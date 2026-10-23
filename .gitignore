@@ -1,0 +1,8 @@
+.env
+.state/
+logs/
+.firecrawl/
+__pycache__/
+*.py[cod]
+*.safetensors
+*.bin

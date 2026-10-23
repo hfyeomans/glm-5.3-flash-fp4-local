@@ -1,0 +1,10 @@
+{
+  "model_id": "nvidia/GLM-5.3-Flash-FP4-Local",
+  "revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+  "weight_shards": 42,
+  "tensor_bytes": 177421592008,
+  "metadata_sha256": {
+    "config.json": "dbf6aaf0d3651a5a297e6672bed57979c20528e2aa7475b80df5ba63d5402ba8",
+    "model.safetensors.index.json": "1981941b2fabb9271ae3a3cb76be6ea41927f730b6633471d3c147106703aeea"
+  }
+}
