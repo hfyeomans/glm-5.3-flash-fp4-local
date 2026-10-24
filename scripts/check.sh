@@ -8,7 +8,7 @@ shellcheck -S warning ./*.sh scripts/*.sh tensorfold/*.sh tensorfold/scripts/*.s
 python3 - <<'PYSYNTAX'
 import ast
 from pathlib import Path
-for root in ['scripts', 'tests', 'tensorfold/scripts', 'tensorfold/tuning', 'tensorfold/csf-resident', 'quality', 'benchmarks']:
+for root in ['scripts', 'tests', 'tensorfold/scripts', 'tensorfold/tuning', 'tensorfold/csf-resident', 'tensorfold/serving', 'quality', 'benchmarks']:
     for path in Path(root).glob('*.py'):
         ast.parse(path.read_text(), filename=str(path))
 print('PASS shell lint and Python syntax')

@@ -1,0 +1,454 @@
+{
+  "archived_baseline": "quality/baselines/initial-v1.json",
+  "new_native_comparison": "tensorfold/results/gpu-embedding-quality-v2.json",
+  "new_run": "logs/qualification-v2/gpu-quality/00-gpu-quality/quality",
+  "metrics": [
+    {
+      "task": "GSM8K flexible exact match",
+      "n": 128,
+      "vllm_archived": 119,
+      "tensorfold_earlier": 120,
+      "tensorfold_gpu_embeddings_new": 120,
+      "mcnemar_p": 1.0
+    },
+    {
+      "task": "GSM8K strict exact match",
+      "n": 128,
+      "vllm_archived": 119,
+      "tensorfold_earlier": 120,
+      "tensorfold_gpu_embeddings_new": 120,
+      "mcnemar_p": 1.0
+    },
+    {
+      "task": "IFEval prompt strict",
+      "n": 128,
+      "vllm_archived": 112,
+      "tensorfold_earlier": 113,
+      "tensorfold_gpu_embeddings_new": 113,
+      "mcnemar_p": 1.0
+    },
+    {
+      "task": "IFEval prompt loose",
+      "n": 128,
+      "vllm_archived": 114,
+      "tensorfold_earlier": 114,
+      "tensorfold_gpu_embeddings_new": 114,
+      "mcnemar_p": 1.0
+    }
+  ],
+  "paired_vllm_vs_new": {
+    "vllm_run": "logs/quality/initial-v1-vllm",
+    "tensorfold_run": "logs/qualification-v2/gpu-quality/00-gpu-quality/quality",
+    "profile": {
+      "name": "initial-v1-low-reasoning",
+      "harness_commit": "d6de81643928d653435c431bae19945d41d32520",
+      "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "sample_seed": 1729,
+      "samples_per_task": 128,
+      "max_output_tokens": 4096,
+      "max_input_plus_output_tokens": 16384,
+      "reasoning_effort": "low",
+      "tasks": {
+        "gsm8k_cot": {
+          "dataset": "openai/gsm8k",
+          "revision": "740312add88f781978c0658806c59bc2815b9866",
+          "split": "test",
+          "expected_size": 1319
+        },
+        "ifeval": {
+          "dataset": "google/IFEval",
+          "revision": "966cd89545d6b6acfd7638bc708b98261ca58e84",
+          "split": "train",
+          "expected_size": 541
+        }
+      }
+    },
+    "pilot": false,
+    "metrics": [
+      {
+        "task": "gsm8k_cot",
+        "filter": "flexible-extract",
+        "metric": "exact_match",
+        "title": "GSM8K flexible exact match",
+        "n": 128,
+        "vllm_correct": 119,
+        "tensorfold_correct": 120,
+        "vllm_accuracy": 0.9296875,
+        "tensorfold_accuracy": 0.9375,
+        "vllm_wilson_95": [
+          0.8717651965063937,
+          0.96257023169606
+        ],
+        "tensorfold_wilson_95": [
+          0.8815120889557413,
+          0.9679930743049387
+        ],
+        "difference_tensorfold_minus_vllm": 0.0078125,
+        "paired_bootstrap_95": [
+          0.0,
+          0.0234375
+        ],
+        "vllm_only_correct": 0,
+        "tensorfold_only_correct": 1,
+        "both_correct": 119,
+        "both_incorrect": 8,
+        "mcnemar_exact_two_sided_p": 1.0
+      },
+      {
+        "task": "gsm8k_cot",
+        "filter": "strict-match",
+        "metric": "exact_match",
+        "title": "GSM8K strict exact match",
+        "n": 128,
+        "vllm_correct": 119,
+        "tensorfold_correct": 120,
+        "vllm_accuracy": 0.9296875,
+        "tensorfold_accuracy": 0.9375,
+        "vllm_wilson_95": [
+          0.8717651965063937,
+          0.96257023169606
+        ],
+        "tensorfold_wilson_95": [
+          0.8815120889557413,
+          0.9679930743049387
+        ],
+        "difference_tensorfold_minus_vllm": 0.0078125,
+        "paired_bootstrap_95": [
+          0.0,
+          0.0234375
+        ],
+        "vllm_only_correct": 0,
+        "tensorfold_only_correct": 1,
+        "both_correct": 119,
+        "both_incorrect": 8,
+        "mcnemar_exact_two_sided_p": 1.0
+      },
+      {
+        "task": "ifeval",
+        "filter": "none",
+        "metric": "prompt_level_strict_acc",
+        "title": "IFEval prompt strict",
+        "n": 128,
+        "vllm_correct": 112,
+        "tensorfold_correct": 113,
+        "vllm_accuracy": 0.875,
+        "tensorfold_accuracy": 0.8828125,
+        "vllm_wilson_95": [
+          0.8065737291824854,
+          0.9215735536123834
+        ],
+        "tensorfold_wilson_95": [
+          0.8156338413466524,
+          0.9276831765064426
+        ],
+        "difference_tensorfold_minus_vllm": 0.0078125,
+        "paired_bootstrap_95": [
+          -0.015625,
+          0.03125
+        ],
+        "vllm_only_correct": 1,
+        "tensorfold_only_correct": 2,
+        "both_correct": 111,
+        "both_incorrect": 14,
+        "mcnemar_exact_two_sided_p": 1.0
+      },
+      {
+        "task": "ifeval",
+        "filter": "none",
+        "metric": "prompt_level_loose_acc",
+        "title": "IFEval prompt loose",
+        "n": 128,
+        "vllm_correct": 114,
+        "tensorfold_correct": 114,
+        "vllm_accuracy": 0.890625,
+        "tensorfold_accuracy": 0.890625,
+        "vllm_wilson_95": [
+          0.8247655486183226,
+          0.9337212042929989
+        ],
+        "tensorfold_wilson_95": [
+          0.8247655486183226,
+          0.9337212042929989
+        ],
+        "difference_tensorfold_minus_vllm": 0.0,
+        "paired_bootstrap_95": [
+          -0.0234375,
+          0.0234375
+        ],
+        "vllm_only_correct": 1,
+        "tensorfold_only_correct": 1,
+        "both_correct": 113,
+        "both_incorrect": 13,
+        "mcnemar_exact_two_sided_p": 1.0
+      }
+    ],
+    "official_scores": {
+      "vllm": {
+        "gsm8k_cot": {
+          "name": "gsm8k_cot",
+          "alias": "gsm8k_cot",
+          "sample_len": 128,
+          "exact_match,strict-match": 0.9296875,
+          "exact_match_stderr,strict-match": "N/A",
+          "exact_match,flexible-extract": 0.9296875,
+          "exact_match_stderr,flexible-extract": "N/A"
+        },
+        "ifeval": {
+          "name": "ifeval",
+          "alias": "ifeval",
+          "sample_len": 128,
+          "prompt_level_strict_acc,none": 0.875,
+          "prompt_level_strict_acc_stderr,none": "N/A",
+          "inst_level_strict_acc,none": 0.914572864321608,
+          "inst_level_strict_acc_stderr,none": "N/A",
+          "prompt_level_loose_acc,none": 0.890625,
+          "prompt_level_loose_acc_stderr,none": "N/A",
+          "inst_level_loose_acc,none": 0.9246231155778895,
+          "inst_level_loose_acc_stderr,none": "N/A"
+        }
+      },
+      "tensorfold": {
+        "gsm8k_cot": {
+          "name": "gsm8k_cot",
+          "alias": "gsm8k_cot",
+          "sample_len": 128,
+          "exact_match,strict-match": 0.9375,
+          "exact_match_stderr,strict-match": "N/A",
+          "exact_match,flexible-extract": 0.9375,
+          "exact_match_stderr,flexible-extract": "N/A"
+        },
+        "ifeval": {
+          "name": "ifeval",
+          "alias": "ifeval",
+          "sample_len": 128,
+          "prompt_level_strict_acc,none": 0.8828125,
+          "prompt_level_strict_acc_stderr,none": "N/A",
+          "inst_level_strict_acc,none": 0.9195979899497487,
+          "inst_level_strict_acc_stderr,none": "N/A",
+          "prompt_level_loose_acc,none": 0.890625,
+          "prompt_level_loose_acc_stderr,none": "N/A",
+          "inst_level_loose_acc,none": 0.9246231155778895,
+          "inst_level_loose_acc_stderr,none": "N/A"
+        }
+      }
+    },
+    "diagnostics": {
+      "vllm": {
+        "requests": 256,
+        "truncated": 0,
+        "unclosed_reasoning": 0,
+        "total_completion_tokens": 62761,
+        "request_seconds": 403.8202073992579,
+        "cached_prompt_tokens": 719
+      },
+      "tensorfold": {
+        "requests": 256,
+        "truncated": 0,
+        "unclosed_reasoning": 0,
+        "total_completion_tokens": 62166,
+        "request_seconds": 510.87185802933527,
+        "cached_prompt_tokens": 0
+      }
+    },
+    "disagreements": [
+      {
+        "task": "gsm8k_cot",
+        "doc_id": 425,
+        "filter": "flexible-extract",
+        "metric": "exact_match",
+        "vllm_correct": 0,
+        "tensorfold_correct": 1,
+        "vllm_answer": "Lillian has 3 homemade feeders and 3 store-bought feeders, for 6 total. Each feeder attracts 20 birds on average, so 6 x 20 = 120 birds total. The homemade ones attract 10 more each than the store-bought ones. Let the store-bought ones attract x birds each, then homemade attract x + 10. So 3x + 3(x + 10) = 120, which gives 6x + 30 = 120, so x = 15. Store-bought feeders attract 15 birds each and homemade ones attract 25 each. Total: 3 x 25 + 3 x 15 = 75 + 45 = 120. The answer is 120.",
+        "tensorfold_answer": "Lillian has 3 homemade feeders and 3 store-bought feeders, for 6 total. Normally each feeder attracts 20 birds, but the homemade ones attract 10 more, so they attract 20 + 10 = 30 birds each. The homemade feeders attract 3 x 30 = 90 birds. The store-bought feeders attract 3 x 20 = 60 birds. In total, 90 + 60 = 150 birds. The answer is 150."
+      },
+      {
+        "task": "gsm8k_cot",
+        "doc_id": 425,
+        "filter": "strict-match",
+        "metric": "exact_match",
+        "vllm_correct": 0,
+        "tensorfold_correct": 1,
+        "vllm_answer": "Lillian has 3 homemade feeders and 3 store-bought feeders, for 6 total. Each feeder attracts 20 birds on average, so 6 x 20 = 120 birds total. The homemade ones attract 10 more each than the store-bought ones. Let the store-bought ones attract x birds each, then homemade attract x + 10. So 3x + 3(x + 10) = 120, which gives 6x + 30 = 120, so x = 15. Store-bought feeders attract 15 birds each and homemade ones attract 25 each. Total: 3 x 25 + 3 x 15 = 75 + 45 = 120. The answer is 120.",
+        "tensorfold_answer": "Lillian has 3 homemade feeders and 3 store-bought feeders, for 6 total. Normally each feeder attracts 20 birds, but the homemade ones attract 10 more, so they attract 20 + 10 = 30 birds each. The homemade feeders attract 3 x 30 = 90 birds. The store-bought feeders attract 3 x 20 = 60 birds. In total, 90 + 60 = 150 birds. The answer is 150."
+      },
+      {
+        "task": "ifeval",
+        "doc_id": 261,
+        "filter": "none",
+        "metric": "prompt_level_strict_acc",
+        "vllm_correct": 1,
+        "tensorfold_correct": 0,
+        "vllm_answer": "Throughout my entire experience with this particular software, I have never once encountered a localized version of it. Despite searching through various distribution channels, checking with different vendors, and exploring multiple regional marketplaces, no version tailored to specific languages or local customs has ever appeared before me. This absence of localization has always struck me as somewhat unusual, especially considering how common it has become for software developers to adapt their products for different markets around the world. The lack of a localized option means that users in non-English speaking regions must either work with the default language or seek out unofficial translations, neither of which is an ideal solution.\n\n***\n\nHowever, what I have seen, on numerous occasions, is an international version of the software. This international edition appears to be designed with a global audience in mind, offering broader compatibility and features that transcend regional boundaries. While it may not cater to the specific linguistic or cultural needs of individual countries, it provides a standardized experience that users from different parts of the world can access equally. The international version seems to be the developer's answer to worldwide distribution, prioritizing universal availability over regional customization.\n\n***\n\nThe distinction between these two versions is worth considering carefully. A localized version would typically include translated interfaces, region-specific settings, and compliance with local regulations, whereas the international version takes a more one-size-fits-all approach. Like a humming bird that visits many different flowers without settling on any single one, the international version touches many markets without deeply rooting itself in any particular one. For users who need deep localization, this can be frustrating, but for those who simply want functional software that works anywhere, the international version remains a perfectly serviceable choice.",
+        "tensorfold_answer": "In all my years of working with various software applications, I have never once encountered a localized version of this particular program. Despite checking official distribution channels, browsing through community forums, and even reaching out to the developers directly, no localized edition seems to exist. It's a curious gap, especially considering how many users around the world would benefit from having the interface, documentation, and support materials translated into their native languages.\n\n***\n\nWhat I have seen, however, is the international version of the software. This edition appears to be designed with a global audience in mind, offering broad compatibility and features that work across different regions. While it doesn't provide the tailored experience that a true localization would\u2014such as translated menus, region-specific settings, or culturally adapted content\u2014it does ensure that users everywhere can access the same core functionality. The international version hums along steadily, doing its job reliably no matter where in the world it's installed.\n\n***\n\nUltimately, the distinction between these two possibilities matters quite a bit for users with specific needs. Someone hoping for a fully localized experience will be disappointed by its absence, but those willing to work with the international version will find it perfectly serviceable. Perhaps in the future, the developers will recognize the demand and release a localized edition, but for now, the international version remains the only option available to everyone."
+      },
+      {
+        "task": "ifeval",
+        "doc_id": 305,
+        "filter": "none",
+        "metric": "prompt_level_strict_acc",
+        "vllm_correct": 0,
+        "tensorfold_correct": 1,
+        "vllm_answer": "```json\n{\n  \"campaign\": \"The Shattered Medalist Trials\",\n  \"session_code\": \"THETA-001\",\n  \"character\": {\n    \"name\": \"Kaelen Theta\",\n    \"class\": \"Rogue (Arcane Trickster)\",\n    \"level\": 3,\n    \"race\": \"Half-Elf\",\n    \"background\": \"Guild Medalist \u2014 a former champion of the underground thieving games\",\n    \"alignment\": \"Chaotic Good\",\n    \"ability_scores\": {\n      \"strength\": 10,\n      \"dexterity\": 17,\n      \"constitution\": 13,\n      \"intelligence\": 15,\n      \"wisdom\": 12,\n      \"charisma\": 14\n    },\n    \"hit_points\": 22,\n    \"armor_class\": 14,\n    \"speed\": 30,\n    \"proficiency_bonus\": 2,\n    \"saving_throws\": {\n      \"dexterity\": 5,\n      \"intelligence\": 4\n    },\n    \"skills\": [\n      \"Stealth +7\",\n      \"Sleight of Hand +7\",\n      \"Perception +3\",\n      \"Deception +4\",\n      \"Acrobatics +5\",\n      \"Investigation +4\"\n    ],\n    \"features\": [\n      \"Sneak Attack (2d6)\",\n      \"Cunning Action\",\n      \"Mage Hand Legerdemain\",\n      \"Thieves' Cant\"\n    ],\n    \"spells\": {\n      \"cantrips\": [\"Mage Hand\", \"Minor Illusion\", \"Fire Bolt\"],\n      \"level_1\": [\"Tasha's Hideous Laughter\", \"Shield\"]\n    },\n    \"equipment\": [\n      \"Rapier\",\n      \"Shortbow with 20 arrows\",\n      \"Leather armor\",\n      \"Thieves' tools\",\n      \"Medalist's medallion (a gold token from the Theta Thieves' Guild)\",\n      \"Burglar's pack\"\n    ]\n  },\n  \"dm_note\": \"You awaken in the ruins of the Theta Spire, a floating tower that crashed a century ago. Your guild medallion hums with faint magic. A locked iron door stands before you, and something skitters in the dark beyond.\"\n}\n```\n\nYou find yourself standing at the edge of a collapsed stone bridge, mist swirling below. The iron door ahead bears the sigil of the Theta Guild \u2014 your guild. What do you do, adventurer?",
+        "tensorfold_answer": "```json\n{\n  \"character_sheet\": {\n    \"name\": \"Kaelen Theta\",\n    \"title\": \"The Medalist of the Golden Arena\",\n    \"class\": \"Monk\",\n    \"subclass\": \"Way of the Open Hand\",\n    \"level\": 3,\n    \"race\": \"Half-Elf\",\n    \"background\": \"Gladiator\",\n    \"alignment\": \"Chaotic Good\",\n    \"ability_scores\": {\n      \"strength\": 12,\n      \"dexterity\": 17,\n      \"constitution\": 14,\n      \"intelligence\": 10,\n      \"wisdom\": 16,\n      \"charisma\": 11\n    },\n    \"modifiers\": {\n      \"strength\": 1,\n      \"dexterity\": 3,\n      \"constitution\": 2,\n      \"intelligence\": 0,\n      \"wisdom\": 3,\n      \"charisma\": 0\n    },\n    \"proficiency_bonus\": 2,\n    \"hit_points\": {\n      \"max\": 22,\n      \"current\": 22,\n      \"hit_dice\": \"3d8\"\n    },\n    \"armor_class\": 16,\n    \"speed\": 40,\n    \"saving_throws\": {\n      \"strength\": 3,\n      \"dexterity\": 5\n    },\n    \"skills\": [\"Acrobatics\", \"Athletics\", \"Insight\", \"Perception\", \"Performance\"],\n    \"features\": [\n      \"Martial Arts (1d4)\",\n      \"Ki (3 points)\",\n      \"Flurry of Blows\",\n      \"Patient Defense\",\n      \"Step of the Wind\",\n      \"Unarmored Defense\",\n      \"Deflect Missiles\",\n      \"Open Hand Technique\"\n    ],\n    \"equipment\": [\n      \"Shortsword\",\n      \"10 darts\",\n      \"Explorer's pack\",\n      \"Trophy medal from the arena (a gold 'medalist' medallion)\",\n      \"Cloth robes embroidered with the theta symbol of his old monastery\"\n    ],\n    \"backstory\": \"Kaelen Theta earned his nickname 'The Medalist' by winning three consecutive championships in the fighting pits of Waterdeep. After discovering the games were rigged by a corrupt noble, he fled and now seeks redemption at the monastery where he was raised, marked by the theta symbol he wears as a reminder of balance.\",\n    \"personality_traits\": \"Disciplined in combat, reckless in conversation\",\n    \"ideals\": \"Freedom - Chains are meant to be broken\",\n    \"bonds\": \"The monastery that took him back when no one else would\",\n    \"flaws\": \"Cannot resist a challenge or a wager\"\n  },\n  \"dm_note\": \"Welcome, adventurer! Your first quest awaits: rumors speak of bandits ambushing travelers on the road to the monastery. The session begins at dawn. Roll for initiative when ready!\"\n}\n```"
+      },
+      {
+        "task": "ifeval",
+        "doc_id": 496,
+        "filter": "none",
+        "metric": "prompt_level_strict_acc",
+        "vllm_correct": 0,
+        "tensorfold_correct": 1,
+        "vllm_answer": "# Velocity X1 Sneakers \u2014 Built for Your World\n\nLet's be real: your shoes say everything about you before you even open your mouth. The new Velocity X1s aren't just sneakers \u2014 they're a statement. Whether you're rolling into first period, hitting the court after school, or posting your fit of the day, these kicks were made to keep up with everything you do.\n\n## Style That Hits Different\n\n*The Velocity X1 comes in six fire colorways \u2014 from Electric Volt to Midnight Fade \u2014 so you can match your mood, your outfit, or your squad. The sleek silhouette pairs retro vibes with a futuristic edge, featuring a bold side stripe, reflective accents that pop under streetlights, and a chunky sole that looks just as good with cargo pants as it does with jeans.* No boring basics here. These are the shoes people ask about in the hallway.\n\n## Comfort That Goes All Day\n\nSchool days are long. Practice is longer. That's why we packed the X1 with CloudFoam cushioning that absorbs impact whether you're sprinting to class or landing jump shots. The breathable mesh upper keeps your feet cool even during the most intense gym sessions, and the padded collar hugs your ankle without ever feeling tight. *Slip them on in seconds \u2014 no double-knot struggles, no blisters, no breaking-in period. They feel amazing from day one.*\n\n## Built Tough for Real Life\n\nTeen life is messy, and your shoes should be able to handle it. The X1 features a durable rubber outsole with grip that works on basketball courts, skate parks, wet sidewalks, and everything in between. Spilled your smoothie on them? No problem \u2014 the stain-resistant coating wipes clean in seconds. These sneakers are engineered to survive your entire school year and still look fresh.\n\n## Your Move\n\nAvailable in sizes 4 through 13, the Velocity X1 drops this season at a price that won't drain your entire savings. Grab your favorite colorway before they sell out \u2014 because trust us, they will.\n\n**Step up. Stand out. Velocity X1.**",
+        "tensorfold_answer": "# VOLT SPRINT X \u2014 Shoes That Move Like You Do\n\nLet's be real: your shoes say everything before you even open your mouth. Whether you're rolling up to school, hitting the court after class, or just vibing with your crew downtown, the new **Volt Sprint X** is built to keep up with every single thing you do \u2014 and look unreal while doing it.\n\n## Style That Hits Different\n\nThe Volt Sprint X comes in six colorways that were literally designed with you in mind. Go bold with Electric Lime, keep it clean with Ghost White, or flex the Midnight Fade that shifts color depending on the light. *These aren't just shoes \u2014 they're a whole personality upgrade.* The sleek silhouette pairs perfectly with jeans, joggers, shorts, or whatever fit you're rocking that day. No clunky soles, no boring designs. Just clean lines, fresh colors, and a look that turns heads in the hallway.\n\n## Comfort That Doesn't Quit\n\nHere's the thing \u2014 looking good means nothing if your feet are screaming by third period. That's why the Volt Sprint X features our **CloudCore\u2122 cushioning system**, a responsive foam midsole that absorbs impact whether you're sprinting to class (we've all been there) or landing jump shots at the park. The breathable knit upper keeps your feet cool all day, even during those brutal afternoon practices. *Slip them on in the morning and forget you're even wearing shoes until you kick them off at night.*\n\n## Built Tough for Real Life\n\nTeen life is chaotic, and your shoes shouldn't fall apart after a month. The Volt Sprint X features a reinforced rubber outsole with a grip pattern engineered for everything from wet pavement to gym floors. Spilled your smoothie on them? No problem \u2014 the stain-resistant coating wipes clean in seconds. These shoes are made to survive lockers, skate sessions, rain, and everything else your schedule throws at them.\n\n## The Details\n\n- Lightweight design (under 10 oz per shoe)\n- Eco-friendly materials \u2014 40% recycled content, because the planet matters\n- Available in sizes 4\u201313, men's and women's\n- Price: $89.99 \u2014 premium quality without the insane price tag\n\n## Bottom Line\n\nThe Volt Sprint X isn't just another pair of sneakers. It's comfort, durability, and serious style all wrapped into one. Your feed will thank you. Your feet will thank you. Your wallet will *definitely* thank you.\n\n**Grab your pair before your size sells out. Trust us \u2014 they will.**"
+      },
+      {
+        "task": "ifeval",
+        "doc_id": 261,
+        "filter": "none",
+        "metric": "prompt_level_loose_acc",
+        "vllm_correct": 1,
+        "tensorfold_correct": 0,
+        "vllm_answer": "Throughout my entire experience with this particular software, I have never once encountered a localized version of it. Despite searching through various distribution channels, checking with different vendors, and exploring multiple regional marketplaces, no version tailored to specific languages or local customs has ever appeared before me. This absence of localization has always struck me as somewhat unusual, especially considering how common it has become for software developers to adapt their products for different markets around the world. The lack of a localized option means that users in non-English speaking regions must either work with the default language or seek out unofficial translations, neither of which is an ideal solution.\n\n***\n\nHowever, what I have seen, on numerous occasions, is an international version of the software. This international edition appears to be designed with a global audience in mind, offering broader compatibility and features that transcend regional boundaries. While it may not cater to the specific linguistic or cultural needs of individual countries, it provides a standardized experience that users from different parts of the world can access equally. The international version seems to be the developer's answer to worldwide distribution, prioritizing universal availability over regional customization.\n\n***\n\nThe distinction between these two versions is worth considering carefully. A localized version would typically include translated interfaces, region-specific settings, and compliance with local regulations, whereas the international version takes a more one-size-fits-all approach. Like a humming bird that visits many different flowers without settling on any single one, the international version touches many markets without deeply rooting itself in any particular one. For users who need deep localization, this can be frustrating, but for those who simply want functional software that works anywhere, the international version remains a perfectly serviceable choice.",
+        "tensorfold_answer": "In all my years of working with various software applications, I have never once encountered a localized version of this particular program. Despite checking official distribution channels, browsing through community forums, and even reaching out to the developers directly, no localized edition seems to exist. It's a curious gap, especially considering how many users around the world would benefit from having the interface, documentation, and support materials translated into their native languages.\n\n***\n\nWhat I have seen, however, is the international version of the software. This edition appears to be designed with a global audience in mind, offering broad compatibility and features that work across different regions. While it doesn't provide the tailored experience that a true localization would\u2014such as translated menus, region-specific settings, or culturally adapted content\u2014it does ensure that users everywhere can access the same core functionality. The international version hums along steadily, doing its job reliably no matter where in the world it's installed.\n\n***\n\nUltimately, the distinction between these two possibilities matters quite a bit for users with specific needs. Someone hoping for a fully localized experience will be disappointed by its absence, but those willing to work with the international version will find it perfectly serviceable. Perhaps in the future, the developers will recognize the demand and release a localized edition, but for now, the international version remains the only option available to everyone."
+      },
+      {
+        "task": "ifeval",
+        "doc_id": 496,
+        "filter": "none",
+        "metric": "prompt_level_loose_acc",
+        "vllm_correct": 0,
+        "tensorfold_correct": 1,
+        "vllm_answer": "# Velocity X1 Sneakers \u2014 Built for Your World\n\nLet's be real: your shoes say everything about you before you even open your mouth. The new Velocity X1s aren't just sneakers \u2014 they're a statement. Whether you're rolling into first period, hitting the court after school, or posting your fit of the day, these kicks were made to keep up with everything you do.\n\n## Style That Hits Different\n\n*The Velocity X1 comes in six fire colorways \u2014 from Electric Volt to Midnight Fade \u2014 so you can match your mood, your outfit, or your squad. The sleek silhouette pairs retro vibes with a futuristic edge, featuring a bold side stripe, reflective accents that pop under streetlights, and a chunky sole that looks just as good with cargo pants as it does with jeans.* No boring basics here. These are the shoes people ask about in the hallway.\n\n## Comfort That Goes All Day\n\nSchool days are long. Practice is longer. That's why we packed the X1 with CloudFoam cushioning that absorbs impact whether you're sprinting to class or landing jump shots. The breathable mesh upper keeps your feet cool even during the most intense gym sessions, and the padded collar hugs your ankle without ever feeling tight. *Slip them on in seconds \u2014 no double-knot struggles, no blisters, no breaking-in period. They feel amazing from day one.*\n\n## Built Tough for Real Life\n\nTeen life is messy, and your shoes should be able to handle it. The X1 features a durable rubber outsole with grip that works on basketball courts, skate parks, wet sidewalks, and everything in between. Spilled your smoothie on them? No problem \u2014 the stain-resistant coating wipes clean in seconds. These sneakers are engineered to survive your entire school year and still look fresh.\n\n## Your Move\n\nAvailable in sizes 4 through 13, the Velocity X1 drops this season at a price that won't drain your entire savings. Grab your favorite colorway before they sell out \u2014 because trust us, they will.\n\n**Step up. Stand out. Velocity X1.**",
+        "tensorfold_answer": "# VOLT SPRINT X \u2014 Shoes That Move Like You Do\n\nLet's be real: your shoes say everything before you even open your mouth. Whether you're rolling up to school, hitting the court after class, or just vibing with your crew downtown, the new **Volt Sprint X** is built to keep up with every single thing you do \u2014 and look unreal while doing it.\n\n## Style That Hits Different\n\nThe Volt Sprint X comes in six colorways that were literally designed with you in mind. Go bold with Electric Lime, keep it clean with Ghost White, or flex the Midnight Fade that shifts color depending on the light. *These aren't just shoes \u2014 they're a whole personality upgrade.* The sleek silhouette pairs perfectly with jeans, joggers, shorts, or whatever fit you're rocking that day. No clunky soles, no boring designs. Just clean lines, fresh colors, and a look that turns heads in the hallway.\n\n## Comfort That Doesn't Quit\n\nHere's the thing \u2014 looking good means nothing if your feet are screaming by third period. That's why the Volt Sprint X features our **CloudCore\u2122 cushioning system**, a responsive foam midsole that absorbs impact whether you're sprinting to class (we've all been there) or landing jump shots at the park. The breathable knit upper keeps your feet cool all day, even during those brutal afternoon practices. *Slip them on in the morning and forget you're even wearing shoes until you kick them off at night.*\n\n## Built Tough for Real Life\n\nTeen life is chaotic, and your shoes shouldn't fall apart after a month. The Volt Sprint X features a reinforced rubber outsole with a grip pattern engineered for everything from wet pavement to gym floors. Spilled your smoothie on them? No problem \u2014 the stain-resistant coating wipes clean in seconds. These shoes are made to survive lockers, skate sessions, rain, and everything else your schedule throws at them.\n\n## The Details\n\n- Lightweight design (under 10 oz per shoe)\n- Eco-friendly materials \u2014 40% recycled content, because the planet matters\n- Available in sizes 4\u201313, men's and women's\n- Price: $89.99 \u2014 premium quality without the insane price tag\n\n## Bottom Line\n\nThe Volt Sprint X isn't just another pair of sneakers. It's comfort, durability, and serious style all wrapped into one. Your feed will thank you. Your feet will thank you. Your wallet will *definitely* thank you.\n\n**Grab your pair before your size sells out. Trust us \u2014 they will.**"
+      }
+    ]
+  },
+  "scope": "Reuse archived vLLM and earlier TensorFold; fresh GPU-embedding TensorFold run uses the identical frozen 256 questions, prompts, grading and output budget. This is not a long-context accuracy result.",
+  "candidate_launch": {
+    "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+    "profile": "gpu-quality",
+    "protocol": {
+      "profiles_sha256": "29253bc0dcc45907aac77d73b89770d18da032a1fd0aad76fee3502b9e47b4e3",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 3,
+      "mtp": "both",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-2048",
+        "prefill-8192"
+      ],
+      "teacher_histories_sha256": "60f43af7dfa98dd7514811af4975039e12f2ebbc2e826aea0f78a4b261b7aed7",
+      "quality": true,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": false,
+      "context_targets": [
+        2048,
+        8192
+      ]
+    },
+    "settings": {
+      "TF_COMM_PORT": "29600",
+      "TF_CONTEXT": "16384",
+      "TF_PROMPT_CACHE_GIB": "0",
+      "TF_NCCL_DEBUG": "WARN",
+      "TF_NVFP4_DECODE_WARPS": "1",
+      "TF_TUNE_PREFILL_UP": "4",
+      "TF_MEMORY_RESERVE_GIB": "",
+      "TF_PROFILE": "0",
+      "TF_TUNE_PREFILL_DOWN": "8",
+      "TF_TUNE_SPLIT_TARGET": "192",
+      "TF_TUNE_SCALE_LAYOUT": "2",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "TF_GLM_PREFILL_REDUCE": "split",
+      "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "TF_PORT": "8001",
+      "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+      "TF_TUNE_HOST_EMBED": "0",
+      "TF_GLM_PROMPT_K": "one",
+      "TF_GLM_KDA_DECODE_WIDE": "1",
+      "NCCL_CUMEM_HOST_ENABLE": "0",
+      "TF_HOST": "127.0.0.1",
+      "TF_PARALLEL": "1",
+      "TF_GLM_PDL": "1",
+      "NCCL_CUMEM_ENABLE": "0"
+    }
+  },
+  "candidate_completion": {
+    "profile": "gpu-quality",
+    "protocol": {
+      "profiles_sha256": "29253bc0dcc45907aac77d73b89770d18da032a1fd0aad76fee3502b9e47b4e3",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 3,
+      "mtp": "both",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-2048",
+        "prefill-8192"
+      ],
+      "teacher_histories_sha256": "60f43af7dfa98dd7514811af4975039e12f2ebbc2e826aea0f78a4b261b7aed7",
+      "quality": true,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": false,
+      "context_targets": [
+        2048,
+        8192
+      ]
+    },
+    "started_unix": 1792869158.7254777,
+    "token_hashes": {
+      "short-code": [
+        "fc786447a3bd4ec86bb8df0ba64e2c22e7d2da6952ae1b0ea9d4f6a3fa9b8bc6"
+      ],
+      "prefill-8192": [
+        "6738722776320d3a0dc6c5cca336fc6a666f8da44906fabde22ee61e554ccf04"
+      ],
+      "prefill-2048": [
+        "ba94da259158351f72365eeb76c905a91c4cd0e6fbfa931aed0092155bec6520"
+      ],
+      "short-prose": [
+        "b1ac95394624d2ec9a84baa182a7778fa87a3494ae689eb967c6def2c354af8b"
+      ]
+    },
+    "repeat_and_mtp_identical": true,
+    "status": "pass",
+    "elapsed_seconds": 844.4795274734497
+  },
+  "evidence": [
+    {
+      "path": "logs/qualification-v2/gpu-quality/00-gpu-quality/launch-manifest.json",
+      "sha256": "ddb5a382975f29d50cf32bb44ff8be0d151e7b3451d51d4c19b69c4914a35d15"
+    },
+    {
+      "path": "logs/qualification-v2/gpu-quality/00-gpu-quality/quality/manifest.json",
+      "sha256": "34d831e92573cf6e344cdf0451781f0e872788dcf1dcd85bdc6545e589d144d0"
+    },
+    {
+      "path": "logs/qualification-v2/gpu-quality/00-gpu-quality/quality/requests.jsonl",
+      "sha256": "af7f0fc407c64ecfb5fd594142f1dc489f7927c1060a7a7f8ffcd2cb12e90f1d"
+    },
+    {
+      "path": "logs/qualification-v2/gpu-quality/00-gpu-quality/teacher/manifest.json",
+      "sha256": "69b521b7a3dc5c0fb122ef7886ee9f6bb0f897cfd9d3c3bcc121ddcb8771e015"
+    },
+    {
+      "path": "logs/qualification-v2/gpu-quality/00-gpu-quality/teacher/rows.jsonl",
+      "sha256": "cf842340aedf95274f480c5efb9679b67c50b7e3df43938f7f290a544807a227"
+    },
+    {
+      "path": "quality/baselines/initial-v1.json",
+      "sha256": "a40258297833c51a92bbc0b3bbc2879988bd392c1447f9129ea611c4aa54ece5"
+    }
+  ],
+  "input_length_scope": {
+    "min_tokens": 30,
+    "median_tokens": 418,
+    "max_tokens": 784,
+    "note": "Configured 16K is allocation, not task input length. These scores do not establish long-prefill precision-path coverage or long-context accuracy."
+  }
+}

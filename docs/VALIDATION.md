@@ -725,3 +725,41 @@ free memory returned to 97,187/97,340 MiB. The unrelated graphics allocation rem
 [Evidence index](../tensorfold/results/csf-resident-qualification-v1.json) links the
 portable results and final service-state log hash. To start vLLM again from this repo,
 run `./start.sh`; the normal image and B12X/memory settings are unchanged.
+
+
+## GPU-embedding quality and 512K qualification (2026-10-24)
+
+The separate `tensorfold/serving/profiles.json` makes GPU embeddings explicit for
+512K and smaller profiles; only `host-1m` uses mapped host embeddings. The immutable
+resident-scale image, checkpoint revision and W4A16 arithmetic are unchanged.
+
+The fresh 256-case short-quality run preserved every earlier native output hash
+and grade: GSM8K 120/128, IFEval strict 113/128 and loose 114/128. Archived vLLM was
+119/128, 112/128 and 114/128 respectively; this sample does not establish a quality
+advantage. All 1,439 fixed-history positions also matched exactly.
+[Three-way comparison](QUALITY-BAKEOFF-V2.md).
+
+At configured 524,288 tokens with GPU embeddings, cold 261,888- and 524,027-token
+retrieval passed with MTP both on and off, with identical output hashes. Free
+memory stayed at least 4,235 / 4,388 MiB through retrieval. The subsequent
+log-probability diagnostic temporarily used 58 MiB more per rank: whole-run minima
+were **4,177 / 4,330 MiB**, above the 1,536 MiB floor. Those 1,439 probabilities and
+top-1 decisions were again identical to the earlier reference. Sampling is 1 Hz;
+transient peaks between samples are not observed.
+[Receipt](../tensorfold/results/gpu-512k-qualification-v2.json).
+
+This qualifies the tested allocation/retrieval/short-probability behavior, not broad
+512K accuracy. The separately frozen [1M task screen](../quality/LONG-CONTEXT.md)
+will report actual input lengths, per-task failures and small-sample limits.
+
+
+## Native prefill diagnosis (2026-10-24)
+
+Two normal 8K/32K controls passed, with <0.05% prefill drift. The first profiling
+benchmark was correctly rejected by the normal client's profiling-off guard;
+its failure and interleaved combined logs are retained. A separate diagnostic
+keeps that guard intact, redirects each rank's stderr to its own file, and validates
+complete chunk/stage records. All eight diagnostic requests passed and all 24
+control/diagnostic output hashes matched within their workload. Instrumented TTFT
+overhead was 2.35%/1.59%; no instrumented timing is presented as production speed.
+[Findings and next experiments](PREFILL-INVESTIGATION-V2.md).

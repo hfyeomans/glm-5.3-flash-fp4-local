@@ -56,3 +56,14 @@ The [pinned vLLM source audit](../tensorfold/results/vllm-prefill-policy-audit-v
 found hybrid A4 prefill enabled by the supplied flags. TensorFold's expert path here
 remains W4A16. This is a plausible contributor to the prefill gap, not a measured
 causal attribution of the whole cross-engine difference.
+
+
+## GPU embeddings and native prefill trace
+
+The [new investigation](PREFILL-INVESTIGATION-V2.md) measured resident scales with
+GPU embeddings at about 4,442/4,481 prefill tok/s and 1.845/7.313 s TTFT for 8K/32K
+with request-level MTP decoding off. Two controls agree within 0.05%. Complete
+per-rank traces identify substantial expert, projection and attention costs;
+experts alone are about 27% of traced chunk wall time. Instrumented timings are
+kept separate and all output hashes matched. These observations do not attribute
+the entire cross-engine gap to one kernel or establish a quality advantage.

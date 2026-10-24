@@ -111,3 +111,13 @@ class CancelFixtureTests(unittest.TestCase):
             source.write_text('print("different fixture")\n')
             with self.assertRaisesRegex(ValueError, 'Unrecognized upstream'):
                 sweep.prepare_cancel_fixture(source, target)
+
+
+class ServingPlacementTests(unittest.TestCase):
+    def test_only_1m_serving_profile_offloads_embeddings(self):
+        import json
+        manifest = json.loads((ROOT / 'tensorfold/serving/profiles.json').read_text())
+        for name in manifest['profiles']:
+            env = runner.environment(name, profiles=manifest)
+            self.assertEqual(env['TF_TUNE_HOST_EMBED'], '1' if name == 'host-1m' else '0')
+        self.assertEqual(runner.environment('gpu-512k', profiles=manifest)['TF_CONTEXT'], '524288')

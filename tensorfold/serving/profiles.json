@@ -1,0 +1,39 @@
+{
+  "image": "glm53-fp4-tensorfold:csf-resident-v1",
+  "parent_image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+  "parent_tree": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+  "patch_sha256": "567b5953034033ed5432fc31255149c9315d5e7fc93e1aaaffbc2f05c5d46905",
+  "source_tree": "b02cfca0f02235fa8f4b87c0ae921664a73d1807",
+  "built_image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+  "common": {
+    "TF_HOST": "127.0.0.1",
+    "TF_CONTEXT": "131072",
+    "TF_PARALLEL": "1",
+    "TF_PROMPT_CACHE_GIB": "0",
+    "TF_TUNE_HOST_EMBED": "0",
+    "TF_TUNE_SCALE_LAYOUT": "2",
+    "TF_GLM_OVERLAP_PIECES": "4",
+    "TF_VOLUME": "glm53-fp4-tensorfold-csf-v1"
+  },
+  "profiles": {
+    "gpu-quality": {
+      "TF_CONTEXT": "16384"
+    },
+    "gpu-perf": {},
+    "gpu-profile": {
+      "TF_PROFILE": "1"
+    },
+    "gpu-512k": {
+      "TF_CONTEXT": "524288",
+      "TF_MEMORY_RESERVE_GIB": "1.5"
+    },
+    "host-1m": {
+      "TF_CONTEXT": "1048576",
+      "TF_MEMORY_RESERVE_GIB": "1.5",
+      "TF_TUNE_HOST_EMBED": "1"
+    },
+    "fast-gpu": {
+      "TF_TUNE_SCALE_LAYOUT": "0"
+    }
+  }
+}

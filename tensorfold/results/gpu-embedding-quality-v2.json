@@ -1,0 +1,75 @@
+{
+  "reference": "logs/quality/initial-v1-tensorfold",
+  "candidate": "logs/qualification-v2/gpu-quality/00-gpu-quality/quality",
+  "pilot": false,
+  "reference_image_id": "sha256:c829536f5a214755ff50f4e72e622814a9226b8aec43ed646cdc6cd20c418e11",
+  "candidate_image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+  "reference_settings": {
+    "TF_PARALLEL": "1",
+    "TF_PROFILE": "0",
+    "TF_PROMPT_CACHE_GIB": "0",
+    "TF_MEMORY_RESERVE_GIB": "",
+    "TF_CONTEXT": "16384"
+  },
+  "candidate_settings": {
+    "TF_CONTEXT": "16384",
+    "TF_PROMPT_CACHE_GIB": "0",
+    "TF_MEMORY_RESERVE_GIB": "",
+    "TF_PROFILE": "0",
+    "TF_PARALLEL": "1"
+  },
+  "profile_sha256": "b513da3c66ae8b9f087250c1dbccc6c890ac27c179c22092f29ea102da41b551",
+  "client_sha256": "be5bc56049637aa5e118437536b58f17758bf10b2491b7342a82b43dc44c8a03",
+  "requests": 256,
+  "identical_output_token_hashes": 256,
+  "changed_outputs": [],
+  "scores": [
+    {
+      "title": "GSM8K flexible exact match",
+      "n": 128,
+      "reference_correct": 120,
+      "candidate_correct": 120,
+      "changed_grades": 0,
+      "reference_only_correct": 0,
+      "candidate_only_correct": 0
+    },
+    {
+      "title": "GSM8K strict exact match",
+      "n": 128,
+      "reference_correct": 120,
+      "candidate_correct": 120,
+      "changed_grades": 0,
+      "reference_only_correct": 0,
+      "candidate_only_correct": 0
+    },
+    {
+      "title": "IFEval prompt strict",
+      "n": 128,
+      "reference_correct": 113,
+      "candidate_correct": 113,
+      "changed_grades": 0,
+      "reference_only_correct": 0,
+      "candidate_only_correct": 0
+    },
+    {
+      "title": "IFEval prompt loose",
+      "n": 128,
+      "reference_correct": 114,
+      "candidate_correct": 114,
+      "changed_grades": 0,
+      "reference_only_correct": 0,
+      "candidate_only_correct": 0
+    }
+  ],
+  "diagnostics": {
+    "reference": {
+      "truncated": 0,
+      "unclosed_reasoning": 0
+    },
+    "candidate": {
+      "truncated": 0,
+      "unclosed_reasoning": 0
+    }
+  },
+  "limits": "Exact agreement applies only to the recorded sample and settings. It is not a proof of universal equivalence, a long-context quality score or a comparison to unquantized weights."
+}

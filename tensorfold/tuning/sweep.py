@@ -59,6 +59,8 @@ def main():
     p.add_argument('--mtp', choices=['on', 'off', 'both'], default='on')
     p.add_argument('--teacher-histories', type=Path)
     p.add_argument('--quality', action='store_true')
+    p.add_argument('--long-context-bank', type=Path)
+    p.add_argument('--long-context-lengths', nargs='+', type=int)
     p.add_argument('--baseline-image', action='store_true')
     p.add_argument('--cache-check', action='store_true')
     p.add_argument('--cancel-check', action='store_true', help='Run the pinned image’s upstream prompt-cancellation/release fixture after timing')
@@ -70,6 +72,8 @@ def main():
     p.add_argument('--cases', nargs='+', default=['short-code', 'short-prose', 'prefill-8192', 'prefill-32768'])
     args = p.parse_args()
     profiles = json.loads(args.profile_file.read_text())
+    if bool(args.long_context_bank) != bool(args.long_context_lengths):
+        p.error('Long-context bank and lengths must be supplied together')
     if args.minimum_free_mib < 0 or (args.minimum_free_mib and args.cache_check):
         p.error('Memory floor must be nonnegative and cannot be combined with cache checks')
     if args.context_stage_timeout < 1:
@@ -94,6 +98,10 @@ def main():
     if args.cancel_check:
         protocol['cancel_check'] = True
         protocol['cancel_host_header_adapter'] = 1
+    if args.long_context_bank:
+        protocol['long_context_bank_sha256'] = sha(args.long_context_bank / 'manifest.json')
+        protocol['long_context_lengths'] = args.long_context_lengths
+        protocol['long_context_client_sha256'] = sha(ROOT / 'quality/long_context.py')
     had_failure = False
     for number, profile in enumerate(args.profiles):
         folder = args.output / f'{number:02}-{profile}'
@@ -160,10 +168,15 @@ def main():
                                 '--words', '9000', '--runs', '3', '--slack', '3', '--release-max', '3',
                                 '--record', str(folder / 'cancel-requests.jsonl')]),
                 ])
+            if args.long_context_bank:
+                commands.append(('long-context', [sys.executable, str(ROOT / 'quality/long_context.py'),
+                    '--bank', str(args.long_context_bank), '--lengths', *map(str, args.long_context_lengths),
+                    '--output', str(folder / 'long-context'), '--telemetry-file', str(folder / 'gpu.csv'),
+                    '--minimum-free-mib', str(args.minimum_free_mib or 1536)]))
             for stage, command in commands:
                 print(f'{profile}: {stage}', flush=True)
                 with (folder / f'{stage}.log').open('w') as out:
-                    subprocess.run(command, cwd=ROOT, env=env, stdout=out, stderr=subprocess.STDOUT, check=True, timeout=7200 if stage == 'quality' else args.context_stage_timeout if stage.startswith('context') else 1800)
+                    subprocess.run(command, cwd=ROOT, env=env, stdout=out, stderr=subprocess.STDOUT, check=True, timeout=43200 if stage == 'long-context' else 7200 if stage == 'quality' else args.context_stage_timeout if stage.startswith('context') else 1800)
                 if stage == 'cancel-fixture':
                     (folder / 'cancel-fixture.json').write_text(json.dumps({
                         'path_in_image': '/src/tensorfold/zig/tests/qwen35/serve_cancel_release.py',

@@ -83,3 +83,20 @@ The [separate recipe](csf-resident/README.md) adds compact TP slices, typed GPU 
 A pinned vLLM source audit also found hybrid A4 prefill enabled by the supplied flags. That is a separate arithmetic choice from TensorFold's W4A16 expert path; see [precision notes](../docs/PRECISION-AND-QUALITY.md). No timing ablation attributes the full cross-engine gap to this policy.
 
 The [resident-scale results](csf-resident/RESULTS.md) record the implemented patch, measured 3.80 GiB/rank headroom gain at 512K, exact quality comparisons and completed 640K→768K→896K→near-1M prompt ladder. The 1M pool has only 157 MiB above the 1.5 GiB target on the limiting GPU; scope remains explicit.
+
+
+## Follow-up qualification and profiling (2026-10-24)
+
+The separate serving profiles now keep embeddings in VRAM through 512K and map
+them only for 1M. Actual 512K cold retrieval passed in both MTP modes, with
+4,235/4,388 MiB free through retrieval and 4,177/4,330 MiB whole-run minima after
+the extra probability diagnostic. All 256 short-quality outputs and 1,439
+probabilities matched the earlier native reference. This is not broad 512K accuracy.
+
+[Complete native prefill traces](../docs/PREFILL-INVESTIGATION-V2.md) show routed
+experts at about 27% of chunk wall time, alongside substantial projection and
+attention costs. These results support targeted kernel/attention investigation,
+not a claim that removing a GB10-associated setting or adding A4 alone solves the
+whole gap. The diagnostic launcher changes stderr routing only; no native kernel
+or precision change was made in this phase. The short vLLM comparison shows no
+convincing quality advantage for the slower native configuration.

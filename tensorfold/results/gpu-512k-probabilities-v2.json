@@ -1,0 +1,8 @@
+{
+  "scope": "Fixed-history up to the first 128 completion tokens of 8 GSM8K and 8 IFEval baseline outputs; sampled diagnostic, not full model equivalence",
+  "history_sha256": "679ddb03d76d09aa0f4c43f55cb73fb0ac68ac1853fd446c591448500439d108",
+  "positions": 1439,
+  "top1_flips": [],
+  "max_abs_target_logprob_change": 0.0,
+  "mean_abs_target_logprob_change": 0.0
+}

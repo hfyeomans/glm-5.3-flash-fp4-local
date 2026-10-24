@@ -1,0 +1,1077 @@
+{
+  "cells": [
+    {
+      "case": "prefill-8192",
+      "control_client_ttft_medians": [
+        1.8451513350009918,
+        1.845213567954488
+      ],
+      "diagnostic_client_ttft_median": 1.8886310319649056,
+      "control_prefill_medians": [
+        1.844393087,
+        1.844464836
+      ],
+      "control_decode_tps_medians": [
+        63.963639242679676,
+        63.99481369566831
+      ],
+      "all_output_hashes_identical": true,
+      "output_sha256": "6738722776320d3a0dc6c5cca336fc6a666f8da44906fabde22ee61e554ccf04",
+      "ranks": [
+        {
+          "rank": 0,
+          "n": 3,
+          "median_wall_ms_per_chunk": 463.091525,
+          "stages": [
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "wait_filled",
+              "median_ms_per_chunk": 208.12242499999996
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "wait_filled",
+              "median_ms_per_chunk": 141.6622500000005
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "ffn",
+              "median_ms_per_chunk": 133.68532499999998
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "experts",
+              "median_ms_per_chunk": 126.80677500000007
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "projections",
+              "median_ms_per_chunk": 87.1121
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "mla",
+              "median_ms_per_chunk": 64.8917
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "kda",
+              "median_ms_per_chunk": 42.71957500000001
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "partials",
+              "median_ms_per_chunk": 34.5521
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "partials",
+              "median_ms_per_chunk": 34.181224999999976
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "output_projection",
+              "median_ms_per_chunk": 33.92770000000002
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "output_projection",
+              "median_ms_per_chunk": 29.801825
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "shared_expert",
+              "median_ms_per_chunk": 26.620349999999988
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "mtp",
+              "median_ms_per_chunk": 17.492675000000002
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "glued",
+              "median_ms_per_chunk": 12.56985
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "glued",
+              "median_ms_per_chunk": 12.433975000000025
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "wait_shared",
+              "median_ms_per_chunk": 11.102325000000013
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "wait_shared",
+              "median_ms_per_chunk": 10.983450000000003
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "glue",
+              "median_ms_per_chunk": 7.207625000000005
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "glue",
+              "median_ms_per_chunk": 7.136625000000002
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "wait_gathered",
+              "median_ms_per_chunk": 6.646049999999973
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "wait_gathered",
+              "median_ms_per_chunk": 3.7862250000000146
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "router",
+              "median_ms_per_chunk": 2.9454500000000023
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "replicated_qakva",
+              "median_ms_per_chunk": 2.5717000000000008
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_score",
+              "median_ms_per_chunk": 1.3245000000000007
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_select",
+              "median_ms_per_chunk": 0.6142500000000004
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "head",
+              "median_ms_per_chunk": 0.2459
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "glue",
+              "median_ms_per_chunk": 0.14205
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_update",
+              "median_ms_per_chunk": 0.10444999999999997
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "gate",
+              "median_ms_per_chunk": 0.10327499999999999
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "cache_write",
+              "median_ms_per_chunk": 0.09499999999999999
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "wait_glues",
+              "median_ms_per_chunk": 0.08127500000000062
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "wait_glues",
+              "median_ms_per_chunk": 0.08112500000000068
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "control_reduce",
+              "median_ms_per_chunk": 0.07
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "embed",
+              "median_ms_per_chunk": 0.033725
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "draw",
+              "median_ms_per_chunk": 0.0133
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "token_gather",
+              "median_ms_per_chunk": 0.00255
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "commit",
+              "median_ms_per_chunk": 0.000825
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "drafter",
+              "median_ms_per_chunk": 0.000475
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "prompt_score",
+              "median_ms_per_chunk": 0.00045
+            }
+          ]
+        },
+        {
+          "rank": 1,
+          "n": 3,
+          "median_wall_ms_per_chunk": 463.02902500000005,
+          "stages": [
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "wait_filled",
+              "median_ms_per_chunk": 204.4673250000001
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "wait_filled",
+              "median_ms_per_chunk": 139.0685000000006
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "ffn",
+              "median_ms_per_chunk": 131.17362500000004
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "experts",
+              "median_ms_per_chunk": 124.436525
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "projections",
+              "median_ms_per_chunk": 85.19694999999997
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "mla",
+              "median_ms_per_chunk": 63.784675
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "kda",
+              "median_ms_per_chunk": 42.04374999999998
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "partials",
+              "median_ms_per_chunk": 38.644449999999935
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "partials",
+              "median_ms_per_chunk": 37.10675000000001
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "output_projection",
+              "median_ms_per_chunk": 33.175674999999956
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "output_projection",
+              "median_ms_per_chunk": 28.822175
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "shared_expert",
+              "median_ms_per_chunk": 25.6938
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "mtp",
+              "median_ms_per_chunk": 17.47285
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "glued",
+              "median_ms_per_chunk": 12.533724999999995
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "glued",
+              "median_ms_per_chunk": 12.414525000000008
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "wait_shared",
+              "median_ms_per_chunk": 11.06054999999999
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "wait_shared",
+              "median_ms_per_chunk": 10.996225000000011
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "wait_gathered",
+              "median_ms_per_chunk": 10.628474999999982
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "wait_gathered",
+              "median_ms_per_chunk": 8.651549999999991
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "glue",
+              "median_ms_per_chunk": 7.031250000000006
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "glue",
+              "median_ms_per_chunk": 6.958174999999998
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "router",
+              "median_ms_per_chunk": 2.9964750000000038
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "replicated_qakva",
+              "median_ms_per_chunk": 2.4917
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_score",
+              "median_ms_per_chunk": 1.2518
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_select",
+              "median_ms_per_chunk": 0.6212000000000002
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "head",
+              "median_ms_per_chunk": 0.24674999999999997
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "glue",
+              "median_ms_per_chunk": 0.141525
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_update",
+              "median_ms_per_chunk": 0.10192499999999997
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "cache_write",
+              "median_ms_per_chunk": 0.09362500000000001
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "wait_glues",
+              "median_ms_per_chunk": 0.08097500000000063
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "wait_glues",
+              "median_ms_per_chunk": 0.08065000000000068
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "gate",
+              "median_ms_per_chunk": 0.060599999999999994
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "embed",
+              "median_ms_per_chunk": 0.035
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "control_reduce",
+              "median_ms_per_chunk": 0.031924999999999995
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "draw",
+              "median_ms_per_chunk": 0.014125
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "token_gather",
+              "median_ms_per_chunk": 0.00205
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "commit",
+              "median_ms_per_chunk": 0.0007
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "prompt_score",
+              "median_ms_per_chunk": 0.00042500000000000003
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "drafter",
+              "median_ms_per_chunk": 0.000425
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case": "prefill-32768",
+      "control_client_ttft_medians": [
+        7.311767268984113,
+        7.315050444973167
+      ],
+      "diagnostic_client_ttft_median": 7.429959392989986,
+      "control_prefill_medians": [
+        7.310514859,
+        7.313711455
+      ],
+      "control_decode_tps_medians": [
+        63.078844282317775,
+        63.10353418754789
+      ],
+      "all_output_hashes_identical": true,
+      "output_sha256": "ac269adf873743af08bdab041c4f76f05758d64ca8852d01766b3a7457408bf1",
+      "ranks": [
+        {
+          "rank": 0,
+          "n": 3,
+          "median_wall_ms_per_chunk": 455.30975625,
+          "stages": [
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "wait_filled",
+              "median_ms_per_chunk": 205.59068750000012
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "wait_filled",
+              "median_ms_per_chunk": 136.98726874999835
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "ffn",
+              "median_ms_per_chunk": 128.87819375000018
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "experts",
+              "median_ms_per_chunk": 122.01944375000005
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "projections",
+              "median_ms_per_chunk": 87.39287499999996
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "mla",
+              "median_ms_per_chunk": 57.61916250000001
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "kda",
+              "median_ms_per_chunk": 42.65440000000003
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "partials",
+              "median_ms_per_chunk": 34.89974375000005
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "partials",
+              "median_ms_per_chunk": 34.36833749999993
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "output_projection",
+              "median_ms_per_chunk": 34.01987499999998
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "output_projection",
+              "median_ms_per_chunk": 29.824193750000077
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "shared_expert",
+              "median_ms_per_chunk": 26.550193749999927
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "mtp",
+              "median_ms_per_chunk": 16.943649999999998
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "glued",
+              "median_ms_per_chunk": 12.48959374999999
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "glued",
+              "median_ms_per_chunk": 12.396399999999945
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "wait_shared",
+              "median_ms_per_chunk": 10.974912500000052
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "wait_shared",
+              "median_ms_per_chunk": 10.944475000000033
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "glue",
+              "median_ms_per_chunk": 7.241906250000012
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "glue",
+              "median_ms_per_chunk": 7.16185625000002
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "wait_gathered",
+              "median_ms_per_chunk": 6.63476875000005
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_score",
+              "median_ms_per_chunk": 4.501787499999998
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "wait_gathered",
+              "median_ms_per_chunk": 3.7493624999999793
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "router",
+              "median_ms_per_chunk": 2.9981374999999897
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "replicated_qakva",
+              "median_ms_per_chunk": 2.5159312500000013
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_select",
+              "median_ms_per_chunk": 1.5346624999999992
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "head",
+              "median_ms_per_chunk": 0.24526874999999998
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "glue",
+              "median_ms_per_chunk": 0.14228125
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "gate",
+              "median_ms_per_chunk": 0.10631874999999999
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_update",
+              "median_ms_per_chunk": 0.10274375000000012
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "cache_write",
+              "median_ms_per_chunk": 0.0983750000000001
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "wait_glues",
+              "median_ms_per_chunk": 0.08168749999999549
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "wait_glues",
+              "median_ms_per_chunk": 0.08131249999999539
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "control_reduce",
+              "median_ms_per_chunk": 0.07104375
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "embed",
+              "median_ms_per_chunk": 0.030100000000000002
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "draw",
+              "median_ms_per_chunk": 0.0034625
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "commit",
+              "median_ms_per_chunk": 0.0006999999999999998
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "token_gather",
+              "median_ms_per_chunk": 0.0006375
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "prompt_score",
+              "median_ms_per_chunk": 0.00044375
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "drafter",
+              "median_ms_per_chunk": 0.00043750000000000017
+            }
+          ]
+        },
+        {
+          "rank": 1,
+          "n": 3,
+          "median_wall_ms_per_chunk": 455.26073125,
+          "stages": [
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "wait_filled",
+              "median_ms_per_chunk": 201.70703124999983
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "wait_filled",
+              "median_ms_per_chunk": 134.66758749999835
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "ffn",
+              "median_ms_per_chunk": 126.78555
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "experts",
+              "median_ms_per_chunk": 120.01991875000006
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "projections",
+              "median_ms_per_chunk": 85.5143624999999
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "mla",
+              "median_ms_per_chunk": 56.587687499999994
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "kda",
+              "median_ms_per_chunk": 42.05849374999998
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "partials",
+              "median_ms_per_chunk": 38.80126250000005
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "partials",
+              "median_ms_per_chunk": 37.145212499999985
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "output_projection",
+              "median_ms_per_chunk": 33.17861250000001
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "output_projection",
+              "median_ms_per_chunk": 28.835912499999882
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "shared_expert",
+              "median_ms_per_chunk": 25.656212500000006
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "mtp",
+              "median_ms_per_chunk": 16.9361875
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "glued",
+              "median_ms_per_chunk": 12.49496250000002
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "glued",
+              "median_ms_per_chunk": 12.425931249999932
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "wait_shared",
+              "median_ms_per_chunk": 11.03149375000002
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "wait_shared",
+              "median_ms_per_chunk": 11.011531250000012
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "wait_gathered",
+              "median_ms_per_chunk": 10.43998125000001
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "wait_gathered",
+              "median_ms_per_chunk": 8.938274999999978
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "glue",
+              "median_ms_per_chunk": 7.035600000000014
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "glue",
+              "median_ms_per_chunk": 6.975974999999995
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_score",
+              "median_ms_per_chunk": 4.419537500000003
+            },
+            {
+              "stream": "main",
+              "site": "ffn",
+              "stage": "router",
+              "median_ms_per_chunk": 2.9966812500000004
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "replicated_qakva",
+              "median_ms_per_chunk": 2.493581250000002
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_select",
+              "median_ms_per_chunk": 1.4964187500000026
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "head",
+              "median_ms_per_chunk": 0.24584999999999999
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "glue",
+              "median_ms_per_chunk": 0.14388125000000002
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "index_update",
+              "median_ms_per_chunk": 0.10190625000000018
+            },
+            {
+              "stream": "main",
+              "site": "mixer",
+              "stage": "cache_write",
+              "median_ms_per_chunk": 0.09780625000000019
+            },
+            {
+              "stream": "side",
+              "site": "ffn",
+              "stage": "wait_glues",
+              "median_ms_per_chunk": 0.08058749999999537
+            },
+            {
+              "stream": "side",
+              "site": "mixer",
+              "stage": "wait_glues",
+              "median_ms_per_chunk": 0.08054374999999542
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "gate",
+              "median_ms_per_chunk": 0.06300625
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "control_reduce",
+              "median_ms_per_chunk": 0.03350000000000001
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "embed",
+              "median_ms_per_chunk": 0.03055625
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "draw",
+              "median_ms_per_chunk": 0.0030062500000000002
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "commit",
+              "median_ms_per_chunk": 0.0006999999999999998
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "token_gather",
+              "median_ms_per_chunk": 0.0005125
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "drafter",
+              "median_ms_per_chunk": 0.00044375000000000013
+            },
+            {
+              "stream": "main",
+              "site": "chunk",
+              "stage": "prompt_score",
+              "median_ms_per_chunk": 0.00043125000000000016
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnostic_manifest": {
+    "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+    "settings": {
+      "TF_CONTEXT": "131072",
+      "TF_NVFP4_DECODE_WARPS": "1",
+      "NCCL_CUMEM_ENABLE": "0",
+      "TF_PARALLEL": "1",
+      "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+      "TF_TUNE_PREFILL_UP": "4",
+      "TF_GLM_PROMPT_K": "one",
+      "TF_GLM_PREFILL_REDUCE": "split",
+      "TF_HOST": "127.0.0.1",
+      "TF_PROMPT_CACHE_GIB": "0",
+      "TF_MEMORY_RESERVE_GIB": "",
+      "TF_PROFILE": "1",
+      "TF_NCCL_DEBUG": "WARN",
+      "TF_TUNE_PREFILL_DOWN": "8",
+      "TF_GLM_PDL": "1",
+      "NCCL_CUMEM_HOST_ENABLE": "0",
+      "TF_COMM_PORT": "29600",
+      "TF_TUNE_SPLIT_TARGET": "192",
+      "TF_TUNE_HOST_EMBED": "0",
+      "TF_TUNE_SCALE_LAYOUT": "2",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "TF_GLM_KDA_DECODE_WIDE": "1",
+      "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "TF_PORT": "8001"
+    },
+    "client_sha256": "915e3ae992b2b2a24746f4e7a6e08dec6d6e070ecca1958821030324b454b05c",
+    "stream_helper_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+    "original_runner_sha256": "39c53e2405512be6c91d07c15117f4bd44ed90c5354c798118b4d1e9441bcf8d",
+    "runner_sha256": "147264a01fbd1a0e65c842ad79f53542cbce3f24c613d319dc09ae5d58a3aeca",
+    "workloads_sha256": "5c9cea16d0486aee749dd9543db76705f35e74f2e044233e70ee5e35b5151545",
+    "cases": [
+      "prefill-8192",
+      "prefill-32768"
+    ],
+    "repeats": 3,
+    "mtp": false
+  },
+  "validated_requests": 8,
+  "validated_rank_requests": 16,
+  "scope": "Instrumented CUDA-event spans are inclusive and may overlap across streams. Do not add FFN to its router/experts children, output_projection to shared_expert children, or side waits to main wall time. No causal attribution of the entire vLLM gap. Controls bracket the preserved failed profiling-client attempt; the successful separate-log diagnostic follows those controls.",
+  "evidence": [
+    {
+      "path": "logs/qualification-v2/prefill-diagnostic/manifest.json",
+      "sha256": "73ef53ddf02b1156a2fb994403bd86cae72429b8c17a7285a94c2b5633c69b24"
+    },
+    {
+      "path": "logs/qualification-v2/prefill-diagnostic/requests.jsonl",
+      "sha256": "b2958f0b342ec6c9adbadee097ab74c11ae34f606d30822a7c08250a97669d89"
+    },
+    {
+      "path": "logs/qualification-v2/prefill-diagnostic/rank-0.log",
+      "sha256": "2717ffc9978eb56570e1c289450851697d8829534194f4c5e321a526d0cad23e"
+    },
+    {
+      "path": "logs/qualification-v2/prefill-diagnostic/rank-1.log",
+      "sha256": "b8befabb05e22ca480bcacda9fd1a5a79c5e21981aae2db9cf03dc83441dd05c"
+    },
+    {
+      "path": "logs/qualification-v2/prefill-profile/00-gpu-perf/bench/requests.jsonl",
+      "sha256": "da33ada9ccdcc1b9d6864fcb0628ffe6197d22e05a36e6285e3a03fc831fce88"
+    },
+    {
+      "path": "logs/qualification-v2/prefill-profile/02-gpu-perf/bench/requests.jsonl",
+      "sha256": "9ffc95e052ff06c60779abb95034ee42b9d69ef43955a79e22f9cc688bccfeaa"
+    }
+  ]
+}
