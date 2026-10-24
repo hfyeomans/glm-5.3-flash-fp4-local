@@ -40,3 +40,19 @@ Every measured request had zero reused prompt tokens. vLLM retains its qualified
 Some repeated vLLM greedy outputs differ despite the fixed seed; distinct text counts are retained in the JSON. The timing samples are valid fixed-input/fixed-output-length measurements, not a claim of bit-deterministic generation or an accuracy score. TensorFold token-hash consistency is reported separately. The 256-token cap is intentional for throughput. The earlier quality suite remains the accuracy reference.
 
 Raw manifests, requests, SSE frames, counter snapshots and responses are retained under `logs/tuning/`. No clocks, power limits, checkpoint values or shared caches were changed.
+
+
+## Separate compressed-residency capacity experiment
+
+The [resident-CSF32 result](../tensorfold/csf-resident/RESULTS.md) now demonstrates
+near-1M TensorFold inference. It has a measured speed cost: in the same experimental
+image with mapped embedding, returning legacy controls averaged 121.12 decode tok/s,
+4,437 prefill tok/s and 1.847 s client TTFT at 8K/MTP-on; resident scales measured
+112.72, 4,278 and 1.915 s. Across the six workloads, decode was 6.6–7.9% slower;
+2K–64K prefill was 3.2–4.1% slower. All 144 output hashes matched. The original
+normal-image and vLLM table above remains its own unchanged cohort comparison.
+
+The [pinned vLLM source audit](../tensorfold/results/vllm-prefill-policy-audit-v1.json)
+found hybrid A4 prefill enabled by the supplied flags. TensorFold's expert path here
+remains W4A16. This is a plausible contributor to the prefill gap, not a measured
+causal attribution of the whole cross-engine difference.

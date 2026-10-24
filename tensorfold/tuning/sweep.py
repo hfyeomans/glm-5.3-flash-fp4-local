@@ -36,6 +36,20 @@ def headroom(path, devices, minimum):
             'scope': 'One-second samples across startup and completed rungs; transient peaks between samples are not captured'}
 
 
+def prepare_cancel_fixture(source, destination):
+    # Keep the upstream test and thresholds; use the same authority as its normal HTTP client.
+    original = source.read_text()
+    old = 'b"POST /v1/chat/completions HTTP/1.1\\r\\nHost: x\\r\\nContent-Type: application/json\\r\\nContent-Length: "'
+    new = 'b"POST /v1/chat/completions HTTP/1.1\\r\\nHost: " + HOST.netloc.encode("ascii") + b"\\r\\nContent-Type: application/json\\r\\nContent-Length: "'
+    if original.count(old) != 1:
+        raise ValueError('Unrecognized upstream cancellation fixture Host header')
+    adapted = original.replace(old, new)
+    compile(adapted, str(destination), 'exec')
+    destination.write_text(adapted)
+    return {'upstream_sha256': sha(source), 'sha256': sha(destination),
+            'adaptation': 'Raw socket Host header uses URL authority, matching http.client; no server host policy or test threshold changed'}
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--profile-file', type=Path, default=Path(__file__).with_name('profiles.json'))
@@ -47,6 +61,7 @@ def main():
     p.add_argument('--quality', action='store_true')
     p.add_argument('--baseline-image', action='store_true')
     p.add_argument('--cache-check', action='store_true')
+    p.add_argument('--cancel-check', action='store_true', help='Run the pinned image’s upstream prompt-cancellation/release fixture after timing')
     p.add_argument('--skip-benchmark', action='store_true')
     p.add_argument('--context-stage-timeout', type=int, default=1800)
     p.add_argument('--minimum-free-mib', type=int, default=0,
@@ -76,6 +91,9 @@ def main():
         protocol['context_stage_timeout_seconds'] = args.context_stage_timeout
     if args.minimum_free_mib:
         protocol['minimum_free_MiB'] = args.minimum_free_mib
+    if args.cancel_check:
+        protocol['cancel_check'] = True
+        protocol['cancel_host_header_adapter'] = 1
     had_failure = False
     for number, profile in enumerate(args.profiles):
         folder = args.output / f'{number:02}-{profile}'
@@ -133,10 +151,25 @@ def main():
                 commands.append(('teacher', [sys.executable, str(Path(__file__).with_name('teacher_force.py')), 'run', str(args.teacher_histories), str(folder / 'teacher')]))
             if args.quality:
                 commands.append(('quality', [str(ROOT / 'quality/run.sh'), '--backend', 'tensorfold', '--output', str(folder / 'quality')]))
+            if args.cancel_check:
+                fixture = folder / 'cancel_fixture.py'
+                upstream_fixture = folder / 'cancel_fixture_upstream.py'
+                commands.extend([
+                    ('cancel-fixture', ['docker', 'cp', env['TF_CONTAINER'] + ':/src/tensorfold/zig/tests/qwen35/serve_cancel_release.py', str(upstream_fixture)]),
+                    ('cancel', [sys.executable, str(fixture), f'http://127.0.0.1:{env["TF_PORT"]}', env['TF_MODEL_NAME'],
+                                '--words', '9000', '--runs', '3', '--slack', '3', '--release-max', '3',
+                                '--record', str(folder / 'cancel-requests.jsonl')]),
+                ])
             for stage, command in commands:
                 print(f'{profile}: {stage}', flush=True)
                 with (folder / f'{stage}.log').open('w') as out:
                     subprocess.run(command, cwd=ROOT, env=env, stdout=out, stderr=subprocess.STDOUT, check=True, timeout=7200 if stage == 'quality' else args.context_stage_timeout if stage.startswith('context') else 1800)
+                if stage == 'cancel-fixture':
+                    (folder / 'cancel-fixture.json').write_text(json.dumps({
+                        'path_in_image': '/src/tensorfold/zig/tests/qwen35/serve_cancel_release.py',
+                        **prepare_cancel_fixture(folder / 'cancel_fixture_upstream.py', folder / 'cancel_fixture.py'),
+                        'source': 'Upstream fixture extracted from the pinned running image; original retained beside the Host-header adaptation; original author and license retained in image source',
+                    }, indent=2) + '\n')
                 if args.minimum_free_mib and (stage == 'smoke' or stage.startswith('context')):
                     gate = headroom(folder / 'gpu.csv', env['TF_GPUS'].split(','), args.minimum_free_mib)
                     gate['after_stage'] = stage

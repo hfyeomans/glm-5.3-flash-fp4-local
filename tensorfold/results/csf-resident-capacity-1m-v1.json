@@ -1,0 +1,792 @@
+{
+  "launch": {
+    "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+    "profile": "resident-1m",
+    "protocol": {
+      "profiles_sha256": "54c3f4195e4a2d7efced2b3917519528d8c708203e5b5d11efefd0fbade39875",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 2,
+      "mtp": "on",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-8192",
+        "prefill-32768"
+      ],
+      "teacher_histories_sha256": null,
+      "quality": false,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": true,
+      "context_targets": [
+        655104,
+        786176,
+        917248,
+        1048320
+      ],
+      "context_stage_timeout_seconds": 7200,
+      "minimum_free_MiB": 1536
+    },
+    "settings": {
+      "TF_PORT": "8001",
+      "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+      "TF_PROFILE": "0",
+      "TF_NCCL_DEBUG": "WARN",
+      "TF_TUNE_PREFILL_UP": "4",
+      "TF_GLM_PREFILL_REDUCE": "split",
+      "TF_PROMPT_CACHE_GIB": "0",
+      "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "TF_HOST": "127.0.0.1",
+      "TF_PARALLEL": "1",
+      "TF_MEMORY_RESERVE_GIB": "1.5",
+      "TF_TUNE_PREFILL_DOWN": "8",
+      "TF_TUNE_SPLIT_TARGET": "192",
+      "TF_TUNE_HOST_EMBED": "1",
+      "TF_TUNE_SCALE_LAYOUT": "2",
+      "TF_GLM_PDL": "1",
+      "TF_COMM_PORT": "29600",
+      "TF_CONTEXT": "1048576",
+      "TF_NVFP4_DECODE_WARPS": "1",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "TF_GLM_PROMPT_K": "one",
+      "TF_GLM_KDA_DECODE_WIDE": "1",
+      "NCCL_CUMEM_ENABLE": "0",
+      "NCCL_CUMEM_HOST_ENABLE": "0"
+    }
+  },
+  "complete": {
+    "profile": "resident-1m",
+    "protocol": {
+      "profiles_sha256": "54c3f4195e4a2d7efced2b3917519528d8c708203e5b5d11efefd0fbade39875",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 2,
+      "mtp": "on",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-8192",
+        "prefill-32768"
+      ],
+      "teacher_histories_sha256": null,
+      "quality": false,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": true,
+      "context_targets": [
+        655104,
+        786176,
+        917248,
+        1048320
+      ],
+      "context_stage_timeout_seconds": 7200,
+      "minimum_free_MiB": 1536
+    },
+    "started_unix": 1792862631.0584345,
+    "token_hashes": {},
+    "repeat_and_mtp_identical": null,
+    "status": "pass",
+    "elapsed_seconds": 2337.1532559394836
+  },
+  "configured_context": 1048576,
+  "rungs": [
+    {
+      "target": 655104,
+      "context": {
+        "base_url": "http://127.0.0.1:8001",
+        "model": "glm-5.3-flash-fp4-local",
+        "checks": [
+          {
+            "target": 655104,
+            "tokenized_count": 655104,
+            "rows": 56160,
+            "needle_rows": [
+              5616,
+              28080,
+              50544
+            ],
+            "expected": [
+              "cedar-655104-41827",
+              "orchid-655104-63951",
+              "willow-655104-82746"
+            ],
+            "request_sha256": "c30ceb98ae248a25c4ed45565aafa06fb1908a6fd2a06e3cf8b460e0e271323c",
+            "runs": [
+              {
+                "draft": true,
+                "seconds": 188.13935031800065,
+                "retrieval_passed": true,
+                "count_matches": true,
+                "cold": true,
+                "passed": true,
+                "response": {
+                  "id": "chatcmpl-c5480d9a68dcf0502e576b18091d7863",
+                  "object": "chat.completion",
+                  "created": 1792862839,
+                  "model": "glm-5.3-flash-fp4-local",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "1. cedar-655104-41827\n2. orchid-655104-63951\n3. willow-655104-82746"
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 655104,
+                    "completion_tokens": 38,
+                    "total_tokens": 655142,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 0
+                    }
+                  },
+                  "exact_mode": "exact",
+                  "tensorfold": {
+                    "enable_thinking": false,
+                    "reasoning_effort": "none",
+                    "engine": "lanes",
+                    "tokens_per_second": 114.68644590854538,
+                    "seconds": 0.322618769,
+                    "prefill_seconds": 187.795698686,
+                    "prefill_widths": [],
+                    "prefill_raised": [],
+                    "time_to_first_token": 187.811301651,
+                    "sampling": "greedy",
+                    "drafts": true,
+                    "token_sha": "bb6f68270f93",
+                    "token_sha256": "bb6f68270f935e067b1b7f664492eac27da27db6d4e620cf881a76b4c0f6a10c",
+                    "min_rows": 3
+                  },
+                  "speculative": {
+                    "rounds": 11,
+                    "drafted": 30,
+                    "accepted": 26,
+                    "acceptance_rate": 0.8666666666666667,
+                    "tokens_per_round": 3.4545454545454546
+                  }
+                }
+              },
+              {
+                "draft": false,
+                "seconds": 189.44559988600668,
+                "retrieval_passed": true,
+                "count_matches": true,
+                "cold": true,
+                "passed": true,
+                "response": {
+                  "id": "chatcmpl-4e4d281cdfb70a73f3ecddd1e2e3415d",
+                  "object": "chat.completion",
+                  "created": 1792863027,
+                  "model": "glm-5.3-flash-fp4-local",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "1. cedar-655104-41827\n2. orchid-655104-63951\n3. willow-655104-82746"
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 655104,
+                    "completion_tokens": 38,
+                    "total_tokens": 655142,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 0
+                    }
+                  },
+                  "exact_mode": "exact",
+                  "tensorfold": {
+                    "enable_thinking": false,
+                    "reasoning_effort": "none",
+                    "engine": "lanes",
+                    "tokens_per_second": 44.556014524518936,
+                    "seconds": 0.830415386,
+                    "prefill_seconds": 188.593832687,
+                    "prefill_widths": [],
+                    "prefill_raised": [],
+                    "time_to_first_token": 188.609564726,
+                    "sampling": "greedy",
+                    "drafts": false,
+                    "token_sha": "bb6f68270f93",
+                    "token_sha256": "bb6f68270f935e067b1b7f664492eac27da27db6d4e620cf881a76b4c0f6a10c",
+                    "min_rows": 1
+                  },
+                  "speculative": {
+                    "rounds": 37,
+                    "drafted": 0,
+                    "accepted": 0,
+                    "acceptance_rate": 0.0,
+                    "tokens_per_round": 1.027027027027027
+                  }
+                }
+              }
+            ],
+            "draft_equals_plain": true
+          }
+        ],
+        "scope": "Synthetic retrieval, not a general long-context accuracy qualification",
+        "passed": true
+      },
+      "headroom": {
+        "required_free_MiB": 1536,
+        "sampled_min_free_MiB": {
+          "0": 1693,
+          "1": 1846
+        },
+        "passed": true,
+        "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured",
+        "after_stage": "context-655104"
+      }
+    },
+    {
+      "target": 786176,
+      "context": {
+        "base_url": "http://127.0.0.1:8001",
+        "model": "glm-5.3-flash-fp4-local",
+        "checks": [
+          {
+            "target": 786176,
+            "tokenized_count": 786168,
+            "rows": 67107,
+            "needle_rows": [
+              6710,
+              33553,
+              60396
+            ],
+            "expected": [
+              "cedar-786176-41827",
+              "orchid-786176-63951",
+              "willow-786176-82746"
+            ],
+            "request_sha256": "269cf60895466679331afe1a0283bd6287b547d9e5fdcb2350ee6a6dc6b9c837",
+            "runs": [
+              {
+                "draft": true,
+                "seconds": 236.98690739599988,
+                "retrieval_passed": true,
+                "count_matches": true,
+                "cold": true,
+                "passed": true,
+                "response": {
+                  "id": "chatcmpl-323111762b3ff2c533dfb06bcf21fae1",
+                  "object": "chat.completion",
+                  "created": 1792863220,
+                  "model": "glm-5.3-flash-fp4-local",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "1. cedar-786176-41827\n2. orchid-786176-63951\n3. willow-786176-82746"
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 786168,
+                    "completion_tokens": 38,
+                    "total_tokens": 786206,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 0
+                    }
+                  },
+                  "exact_mode": "exact",
+                  "tensorfold": {
+                    "enable_thinking": false,
+                    "reasoning_effort": "none",
+                    "engine": "lanes",
+                    "tokens_per_second": 110.70124821671133,
+                    "seconds": 0.334232907,
+                    "prefill_seconds": 236.627633148,
+                    "prefill_widths": [],
+                    "prefill_raised": [],
+                    "time_to_first_token": 236.646106932,
+                    "sampling": "greedy",
+                    "drafts": true,
+                    "token_sha": "265ca8255e4d",
+                    "token_sha256": "265ca8255e4d715ca31d6eb08a1a18df0372db40b18f82aeb24de7e783b131a8",
+                    "min_rows": 3
+                  },
+                  "speculative": {
+                    "rounds": 11,
+                    "drafted": 30,
+                    "accepted": 26,
+                    "acceptance_rate": 0.8666666666666667,
+                    "tokens_per_round": 3.4545454545454546
+                  }
+                }
+              },
+              {
+                "draft": false,
+                "seconds": 237.27477388695115,
+                "retrieval_passed": true,
+                "count_matches": true,
+                "cold": true,
+                "passed": true,
+                "response": {
+                  "id": "chatcmpl-0bd62cc83daa1a98275ae79760f9bb00",
+                  "object": "chat.completion",
+                  "created": 1792863457,
+                  "model": "glm-5.3-flash-fp4-local",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "1. cedar-786176-41827\n2. orchid-786176-63951\n3. willow-786176-82746"
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 786168,
+                    "completion_tokens": 38,
+                    "total_tokens": 786206,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 0
+                    }
+                  },
+                  "exact_mode": "exact",
+                  "tensorfold": {
+                    "enable_thinking": false,
+                    "reasoning_effort": "none",
+                    "engine": "lanes",
+                    "tokens_per_second": 42.22716884973426,
+                    "seconds": 0.876213135,
+                    "prefill_seconds": 236.372325212,
+                    "prefill_widths": [],
+                    "prefill_raised": [],
+                    "time_to_first_token": 236.391333757,
+                    "sampling": "greedy",
+                    "drafts": false,
+                    "token_sha": "265ca8255e4d",
+                    "token_sha256": "265ca8255e4d715ca31d6eb08a1a18df0372db40b18f82aeb24de7e783b131a8",
+                    "min_rows": 1
+                  },
+                  "speculative": {
+                    "rounds": 37,
+                    "drafted": 0,
+                    "accepted": 0,
+                    "acceptance_rate": 0.0,
+                    "tokens_per_round": 1.027027027027027
+                  }
+                }
+              }
+            ],
+            "draft_equals_plain": true
+          }
+        ],
+        "scope": "Synthetic retrieval, not a general long-context accuracy qualification",
+        "passed": true
+      },
+      "headroom": {
+        "required_free_MiB": 1536,
+        "sampled_min_free_MiB": {
+          "0": 1693,
+          "1": 1846
+        },
+        "passed": true,
+        "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured",
+        "after_stage": "context-786176"
+      }
+    },
+    {
+      "target": 917248,
+      "context": {
+        "base_url": "http://127.0.0.1:8001",
+        "model": "glm-5.3-flash-fp4-local",
+        "checks": [
+          {
+            "target": 917248,
+            "tokenized_count": 917247,
+            "rows": 78055,
+            "needle_rows": [
+              7805,
+              39027,
+              70249
+            ],
+            "expected": [
+              "cedar-917248-41827",
+              "orchid-917248-63951",
+              "willow-917248-82746"
+            ],
+            "request_sha256": "a2357b022f90ef37fce43eb4ab5587a19caf135be442d3979c6b5a6ae94abe90",
+            "runs": [
+              {
+                "draft": true,
+                "seconds": 288.05584510799963,
+                "retrieval_passed": true,
+                "count_matches": true,
+                "cold": true,
+                "passed": true,
+                "response": {
+                  "id": "chatcmpl-19936124d369ef0fc8faf15820c3a5d1",
+                  "object": "chat.completion",
+                  "created": 1792863699,
+                  "model": "glm-5.3-flash-fp4-local",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "1. cedar-917248-41827\n2. orchid-917248-63951\n3. willow-917248-82746"
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 917247,
+                    "completion_tokens": 41,
+                    "total_tokens": 917288,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 0
+                    }
+                  },
+                  "exact_mode": "exact",
+                  "tensorfold": {
+                    "enable_thinking": false,
+                    "reasoning_effort": "none",
+                    "engine": "lanes",
+                    "tokens_per_second": 104.6784787310119,
+                    "seconds": 0.382122481,
+                    "prefill_seconds": 287.645780056,
+                    "prefill_widths": [],
+                    "prefill_raised": [],
+                    "time_to_first_token": 287.666668091,
+                    "sampling": "greedy",
+                    "drafts": true,
+                    "token_sha": "be3d13dfef84",
+                    "token_sha256": "be3d13dfef84026ead9c1bce74afb13e4b2f53bd86023d747dda30e55ba947eb",
+                    "min_rows": 3
+                  },
+                  "speculative": {
+                    "rounds": 12,
+                    "drafted": 33,
+                    "accepted": 28,
+                    "acceptance_rate": 0.8484848484848485,
+                    "tokens_per_round": 3.4166666666666665
+                  }
+                }
+              },
+              {
+                "draft": false,
+                "seconds": 288.67931645398494,
+                "retrieval_passed": true,
+                "count_matches": true,
+                "cold": true,
+                "passed": true,
+                "response": {
+                  "id": "chatcmpl-726f2fab76608670d92b39e5eb367f91",
+                  "object": "chat.completion",
+                  "created": 1792863987,
+                  "model": "glm-5.3-flash-fp4-local",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "1. cedar-917248-41827\n2. orchid-917248-63951\n3. willow-917248-82746"
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 917247,
+                    "completion_tokens": 41,
+                    "total_tokens": 917288,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 0
+                    }
+                  },
+                  "exact_mode": "exact",
+                  "tensorfold": {
+                    "enable_thinking": false,
+                    "reasoning_effort": "none",
+                    "engine": "lanes",
+                    "tokens_per_second": 39.97084858062572,
+                    "seconds": 1.000729317,
+                    "prefill_seconds": 287.646861809,
+                    "prefill_widths": [],
+                    "prefill_raised": [],
+                    "time_to_first_token": 287.67065208,
+                    "sampling": "greedy",
+                    "drafts": false,
+                    "token_sha": "be3d13dfef84",
+                    "token_sha256": "be3d13dfef84026ead9c1bce74afb13e4b2f53bd86023d747dda30e55ba947eb",
+                    "min_rows": 1
+                  },
+                  "speculative": {
+                    "rounds": 40,
+                    "drafted": 0,
+                    "accepted": 0,
+                    "acceptance_rate": 0.0,
+                    "tokens_per_round": 1.025
+                  }
+                }
+              }
+            ],
+            "draft_equals_plain": true
+          }
+        ],
+        "scope": "Synthetic retrieval, not a general long-context accuracy qualification",
+        "passed": true
+      },
+      "headroom": {
+        "required_free_MiB": 1536,
+        "sampled_min_free_MiB": {
+          "0": 1693,
+          "1": 1846
+        },
+        "passed": true,
+        "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured",
+        "after_stage": "context-917248"
+      }
+    },
+    {
+      "target": 1048320,
+      "context": {
+        "base_url": "http://127.0.0.1:8001",
+        "model": "glm-5.3-flash-fp4-local",
+        "checks": [
+          {
+            "target": 1048320,
+            "tokenized_count": 1048311,
+            "rows": 89002,
+            "needle_rows": [
+              8900,
+              44501,
+              80101
+            ],
+            "expected": [
+              "cedar-1048320-41827",
+              "orchid-1048320-63951",
+              "willow-1048320-82746"
+            ],
+            "request_sha256": "651a5ad133f920d06e5ad8d52f051ffc98feac6e67fd590d7cd8759d888beb32",
+            "runs": [
+              {
+                "draft": true,
+                "seconds": 342.8828643109882,
+                "retrieval_passed": true,
+                "count_matches": true,
+                "cold": true,
+                "passed": true,
+                "response": {
+                  "id": "chatcmpl-a1d4dcdd67b1653fcfb16f993233fc6b",
+                  "object": "chat.completion",
+                  "created": 1792864281,
+                  "model": "glm-5.3-flash-fp4-local",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "1. cedar-1048320-41827\n2. orchid-1048320-63951\n3. willow-1048320-82746"
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 1048311,
+                    "completion_tokens": 41,
+                    "total_tokens": 1048352,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 0
+                    }
+                  },
+                  "exact_mode": "exact",
+                  "tensorfold": {
+                    "enable_thinking": false,
+                    "reasoning_effort": "none",
+                    "engine": "lanes",
+                    "tokens_per_second": 98.23824299566361,
+                    "seconds": 0.407173406,
+                    "prefill_seconds": 342.443655321,
+                    "prefill_widths": [],
+                    "prefill_raised": [],
+                    "time_to_first_token": 342.466648985,
+                    "sampling": "greedy",
+                    "drafts": true,
+                    "token_sha": "8cfb35b98dab",
+                    "token_sha256": "8cfb35b98dabb74b7079cbaf6daea3d8369bf57730292009209cd9a0c6f393db",
+                    "min_rows": 3
+                  },
+                  "speculative": {
+                    "rounds": 12,
+                    "drafted": 33,
+                    "accepted": 28,
+                    "acceptance_rate": 0.8484848484848485,
+                    "tokens_per_round": 3.4166666666666665
+                  }
+                }
+              },
+              {
+                "draft": false,
+                "seconds": 342.9241477960022,
+                "retrieval_passed": true,
+                "count_matches": true,
+                "cold": true,
+                "passed": true,
+                "response": {
+                  "id": "chatcmpl-28f4e81a6c390984b30e5eb379b4faa1",
+                  "object": "chat.completion",
+                  "created": 1792864624,
+                  "model": "glm-5.3-flash-fp4-local",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "1. cedar-1048320-41827\n2. orchid-1048320-63951\n3. willow-1048320-82746"
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 1048311,
+                    "completion_tokens": 41,
+                    "total_tokens": 1048352,
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    },
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 0
+                    }
+                  },
+                  "exact_mode": "exact",
+                  "tensorfold": {
+                    "enable_thinking": false,
+                    "reasoning_effort": "none",
+                    "engine": "lanes",
+                    "tokens_per_second": 38.46474671729735,
+                    "seconds": 1.039913256,
+                    "prefill_seconds": 341.850175082,
+                    "prefill_widths": [],
+                    "prefill_raised": [],
+                    "time_to_first_token": 341.875735257,
+                    "sampling": "greedy",
+                    "drafts": false,
+                    "token_sha": "8cfb35b98dab",
+                    "token_sha256": "8cfb35b98dabb74b7079cbaf6daea3d8369bf57730292009209cd9a0c6f393db",
+                    "min_rows": 1
+                  },
+                  "speculative": {
+                    "rounds": 40,
+                    "drafted": 0,
+                    "accepted": 0,
+                    "acceptance_rate": 0.0,
+                    "tokens_per_round": 1.025
+                  }
+                }
+              }
+            ],
+            "draft_equals_plain": true
+          }
+        ],
+        "scope": "Synthetic retrieval, not a general long-context accuracy qualification",
+        "passed": true
+      },
+      "headroom": {
+        "required_free_MiB": 1536,
+        "sampled_min_free_MiB": {
+          "0": 1693,
+          "1": 1846
+        },
+        "passed": true,
+        "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured",
+        "after_stage": "context-1048320"
+      }
+    }
+  ],
+  "minimum_sampled_free_MiB": {
+    "0": 1693,
+    "1": 1846
+  },
+  "margin_above_1_5_GiB_MiB": {
+    "0": 157,
+    "1": 310
+  },
+  "logs": [
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/context/655104/report.json",
+      "sha256": "b7a818eaff22ffa581dd9a9c160df6e782815b8482cd0afad21a3b196dd90bf6"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/context-655104-headroom.json",
+      "sha256": "ce9a34cf91b93280dd65e3e74f6b56a3cd33fb163d5d3f2abd2c9b93ecf2cc77"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/context/786176/report.json",
+      "sha256": "bcb78a69ed3fbd47aab0b9df581632c2d951e076d04db2de3e83fcb4701de36d"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/context-786176-headroom.json",
+      "sha256": "24a7745e45fc0e4b1ad93269f4443a588a0fa59871cf255ecfa7bc1bd4b32f9a"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/context/917248/report.json",
+      "sha256": "147dd36f4260a9d1b549bfc0bc201a5aaa343acff0ed3ddc7f2862aa5e5fbefb"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/context-917248-headroom.json",
+      "sha256": "fb20a951347c70628f353b32548ec4c0470b1053c2e091c868ceb0862e6df94f"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/context/1048320/report.json",
+      "sha256": "76097aeb262c9cb3dbaac6548518264e1547250a4b6d34230924091b57b7807e"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/context-1048320-headroom.json",
+      "sha256": "6fb13887dcb03573282c705ef09b44b6c07c7565b38c23cb7a272f44f89b065c"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/gpu.csv",
+      "sha256": "0a08c75b1a33304e82b0016bf1146632d65b8a2d5bae414a4fea457934ab7884"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/server.log",
+      "sha256": "cb9c9ff1b9ab4bbabdf75905d9b982ace26ec04ec5794918e3afb48c8555db04"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/smoke-headroom.json",
+      "sha256": "6a920160b161dda852bd1662971d9c521597f2131dc3d4707d305e2e651989fc"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-ladder-v1/00-resident-1m/native-memory.jsonl",
+      "sha256": "b1cf7557c146d30960d81af325cffc4de9f83bd028a530cea9c803e9b0b234d0"
+    }
+  ],
+  "scope": "Single allocated 1M pool, one slot, no retained prompt cache, mapped BF16 embeddings and resident CSF32. Four increasing prompt lengths, each cold with MTP on and off. Three-marker retrieval and exact token/hash consistency, not broad long-context reasoning accuracy. Free memory sampled once per second; shorter transient peaks are not captured. Intermediate configured pool sizes were not separately run.",
+  "rank0_native_memory": {
+    "samples": 155,
+    "device_peak_bytes": 98861412570,
+    "pinned_host_current_bytes": 1269439488,
+    "scope": "Late-ladder samples of rank-0 native allocator counters; peak is the native counter since startup, not total physical driver allocation. Pinned current is not total host RSS or a host-load peak."
+  }
+}

@@ -61,7 +61,7 @@ Our checkpoint additionally stores many scale tensors using **CSF32 (`csf_32x2_v
 
 TensorFold already had NVFP4 support, but its original GLM path did not connect all of this checkpoint's mixed formats and compressed scales to the loader. [PR #1050](https://github.com/ashhart/TensorFold/pull/1050) supplies that integration. This was a specific checkpoint-format gap, not proof that TensorFold cannot run NVFP4.
 
-The current PR decodes the compressed scales for its GPU layout. Our header accounting found about 8.11 GiB more data in fully expanded scale planes across the model. That is representation accounting, not proof that a future GPU codec would recover exactly that much live VRAM. A lossless GPU representation could preserve values while trading decoding work against memory savings.
+The pinned PR alone decodes the compressed scales for its GPU layout. Our header accounting found about 8.11 GiB more data in fully expanded scale planes across the model. That is representation accounting, not proof that a future GPU codec would recover exactly that much live VRAM. A lossless GPU representation could preserve values while trading decoding work against memory savings.
 
 ## KV-cache precision is separate from weight precision
 
@@ -236,14 +236,18 @@ in pinned host memory; enabling NCCL's host-cuMem flag does not implement that.
 
 ## Which engine has the 1M memory shortfall?
 
-The approximately 2.15 GiB shortfall concerns the experimental TensorFold
-configuration after mapped embedding. Going from configured 512K to 1M requires
-an estimated 3.66 GiB more per rank; the limiting GPU had about 1.51 GiB free.
-Thus another 2.15 GiB of allocation savings would only reach a theoretical fit;
-about 3.65 GiB would preserve 1.5 GiB free. This is additional memory to save,
-not memory already available. Retaining compressed scales on device has an
-estimated 4.05 GiB/rank opportunity, but requires new loader/kernel support and
-actual validation; it is not an existing toggle.
+The approximately 2.15 GiB shortfall was the projected TensorFold gap after mapped
+embedding, before resident compressed scales. Moving from 512K to 1M requires
+3.66 GiB more per rank; merely reaching zero free memory would not preserve the
+1.5 GiB target. The new [resident-CSF32 implementation](../tensorfold/csf-resident/RESULTS.md)
+measured a 3.80 GiB/rank physical headroom gain at 512K and passed near-1M inference
+with 1,693/1,846 MiB sampled free. The limiting card has only 157 MiB above that target.
+This is an implemented, separately pinned experiment with a measured capacity result.
+
+The native reserve setting alone does not guarantee physical free memory: the first
+sequence is allocated before admission. The capacity harness therefore checks actual
+one-second telemetry after smoke and each rung, including startup peaks, and stops
+if either card falls below 1,536 MiB. Those samples cannot capture every shorter peak.
 
 vLLM already starts with a configured 1,048,576-token limit and reports roughly
 1.84 million tokens of shared KV capacity. A near-1M vLLM request has not been

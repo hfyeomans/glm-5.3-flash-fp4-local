@@ -175,3 +175,11 @@ The operational structure is inspired by the neighboring [Aevonix/Mia's AI Lab t
 The [initial quality benchmark](quality/README.md) compares 128 fixed GSM8K questions and 128 fixed IFEval prompts between the two engines using official pinned task graders and identical rendered prompts. It saves per-item evidence and reports paired differences and uncertainty. The [measured initial baseline](docs/QUALITY-BASELINE.md) records the completed two-engine comparison. Use it separately from the throughput benchmark and long-context retrieval tests.
 
 [Precision and quality notes](docs/PRECISION-AND-QUALITY.md) explain W4A16, BF16, NVFP4, lossless scale compression, KV-cache precision, speculative decoding, memory headroom and what each test does—and does not—measure.
+
+
+The separate [TensorFold resident-CSF32 experiment](tensorfold/csf-resident/RESULTS.md)
+now passes a 1,048,311-token prompt in a 1M window on these two cards, with unchanged
+short-quality hashes and 1,693/1,846 MiB sampled free. It trades about 7% decode speed
+and 3–4% longer-prompt prefill throughput for memory, using one slot, mapped embedding
+and no retained prompt cache. It is an explicit capacity profile; the vLLM recipe
+above remains the supported starting point.

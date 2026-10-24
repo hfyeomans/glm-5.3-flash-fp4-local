@@ -647,3 +647,81 @@ difference. These bounded results do not establish broad long-context accuracy.
 Receipts: [quality](../tensorfold/results/csf-resident-quality-v1.json),
 [probabilities](../tensorfold/results/csf-resident-probabilities-v1.json),
 [initial screen](../tensorfold/results/csf-resident-screen-v1.json).
+
+
+### Resident scales: cache, physical memory and completed 1M ladder
+
+Cold/warm cache checks at 3,648 and 7,993 tokens passed, with identical MTP/plain
+output hashes. The 512K allocation passed cold retrieval at 261,888 and 524,027
+actual input tokens in both modes. Minimum sampled free memory: **5,443/5,596 MiB**,
+a gain of **3,896 MiB per GPU** over the earlier mapped-embedding 512K run.
+
+The final **1,048,576-token pool** then started with the same one-slot/cache-off
+settings and 1.5 GiB reserve target. Serial prompt rungs at **655,104; 786,168;
+917,247; and 1,048,311 actual input tokens** all passed three-marker retrieval,
+usage/cold-cache/finish checks and exact MTP/plain token-hash comparison. The final
+pair took 342.88/342.92 seconds end-to-end. This is near-ceiling inference, not just
+successful configuration. Intermediate prompt rungs used the same allocated 1M pool.
+
+Minimum sampled free memory stayed **1,693/1,846 MiB**, leaving **157/310 MiB** above
+the 1.5 GiB target. Telemetry sampled once per second and the harness enforced the
+floor after startup smoke and after every rung. Rank-0 native counters reported
+98,861,412,570 peak device bytes and 1,269,439,488 pinned-host bytes during late-ladder
+sampling; these are allocator counters, not total physical device/host memory.
+Mapped BF16 embedding, FP8 KV and the native MTP component remained loaded throughout.
+No checkpoint/activation precision, GPU clocks/power, or unrelated processes changed.
+
+[512K receipt](../tensorfold/results/csf-resident-capacity-512k-v1.json) ·
+[1M receipt](../tensorfold/results/csf-resident-capacity-1m-v1.json) ·
+[cache receipt](../tensorfold/results/csf-resident-cache-v1.json) ·
+[experiment results](../tensorfold/csf-resident/RESULTS.md).
+The result remains bounded to one slot and synthetic retrieval; broader long-context
+accuracy and additional architectures are untested. Matched timing follows separately.
+
+
+### Resident scales: matched performance and corrected cancellation checks
+
+Same experimental image, 128K context, mapped embedding, one slot, cache off,
+overlap four: legacy→resident→legacy, six fixed workloads, MTP on/off, three measured
+repeats per cell. **108 measured requests + 36 excluded warmups; all 144 output hashes
+match by workload across layouts, modes and repeats.** Returning legacy decode
+medians drifted at most 0.25%; 8K–64K prefill controls differed by less than 0.7%.
+Automatic clock/temperature telemetry is retained.
+
+Resident scales measured **6.6–7.9% lower decode throughput** and **3.2–4.1% lower
+prefill throughput at 2K–64K**. At 8K/MTP-on: returning legacy reference 121.12 decode
+tok/s, 4,437 prefill tok/s, 1.847 s client TTFT; resident 112.72, 4,278 and 1.915 s.
+This qualifies a measured capacity tradeoff, not a faster default. At 128K both
+legacy controls left 4,361/4,514 MiB sampled free; resident left 8,257/8,410 MiB,
+confirming the same 3,896 MiB/card gain seen at 512K.
+
+The first post-timing cancellation fixture was invalid for this server: upstream's
+raw `Host: x` requests received HTTP 403 before inference. Each of the three original
+sweep status files remains **failed**. Their timing stages had completed successfully
+before the fixture error; the report independently validates all rows and preserves
+both failures and hashes. The original probes did not establish cancellation behavior.
+
+A fixture-only adapter now uses the URL authority in that raw Host header, preserving
+the original file and both hashes. It changes neither server host policy nor test
+thresholds (drop after 0.4 s, release and follow-up slack 3 s). Unit checks exercise the
+actual wire bytes, preserved body and unknown-fixture refusal. Corrected tests ran
+separately on resident and legacy profiles: three observed-running release trials
+plus three disconnect/follow-up trials per layout; six `client-left` server events
+each. All follow-up text and native hashes matched. Resident release: 0.027 s;
+legacy: 0.017–0.356 s; maximum follow-up latency 0.165/0.626 s. This is bounded prompt
+cancellation/recovery evidence, not exhaustive concurrent/decode cancellation or a
+recovery-speed comparison.
+
+Portable [timing receipt](../tensorfold/results/csf-resident-performance-v1.json) and
+[corrected cancellation receipt](../tensorfold/results/csf-resident-cancellation-v2.json).
+Final recipe code checks passed **48 tests** (`logs/csf-resident-v1/recipe-check-cancel-host.log`).
+The native patch/image remained unchanged through these runs. Full-suite inherited
+resource-record failures and unrun architectures remain as documented above.
+
+
+Final state: vLLM stopped and preserved; TensorFold test container removed; temporary
+CPU builders stopped without pruning their caches. No GPU compute processes remain;
+free memory returned to 97,187/97,340 MiB. The unrelated graphics allocation remains.
+[Evidence index](../tensorfold/results/csf-resident-qualification-v1.json) links the
+portable results and final service-state log hash. To start vLLM again from this repo,
+run `./start.sh`; the normal image and B12X/memory settings are unchanged.

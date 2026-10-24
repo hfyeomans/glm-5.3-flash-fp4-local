@@ -291,4 +291,4 @@ remain unchanged. The 1M target still needs additional engine allocation savings
 
 ## Consolidated contribution record and next scope
 
-See [PR1050-SM120-BRIEF.md](PR1050-SM120-BRIEF.md) for the dated, evidence-linked record of adopted RTX settings, experimental source patches, retained GB10-associated choices and unrun platforms. The [compressed-scale plan](COMPRESSED-SCALES-PLAN.md) scopes the next TensorFold-only loader/kernel work. Nothing has been posted upstream; compressed GPU residency and 1M remain unimplemented/unqualified.
+See [PR1050-SM120-BRIEF.md](PR1050-SM120-BRIEF.md) for the dated, evidence-linked record of adopted RTX settings, experimental source patches, retained GB10-associated choices and unrun platforms. The [compressed-scale plan](COMPRESSED-SCALES-PLAN.md) scopes the next TensorFold-only loader/kernel work. Nothing has been posted upstream. The later [resident-CSF32 implementation](csf-resident/RESULTS.md) now passes the near-1M prompt ladder, with 1,693/1,846 MiB sampled free and unchanged 256-item quality hashes. The earlier allocation failures and projections above remain historical evidence for the original images.

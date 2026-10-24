@@ -3,7 +3,7 @@
 This isolated TensorFold patch retains the NVIDIA checkpoint's compressed block
 scales on the GPUs. It is a memory optimization with an expansion cost, not a new
 quantization method. The normal TensorFold recipe and vLLM image remain unchanged.
-The engine is TensorFold, not TensorFlow.
+The engine is TensorFold, not TensorFlow. See [measured results](RESULTS.md) for qualification status.
 
 ## Pins and scope
 
@@ -124,3 +124,46 @@ values after smoke and each rung, including startup peaks, and stops before the 
 rung if either card misses the floor. Sampling is once per second, not a guarantee
 against shorter transient peaks. Each rung checks three markers, server token counts,
 cold cache, finish reason and MTP/plain output identity.
+
+
+For matched performance, use identical cases on returning legacy controls. The
+cancellation fixture runs after timing and is extracted from the pinned image's
+upstream source. The raw socket Host header is adapted from `x` to the URL authority
+so it passes the server's existing host check. Original/adapted hashes and the
+unchanged upstream file are saved beside the run; no server policy is weakened. The 3-second release
+and follow-up slack are selected before testing, matching the broader upstream
+cancellation smoke allowance; this is not the HIP-specific half-second target.
+
+```bash
+.state/quality-venv/bin/python tensorfold/tuning/sweep.py \
+  --profile-file tensorfold/csf-resident/profiles.json \
+  --profiles legacy-perf resident-perf legacy-perf --mtp both --repeats 3 \
+  --cases short-code short-prose prefill-2048 prefill-8192 prefill-32768 prefill-65536 \
+  --cancel-check --output logs/csf-resident-v1/performance-v1
+```
+
+Further loader work can remove the current temporary legacy packing and duplicate
+CPU scale materialization used for validation. That requires preserving malformed-
+input checks and the full real-checkpoint byte audit. The present implementation
+optimizes GPU residency; it does not claim optimal startup time. Direct scale
+consumption, expansion/consumer profiling and any A4 prefill path remain separate
+work requiring their own correctness, resource and served-performance evidence.
+
+
+The compiled SM120 separate gate/up prompt kernel already uses 254 registers per
+thread at the retained tile width; the expansion kernel uses 40. See
+`resources-layout.json` and `resources-csf32.json`. An in-kernel decoder therefore
+needs an explicit register/spill and occupancy study: eliminating a launch or scratch
+traffic does not by itself prove a speedup.
+
+
+The native reserve setting alone is not a physical-memory guarantee because its
+first sequence is allocated before stream admission. Use the measured-headroom
+ladder gate above for capacity qualification; the demonstrated 1M margin applies
+to these available GPUs and settings, not additional GPU workloads or retained cache.
+
+
+The output paths above name recorded attempts. Choose an unused output directory for
+fresh measurements; existing attempts are preserved, and incompatible resume
+protocols are refused. The initial performance run's post-timing Host-header fixture
+failures remain recorded; corrected cancellation checks use a separate output path.

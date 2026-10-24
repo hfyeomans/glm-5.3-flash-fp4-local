@@ -1,0 +1,70 @@
+{
+  "model_id": "nvidia/GLM-5.3-Flash-FP4-Local",
+  "revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+  "implementation_commit": "32fc48a",
+  "source_tree": "b02cfca0f02235fa8f4b87c0ae921664a73d1807",
+  "patch_sha256": "567b5953034033ed5432fc31255149c9315d5e7fc93e1aaaffbc2f05c5d46905",
+  "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+  "recipe_checks": {
+    "passed": 48,
+    "log": "logs/csf-resident-v1/recipe-check-cancel-host.log",
+    "sha256": "28265605bff0b1b39309cb910d70464d02bbb9ac84f0e34d57332607ffc06744"
+  },
+  "receipts": [
+    {
+      "path": "tensorfold/results/csf-resident-build-v1.json",
+      "sha256": "0b2f56b6a2237c780b22ab1d7a6cd4899ce3a0f2767b823f45e4ddd11db1889a"
+    },
+    {
+      "path": "tensorfold/results/csf-resident-loader-v1.json",
+      "sha256": "37ddaf4b4bb2e6fff495b5cd44255074b2d3188893f39bc63bf5128e60eef24b"
+    },
+    {
+      "path": "tensorfold/results/csf-resident-contract-v1.json",
+      "sha256": "7c3f1cb4686ca4be5523ed552ae4058200f4abdca638c94ab4475c7e7b32f863"
+    },
+    {
+      "path": "tensorfold/results/csf-resident-quality-v1.json",
+      "sha256": "cb5b77fedb0a7464fdf36d6635aa0dad7511ccca16b049338ef8ef531d2a93fe"
+    },
+    {
+      "path": "tensorfold/results/csf-resident-probabilities-v1.json",
+      "sha256": "c36f9645e8ebdd5f25805bbad2307a9c1753ab302c7b9e45d0f51ccceaac837e"
+    },
+    {
+      "path": "tensorfold/results/csf-resident-cache-v1.json",
+      "sha256": "13d3313956dbd64a09fb0d6faa3bdc83c7899f6bcf8cfc9769556a4be22c8ec7"
+    },
+    {
+      "path": "tensorfold/results/csf-resident-capacity-512k-v1.json",
+      "sha256": "54d1ac1c95ad53a8b84787f02d0b169a48b5df8bbc533aebf868cc3f74a6da68"
+    },
+    {
+      "path": "tensorfold/results/csf-resident-capacity-1m-v1.json",
+      "sha256": "dd9149a45dd9d166099ba2c42bb5b8366f83407d554adb69bf444c0b56292f00"
+    },
+    {
+      "path": "tensorfold/results/csf-resident-performance-v1.json",
+      "sha256": "0c81087295e89e6ffe5f055adced5eb4b72267654afa145d544bb6f1adf0dbc9"
+    },
+    {
+      "path": "tensorfold/results/csf-resident-cancellation-v2.json",
+      "sha256": "df5ddf154307912f0808dad6ee4fb82005c10fda9f42a73070869bcc52d2b2ca"
+    }
+  ],
+  "final_service_state": {
+    "path": "logs/csf-resident-v1/final-service-state.json",
+    "sha256": "90a6267d7cab5d3a483808966edde5b377b34698878ce39f3b19ef26d7a2cf48",
+    "vllm": "stopped and preserved",
+    "tensorfold": "stopped; test container removed",
+    "gpu_compute_processes": 0
+  },
+  "qualification": "Local SM120 TP2, one slot: exact scale reconstruction; unchanged sampled quality/probabilities; cache and prompt-cancellation recovery; cold retrieval through 1,048,311 input tokens in a 1M pool; measured speed/memory tradeoff.",
+  "limits": [
+    "Full upstream CUDA suite remains nonzero on 949 resource-record findings reproduced in the parent; new records pass.",
+    "Other GPU architectures, broad long-context task accuracy, exhaustive concurrency/decode cancellation and direct KV/state-array audits are unrun.",
+    "Only one-second physical-memory samples; 157 MiB extra margin over the 1.5 GiB target on the limiting card.",
+    "Original post-timing Host:x cancellation probes remain failed; corrected checks passed separately.",
+    "Normal recipes were not promoted to the experimental image; no upstream publication."
+  ]
+}

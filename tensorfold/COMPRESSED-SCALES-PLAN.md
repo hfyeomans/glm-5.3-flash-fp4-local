@@ -1,6 +1,6 @@
 # Resident CSF32 scales on SM120: scope and validation plan
 
-Status, 2026-10-24: **isolated loader/kernel implementation complete; served qualification in progress**. The [resident-scale experiment](csf-resident/README.md) preserves the plan below as its design and acceptance record. Full checkpoint scale-byte audits passed on both GPUs; requested net saving is 3.81765 GiB/rank after scratch and metadata. Runtime headroom and 1M success remain to be measured. The user authorized stopping this recipe’s vLLM service for GPU testing; its image, loader, B12X settings and memory budget are unchanged. The engine is TensorFold, not TensorFlow.
+Status, 2026-10-24: **isolated implementation passed byte, short-quality, cache and near-1M capacity checks; matched timing and corrected prompt-cancellation checks are complete**. The [experiment results](csf-resident/RESULTS.md) record actual evidence. The original design and projections below are preserved for comparison. The user authorized stopping this recipe’s vLLM service for GPU testing; its image, loader, B12X settings and memory budget are unchanged. The engine is TensorFold, not TensorFlow.
 
 ## Decision and motivation
 

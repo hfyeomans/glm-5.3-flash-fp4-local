@@ -83,3 +83,31 @@ class CapacityHeadroomTests(unittest.TestCase):
             self.assertTrue(sweep.headroom(path, ['0', '1'], 1400)['passed'])
             with self.assertRaisesRegex(ValueError, 'Missing GPU telemetry'):
                 sweep.headroom(path, ['0', '2'], 1400)
+
+
+class CancelFixtureTests(unittest.TestCase):
+    def test_host_adapter_preserves_body_and_rejects_unknown_source(self):
+        import sys
+        import tempfile
+        import types
+        spec = importlib.util.spec_from_file_location('cancel_sweep', ROOT / 'tensorfold/tuning/sweep.py')
+        sweep = importlib.util.module_from_spec(spec)
+        with patch.dict(sys.modules, {'run': runner}):
+            spec.loader.exec_module(sweep)
+        original = ('sock.sendall(b"POST /v1/chat/completions HTTP/1.1\\r\\nHost: x\\r\\nContent-Type: application/json\\r\\nContent-Length: "'
+                    ' + str(len(payload)).encode() + b"\\r\\n\\r\\n" + payload)\n')
+        with tempfile.TemporaryDirectory() as folder:
+            source, target = [Path(folder) / name for name in ('original.py', 'adapted.py')]
+            source.write_text(original)
+            metadata = sweep.prepare_cancel_fixture(source, target)
+            sent = []
+            exec(compile(target.read_text(), str(target), 'exec'),
+                 {'sock': types.SimpleNamespace(sendall=sent.append), 'payload': b'{}',
+                  'HOST': types.SimpleNamespace(netloc='127.0.0.1:8001')})
+            self.assertIn(b'\r\nHost: 127.0.0.1:8001\r\n', sent[0])
+            self.assertTrue(sent[0].endswith(b'Content-Length: 2\r\n\r\n{}'))
+            self.assertEqual(source.read_text(), original)
+            self.assertNotEqual(metadata['upstream_sha256'], metadata['sha256'])
+            source.write_text('print("different fixture")\n')
+            with self.assertRaisesRegex(ValueError, 'Unrecognized upstream'):
+                sweep.prepare_cancel_fixture(source, target)
