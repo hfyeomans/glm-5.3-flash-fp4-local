@@ -15,7 +15,7 @@ if [[ -f "$REPO_ROOT/.env" ]]; then
     [[ "$line" == *=* ]] || fail '.env requires literal KEY=value lines.'
     key=${line%%=*}; value=${line#*=}
     case "$key" in
-      HF_CACHE_ROOT|MODEL_DIR|MODEL_REVISION|LOAD_FORMAT|IMAGE|CONTAINER_NAME|GPUS|HOST|PORT|SERVED_MODEL_NAME|RUNTIME_VOLUME|MAX_MODEL_LEN|MAX_NUM_SEQS|MAX_NUM_BATCHED_TOKENS|GPU_MEMORY_UTILIZATION|KV_CACHE_MEMORY_BYTES|MIN_GPU_FREE_MIB|WAIT_TIMEOUT|SMOKE_TIMEOUT|RESTART_POLICY) ;;
+      HF_CACHE_ROOT|MODEL_DIR|MODEL_REVISION|LOAD_FORMAT|MTP_ENABLED|IMAGE|CONTAINER_NAME|GPUS|HOST|PORT|SERVED_MODEL_NAME|RUNTIME_VOLUME|MAX_MODEL_LEN|MAX_NUM_SEQS|MAX_NUM_BATCHED_TOKENS|GPU_MEMORY_UTILIZATION|KV_CACHE_MEMORY_BYTES|MIN_GPU_FREE_MIB|WAIT_TIMEOUT|SMOKE_TIMEOUT|RESTART_POLICY) ;;
       *) fail "Unsupported .env key: $key (credentials belong in exported environment variables)." ;;
     esac
     if [[ ! -v "$key" ]]; then export "$key=$value"; fi
@@ -27,6 +27,7 @@ export HF_HOME=$HF_CACHE_ROOT
 export HF_HUB_CACHE=$HF_CACHE_ROOT/hub
 export MODEL_DIR=${MODEL_DIR:-}
 export LOAD_FORMAT=${LOAD_FORMAT:-safetensors}
+export MTP_ENABLED=${MTP_ENABLED:-1}
 export MODEL_REVISION=${MODEL_REVISION:-76348ddb2be2e35e39ecfc00e75dc07703f4f3d5}
 export IMAGE=${IMAGE:-ghcr.io/local-inference-lab/vllm:release-10152026@sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29}
 export CONTAINER_NAME=${CONTAINER_NAME:-glm53-fp4-tp2}
@@ -68,6 +69,7 @@ require(re.fullmatch(r'\d+,\d+',e['GPUS']) and len(set(e['GPUS'].split(',')))==2
 for key in ['CONTAINER_NAME','RUNTIME_VOLUME']:
     require(re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_.-]*',e[key]), key+' must be a Docker name')
 require(re.fullmatch(r'[0-9a-f]{40}',e['MODEL_REVISION']), 'MODEL_REVISION must be a full commit SHA')
+require(e['MTP_ENABLED'] in ['0','1'], 'MTP_ENABLED must be 0 or 1')
 require(e['LOAD_FORMAT'] in ['instanttensor','safetensors'], 'LOAD_FORMAT must be instanttensor or safetensors')
 require(e['RESTART_POLICY'] in ['no','unless-stopped','on-failure','on-failure:3'], 'Unsupported RESTART_POLICY')
 for key in ['HF_HOME','HF_HUB_CACHE','MODEL_DIR']:
@@ -114,9 +116,11 @@ build_serve_args() {
     --override-generation-config '{"temperature":1.0,"top_p":0.95}'
     --prefill-compute-share 0.4 --prefill-schedule-interval 1
     --quantization modelopt_mixed --reasoning-parser glm45
-    --recurrent-checkpoint-policy request_boundaries
-    --speculative-config '{"method":"mtp","draft_sample_method":"probabilistic","rejection_sample_method":"standard","moe_backend":"b12x","attention_backend":"B12X","num_speculative_tokens":3}'
-    --tensor-parallel-size 2 --tool-call-parser glm47)
+    --recurrent-checkpoint-policy request_boundaries)
+  if [[ "$MTP_ENABLED" == 1 ]]; then
+    SERVE_ARGS+=(--speculative-config '{"method":"mtp","draft_sample_method":"probabilistic","rejection_sample_method":"standard","moe_backend":"b12x","attention_backend":"B12X","num_speculative_tokens":3}')
+  fi
+  SERVE_ARGS+=(--tensor-parallel-size 2 --tool-call-parser glm47)
 }
 build_docker_args() {
   DOCKER_ARGS=(docker run -d --name "$CONTAINER_NAME" --init --gpus "\"device=$GPUS\""

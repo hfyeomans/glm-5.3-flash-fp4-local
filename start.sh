@@ -13,7 +13,7 @@ case "${1:-}" in
 esac
 (( $# <= 1 )) || fail 'Too many arguments.'
 validate_config
-log "GLM-5.3-Flash FP4 | 2 GPUs ($GPUS) | MTP3 | port $PORT"
+log "GLM-5.3-Flash FP4 | 2 GPUs ($GPUS) | MTP enabled=$MTP_ENABLED | port $PORT"
 RUN_IMAGE=$IMAGE
 if [[ "${DRY_RUN:-0}" == 1 ]]; then
   if [[ -n "$MODEL_DIR" ]]; then

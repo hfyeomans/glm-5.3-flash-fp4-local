@@ -93,7 +93,7 @@ class LifecycleTests(unittest.TestCase):
         shutil.copytree(ROOT/'config',self.root/'config')
         self.bin = Path(self.tmp.name)/'bin';self.bin.mkdir()
         self.calls = Path(self.tmp.name)/'docker-calls.jsonl'
-        names = ['HF_CACHE_ROOT','HF_HOME','HF_HUB_CACHE','MODEL_DIR','MODEL_REVISION','LOAD_FORMAT','IMAGE','CONTAINER_NAME',
+        names = ['HF_CACHE_ROOT','HF_HOME','HF_HUB_CACHE','MODEL_DIR','MODEL_REVISION','LOAD_FORMAT','MTP_ENABLED','IMAGE','CONTAINER_NAME',
                  'GPUS','HOST','PORT','SERVED_MODEL_NAME','RUNTIME_VOLUME','MAX_MODEL_LEN','MAX_NUM_SEQS',
                  'MAX_NUM_BATCHED_TOKENS','GPU_MEMORY_UTILIZATION','KV_CACHE_MEMORY_BYTES',
                  'MIN_GPU_FREE_MIB','WAIT_TIMEOUT','SMOKE_TIMEOUT','RESTART_POLICY','DRY_RUN','BASE_URL']
@@ -136,6 +136,21 @@ sys.exit(70)
         self.assertNotIn('secret-fixture',r.stdout+r.stderr)
         self.assertFalse(self.calls.exists())
         self.assertEqual(before,sorted(str(p.relative_to(self.root)) for p in self.root.rglob('*')))
+
+    def test_mtp_off_removes_speculation_without_touching_budget_or_docker(self):
+        baseline = self.run_script('start.sh', '--dry-run')
+        self.assertIn('--speculative-config', baseline.stdout)
+        self.env['MTP_ENABLED'] = '0'
+        plain = self.run_script('start.sh', '--dry-run')
+        self.assertEqual(plain.returncode, 0, plain.stderr)
+        self.assertNotIn('--speculative-config', plain.stdout)
+        self.assertIn('7650410496', plain.stdout)
+        self.assertIn('0.985', plain.stdout)
+        self.assertFalse(self.calls.exists())
+        self.env['MTP_ENABLED'] = 'invalid'
+        invalid = self.run_script('start.sh', '--dry-run')
+        self.assertNotEqual(invalid.returncode, 0)
+        self.assertFalse(self.calls.exists())
 
     def test_foreign_container_is_never_stopped_or_removed(self):
         r = self.run_script('start.sh','restart')

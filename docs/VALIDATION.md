@@ -296,3 +296,41 @@ logs preserved. Final restoration evidence: `final-vllm-restore.log`,
 `final-vllm-api.log` and `final-vllm-api/` under the experiment directory; vLLM
 run folder `logs/run-20261024T031041Z-391354/`. No unrelated service, model file,
 cache volume, GPU power setting or clock setting was changed.
+
+## 2026-10-24 — shared cold performance, MTP on/off
+
+Completed the matched raw-completion protocol in
+[PERFORMANCE-BASELINE.md](PERFORMANCE-BASELINE.md), with portable results in
+`benchmarks/results/cold-shared-v1.json`. The checkpoint revision, image IDs,
+launch settings and client hash are retained in that receipt. Six prompts
+(31/33 tokens and exact 2K/8K/32K/64K), 256 output tokens, one active request,
+greedy sampling and seed 1729; three measured repeats after each cell's warmup.
+All server tokenizer arrays match the frozen local tokenizer. Every timed
+request reports zero reused input tokens and exactly 256 output tokens.
+
+At 8K input, median decode is 174.1/117.7 tok/s for vLLM MTP on/off and
+120.6/68.6 tok/s for TensorFold on/off. Median client TTFT is 0.809/0.791 s and
+1.837/1.819 s, respectively. This is a bounded workload result, not an accuracy
+score or universal engine ranking. Full lengths and prefill rates are in the
+linked report.
+
+vLLM keeps the qualified B12X settings, 0.985 fraction, fixed 7,650,410,496-byte
+KV budget, configured 1M window and eight slots. The new `MTP_ENABLED=0` switch
+removes only speculative configuration; default remains 1 (MTP3). TensorFold
+uses the qualified image, one decode warp, configured 128K window, one slot,
+zero retained prompt cache and default reserve. Shared input/output lengths
+and one active client are matched; the configured capacity profiles differ.
+
+The native output token hash is identical across repetitions and MTP modes for
+all six cases. Five of six vLLM cases have text variation across some repeated
+greedy calls despite a fixed seed. This is preserved in raw evidence and distinct
+text counts; the cause has not been established. Do not interpret performance
+measurements as bit-determinism or repeat the earlier quality score as a new
+accuracy measurement.
+
+Raw evidence: `logs/tuning/vllm-mtp-on`, `vllm-mtp-off`,
+`tensorfold-baseline`, and `shared-baseline`. The two-case vLLM pilot is excluded.
+The workload semantic hash is
+`5c9cea16d0486aee749dd9543db76705f35e74f2e044233e70ee5e35b5151545`.
+CPU shell/syntax and lifecycle checks pass (34 tests, including the experimental
+image guard under development). GPU API checks passed before measured runs.
