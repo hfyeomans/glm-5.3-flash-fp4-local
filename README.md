@@ -191,3 +191,9 @@ The [three-way short-quality comparison](docs/QUALITY-BAKEOFF-V2.md) shows no
 convincing accuracy advantage over the archived vLLM baseline. The
 [prefill trace](docs/PREFILL-INVESTIGATION-V2.md) records the remaining native
 performance costs. Broader 1M accuracy is measured separately from capacity.
+
+
+The [reduced long-context accuracy screen](docs/LONG-CONTEXT-ACCURACY-V2.md)
+finished with 21/22 near-1M core cases fully correct and one partial aggregation
+answer. This is a small native regression baseline, separate from capacity and
+from the archived matched vLLM comparison.

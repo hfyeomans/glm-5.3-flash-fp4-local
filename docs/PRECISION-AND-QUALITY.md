@@ -279,3 +279,15 @@ CPU-only source inspection in `logs/csf-resident-v1/vllm-prefill-dispatch.log`
 and `vllm-precision-paths.log`; `vllm/utils/b12x.py`,
 `vllm/model_executor/layers/fused_moe/b12x.py`, the CSF quantization adapter and
 `flashinfer`'s `w4a16/prefill_a4.py`. No vLLM configuration was changed for this audit.
+
+
+## Latest measured quality baseline
+
+The resident-scale/GPU-embedding candidate preserved all 256 earlier native
+answers and all 1,439 fixed-history probabilities. Its short matched scores do
+not establish an accuracy advantage over vLLM. The separate near-1M screen had
+21/22 fully correct core responses and one genuine frequency-aggregation miss;
+that cannot be attributed to engine or precision without a matched reference.
+W4A16 and exact scale reconstruction describe arithmetic/storage properties, not
+an automatic quality advantage. [Short comparison](QUALITY-BAKEOFF-V2.md) ·
+[Long-context results](LONG-CONTEXT-ACCURACY-V2.md).

@@ -39,3 +39,10 @@ also enables a hybrid A4 prefill path when its calibration and scheduler conditi
 are met. That is a plausible performance difference, not evidence that either
 engine is more accurate. Keeping scales compressed changes storage and expansion
 work; it does not intentionally change their reconstructed values.
+
+
+The separate [long-context screen](LONG-CONTEXT-ACCURACY-V2.md) completed its
+user-approved 22-case near-1M core: 21 fully correct and one frequency response
+matching two of three words. This establishes an initial native long-context
+baseline. It does not add a matched vLLM/older-native long-context comparison,
+so it does not establish that slower TensorFold has higher quality.

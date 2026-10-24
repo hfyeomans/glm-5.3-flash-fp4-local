@@ -164,3 +164,9 @@ memory floor. It validates prompt hashes, golds, raw responses and grades, and
 refuses uncommitted selected responses. **Omit reuse for a new engine/kernel
 comparison**; different images are rejected. The official grader and generation
 settings are unchanged. There is no automatic expansion beyond this initial core.
+
+
+The reduced run has completed. [Results](../docs/LONG-CONTEXT-ACCURACY-V2.md)
+report the 22-case core, all shorter controls, corpus-limited cases, supplemental
+results and every miss separately. Different task mixes and sample counts mean
+the short/long aggregate difference is not a causal context-length effect.

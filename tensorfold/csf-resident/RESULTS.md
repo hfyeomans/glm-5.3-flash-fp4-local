@@ -137,3 +137,15 @@ arithmetic. No upstream publication has been made.
 receipts and the code-check log. At handoff both model services are stopped, the
 vLLM container is preserved, and no GPU compute jobs remain. GPU free memory returned
 to 97,187/97,340 MiB; the unrelated existing graphics allocation was preserved.
+
+
+## Later serving and accuracy qualification
+
+The [serving profiles](../serving/README.md) now measure 512K with GPU embeddings
+(4,177/4,330 MiB whole-run minimum free, including the probability diagnostic)
+and reserve host embedding for the explicit 1M profile. The
+[initial longer-task screen](../../docs/LONG-CONTEXT-ACCURACY-V2.md) completed
+21/22 core near-1M cases with full credit; one aggregation answer matched two of
+three words. This extends the earlier capacity-only evidence without claiming
+exhaustive long-context quality. Native image/arithmetic and historical receipts
+above are unchanged.

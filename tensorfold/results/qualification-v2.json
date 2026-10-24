@@ -1,0 +1,92 @@
+{
+  "scope": "Completed quality, GPU-embedding512K, prefill diagnosis and user-reduced near1M screen; no new native kernel/precision changes in this phase.",
+  "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+  "checkpoint": "nvidia/GLM-5.3-Flash-FP4-Local",
+  "revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+  "near_1m": {
+    "tasks": 11,
+    "n": 22,
+    "mean_task_score": 98.485,
+    "clean_full_credit": 21
+  },
+  "short_controls": {
+    "n": 52,
+    "mean_task_score": 98.07692307692308,
+    "clean_full_credit": 51
+  },
+  "headroom": {
+    "required_free_MiB": 1536,
+    "sampled_min_free_MiB": {
+      "0": 1693,
+      "1": 1846
+    },
+    "passed": true,
+    "scope": "One-second samples across both source and continued runs; intervening transient peaks are not observed"
+  },
+  "short_quality_outputs_identical": 256,
+  "fixed_history_positions_identical": 1439,
+  "recipe_tests_passed": 56,
+  "final_state": {
+    "checked_utc": "2026-10-24T23:39:14.218335+00:00",
+    "owned_containers": [
+      "glm53-fp4-tp2\tExited (0) 9 hours ago"
+    ],
+    "gpu_index_used_free_MiB": [
+      "0, 152, 97187",
+      "1, 2, 97340"
+    ],
+    "compute_processes": [],
+    "unrelated_graphics_allocation_preserved": true
+  },
+  "evidence": [
+    {
+      "path": "tensorfold/results/gpu-512k-qualification-v2.json",
+      "sha256": "99bb99762d49963c2f59f5908c0a29ac9cb4e32f3164265fc5fa760433d86732"
+    },
+    {
+      "path": "tensorfold/results/gpu-embedding-quality-v2.json",
+      "sha256": "8f915a4717d4f954a0be5f38f24e794472829953bf21c6c25009b4c469ba8e54"
+    },
+    {
+      "path": "tensorfold/results/gpu-embedding-probabilities-v2.json",
+      "sha256": "1c070e0cdd2d2b5685c836ec98cfa5b4fee609d021584e820f5981115791ab59"
+    },
+    {
+      "path": "tensorfold/results/quality-bakeoff-v2.json",
+      "sha256": "b6a438297c1e521b7bad4926031b662a9633fb4c2b543cf2ff3751a7c910fdca"
+    },
+    {
+      "path": "tensorfold/results/prefill-profile-v2.json",
+      "sha256": "83006c731d5feb7a92be54b3d20bf2e24e136500c8185951ab62c0996048cc2c"
+    },
+    {
+      "path": "tensorfold/results/long-context-bank-v2.json",
+      "sha256": "e579c6a4f3baee200c9e1d18f8cf38c6541e03c72a1a5c355984bc923f98242a"
+    },
+    {
+      "path": "tensorfold/results/long-context-protocol-failure-v1.json",
+      "sha256": "2505e18495d5670ade641d31c7b554f1c94f02c1fb5b45411d21a885187bde6d"
+    },
+    {
+      "path": "tensorfold/results/long-context-reduction-v1.json",
+      "sha256": "beff3590671b07438e427d589bc66e2b8c26c141f8a0fd21ccd1a5b43f5c91af"
+    },
+    {
+      "path": "tensorfold/results/long-context-accuracy-v2.json",
+      "sha256": "33df661eb3aa95529a3fc3c448de77e06eb8ebe24020c251aa5b0022cca362fd"
+    },
+    {
+      "path": "tensorfold/results/long-context-fwe-audit-v1.json",
+      "sha256": "d99c4a9f0017f0adfc6e28776bd493ba15da65b90f500b6bc9e63d62638f409f"
+    },
+    {
+      "path": "logs/qualification-v2/check-reduced-report.log",
+      "sha256": "ce584c615527105cab092c90feafb2ce7c3a2c87e50b4438cf24413a0b5b0fe1"
+    },
+    {
+      "path": "logs/qualification-v2/final-state.json",
+      "sha256": "0442c1694f703483632832dda97902f5fad1ef3050cc50f4c7df37b79076c7a7"
+    }
+  ],
+  "limits": "Two core long examples/task; no matched vLLM long-context scores. Initial invalid-prefix attempt excluded; user-scoped interruption retained. Inherited native CUDA resource-record findings remain documented in the earlier contract receipt."
+}

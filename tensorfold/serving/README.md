@@ -39,3 +39,11 @@ The additional fixed-history log-probability diagnostic briefly used 58 MiB more
 per card, giving whole-run minima of **4,177 / 4,330 MiB**. All 1,439 scored
 positions matched the earlier native reference exactly.
 [Qualification receipt](../results/gpu-512k-qualification-v2.json).
+
+
+The `host-1m` initial accuracy screen is complete: **21/22 core near-1M cases fully
+correct**, with one frequency-aggregation response matching two of three words.
+No corrected-cohort truncations or reasoning-marker outputs occurred. Sampled
+free memory remained at least **1,693/1,846 MiB**. These are two examples per task,
+not an exhaustive 1M quality qualification or a comparison to vLLM at 1M.
+[Accuracy results](../../docs/LONG-CONTEXT-ACCURACY-V2.md).

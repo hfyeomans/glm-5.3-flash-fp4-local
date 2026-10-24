@@ -100,3 +100,22 @@ not a claim that removing a GB10-associated setting or adding A4 alone solves th
 whole gap. The diagnostic launcher changes stderr routing only; no native kernel
 or precision change was made in this phase. The short vLLM comparison shows no
 convincing quality advantage for the slower native configuration.
+
+
+The subsequent [initial long-context accuracy screen](../docs/LONG-CONTEXT-ACCURACY-V2.md)
+completed 22 core near-1M cases (two fixed samples per task): 21 fully correct,
+one frequency-aggregation miss (two of three words). All core retrieval, tracking
+and QA cases passed. Four corpus-limited checks and nine previously completed
+supplemental long cases also passed. All 52 shorter controls were retained,
+including one incorrect SQuAD answer. The mean/clean-completion metrics and actual
+lengths are explicit; no truncations or reasoning-marker outputs occurred in the
+corrected cohort. A prompt-wrapper bug in the initial attempt was corrected and
+its invalid scores excluded. The user reduced the larger plan by fixed sample
+index; completed valid evidence was reused without selecting by score.
+
+This adds bounded accuracy evidence for the RTX 1M host-embedding/resident-scale
+profile, with the same 1,693/1,846 MiB sampled free floor measurements. It is not
+full release qualification, a statistical quality advantage or a matched
+vLLM long-context result. The inherited CUDA resource-record findings remain as
+previously documented; this phase changed recipe/evaluation tooling, not native
+kernel arithmetic. No upstream posting has been made.

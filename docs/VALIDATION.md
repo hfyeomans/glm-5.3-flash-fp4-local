@@ -800,3 +800,34 @@ prompt hashes, golds and memory floor. Invalid-prefix or different-engine result
 cannot be reused. Recipe checks pass 56 tests. The continued run uses the same
 immutable resident-scale image and `host-1m` profile; generation and grading are
 unchanged. [Reduction receipt](../tensorfold/results/long-context-reduction-v1.json).
+
+
+## Completed reduced long-context screen (2026-10-24)
+
+The agreed balanced core completed: **21/22 near-1M cases had clean full credit**.
+All retrieval, variable-tracking and HotpotQA cases passed; one frequency case
+returned two of three gold words (66.67%), choosing the fourth-ranked word instead
+of third. An independent word-count audit confirms the gold. The second frequency
+case passed. No corrected-cohort response truncated or emitted reasoning markers.
+
+All 52 shorter controls remain in the report (51 fully correct, one SQuAD miss).
+Both CWE and both SQuAD corpus-limited checks passed at their actual ~143K/~205K
+lengths and are excluded from the near-1M headline. Nine already completed extra
+long cases passed and remain supplemental. The selected cohort contains 78
+results: 62 reused after strict protocol validation and 16 newly executed. No
+completed valid case was rerun to select a better answer. The native image,
+checkpoint, generation settings and grading are unchanged.
+
+Both source and continued runs passed the sampled 1,536 MiB floor; combined minima
+were **1,693/1,846 MiB**. The continuation ended successfully and stopped/removed
+only its owned TensorFold container. The original vLLM container remains stopped
+and preserved. No GPU compute jobs remain; free memory returned to
+97,187/97,340 MiB, preserving unrelated graphics allocations. Recipe checks pass
+56 tests; no new native kernel code was changed in this phase.
+
+This is an initial two-example/task regression baseline, not a published RULER
+leaderboard run, universal 1M accuracy qualification or proof of superiority to
+vLLM. The short matched bakeoff remains unchanged and shows no convincing quality
+advantage. [Results](LONG-CONTEXT-ACCURACY-V2.md) ·
+[Portable receipt](../tensorfold/results/long-context-accuracy-v2.json) ·
+[Word-count audit](../tensorfold/results/long-context-fwe-audit-v1.json).

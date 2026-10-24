@@ -1,0 +1,706 @@
+{
+  "context_label_semantics": "Group configured_context is the nominal bank label; actual TF_CONTEXT is 1048576 for both groups.",
+  "results": {
+    "complete": true,
+    "cases": 78,
+    "groups": [
+      {
+        "configured_context": 32768,
+        "task": "niah_single_1",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28651,
+        "input_tokens_max": 28653,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_single_2",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28674,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_single_3",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28673,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_multikey_1",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28673,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_multikey_2",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28660,
+        "input_tokens_max": 28671,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_multikey_3",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28610,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_multivalue",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28674,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_multiquery",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28674,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "vt",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28652,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "cwe",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28657,
+        "input_tokens_max": 28669,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "fwe",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28660,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "qa_squad",
+        "n": 4,
+        "mean_score": 75.0,
+        "full_credit": 3,
+        "near_window_cases": 0,
+        "input_tokens_min": 28505,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 3
+      },
+      {
+        "configured_context": 32768,
+        "task": "qa_hotpot",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28471,
+        "input_tokens_max": 28666,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 1048576,
+        "task": "niah_single_1",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044476,
+        "input_tokens_max": 1044477,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "niah_single_2",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044482,
+        "input_tokens_max": 1044482,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "niah_single_3",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044481,
+        "input_tokens_max": 1044482,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "niah_multikey_1",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044482,
+        "input_tokens_max": 1044482,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "niah_multikey_2",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044474,
+        "input_tokens_max": 1044480,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "niah_multikey_3",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044443,
+        "input_tokens_max": 1044448,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "niah_multivalue",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044482,
+        "input_tokens_max": 1044482,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "niah_multiquery",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044482,
+        "input_tokens_max": 1044482,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "vt",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044473,
+        "input_tokens_max": 1044474,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "cwe",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 0,
+        "input_tokens_min": 143602,
+        "input_tokens_max": 143683,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "fwe",
+        "n": 2,
+        "mean_score": 83.33500000000001,
+        "full_credit": 1,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044481,
+        "input_tokens_max": 1044482,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 1
+      },
+      {
+        "configured_context": 1048576,
+        "task": "qa_squad",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 0,
+        "input_tokens_min": 204875,
+        "input_tokens_max": 204877,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      },
+      {
+        "configured_context": 1048576,
+        "task": "qa_hotpot",
+        "n": 2,
+        "mean_score": 100.0,
+        "full_credit": 2,
+        "near_window_cases": 2,
+        "input_tokens_min": 1044433,
+        "input_tokens_max": 1044456,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 2
+      }
+    ],
+    "manifest": {
+      "bank_sha256": "90ae1b9aed4a6b5649a4a2e8abcd258d4aaa7982ad08be23fc00253be74d0961",
+      "client_sha256": "ba164b0e2fa2e76d225b922ada532cd907c42ccc39bb8b6fd558b6cff4982a32",
+      "official_scorer_sha256": "6740467c17b8dc06b6b30f4f97e54ce8de81db0dd879f1538d0b6b5727f4bd5f",
+      "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+      "settings": {
+        "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "TF_COMM_PORT": "29600",
+        "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_GLM_OVERLAP_PIECES": "4",
+        "NCCL_CUMEM_HOST_ENABLE": "0",
+        "TF_CONTEXT": "1048576",
+        "TF_GLM_KDA_DECODE_WIDE": "1",
+        "NCCL_CUMEM_ENABLE": "0",
+        "TF_HOST": "127.0.0.1",
+        "TF_PORT": "8001",
+        "TF_PARALLEL": "1",
+        "TF_MEMORY_RESERVE_GIB": "1.5",
+        "TF_NCCL_DEBUG": "WARN",
+        "TF_TUNE_HOST_EMBED": "1",
+        "TF_TUNE_SCALE_LAYOUT": "2",
+        "TF_GLM_PROMPT_K": "one",
+        "TF_PROMPT_CACHE_GIB": "0",
+        "TF_PROFILE": "0",
+        "TF_NVFP4_DECODE_WARPS": "1",
+        "TF_TUNE_PREFILL_UP": "4",
+        "TF_TUNE_PREFILL_DOWN": "8",
+        "TF_GLM_PDL": "1",
+        "TF_GLM_PREFILL_REDUCE": "split"
+      },
+      "cases": [
+        "niah_single_1-32768-0",
+        "niah_single_1-32768-1",
+        "niah_single_1-32768-2",
+        "niah_single_1-32768-3",
+        "niah_single_2-32768-0",
+        "niah_single_2-32768-1",
+        "niah_single_2-32768-2",
+        "niah_single_2-32768-3",
+        "niah_single_3-32768-0",
+        "niah_single_3-32768-1",
+        "niah_single_3-32768-2",
+        "niah_single_3-32768-3",
+        "niah_multikey_1-32768-0",
+        "niah_multikey_1-32768-1",
+        "niah_multikey_1-32768-2",
+        "niah_multikey_1-32768-3",
+        "niah_multikey_2-32768-0",
+        "niah_multikey_2-32768-1",
+        "niah_multikey_2-32768-2",
+        "niah_multikey_2-32768-3",
+        "niah_multikey_3-32768-0",
+        "niah_multikey_3-32768-1",
+        "niah_multikey_3-32768-2",
+        "niah_multikey_3-32768-3",
+        "niah_multivalue-32768-0",
+        "niah_multivalue-32768-1",
+        "niah_multivalue-32768-2",
+        "niah_multivalue-32768-3",
+        "niah_multiquery-32768-0",
+        "niah_multiquery-32768-1",
+        "niah_multiquery-32768-2",
+        "niah_multiquery-32768-3",
+        "vt-32768-0",
+        "vt-32768-1",
+        "vt-32768-2",
+        "vt-32768-3",
+        "cwe-32768-0",
+        "cwe-32768-1",
+        "cwe-32768-2",
+        "cwe-32768-3",
+        "fwe-32768-0",
+        "fwe-32768-1",
+        "fwe-32768-2",
+        "fwe-32768-3",
+        "qa_squad-32768-0",
+        "qa_squad-32768-1",
+        "qa_squad-32768-2",
+        "qa_squad-32768-3",
+        "qa_hotpot-32768-0",
+        "qa_hotpot-32768-1",
+        "qa_hotpot-32768-2",
+        "qa_hotpot-32768-3",
+        "niah_single_1-1048576-0",
+        "niah_single_1-1048576-1",
+        "niah_single_2-1048576-0",
+        "niah_single_2-1048576-1",
+        "niah_single_3-1048576-0",
+        "niah_single_3-1048576-1",
+        "niah_multikey_1-1048576-0",
+        "niah_multikey_1-1048576-1",
+        "niah_multikey_2-1048576-0",
+        "niah_multikey_2-1048576-1",
+        "niah_multikey_3-1048576-0",
+        "niah_multikey_3-1048576-1",
+        "niah_multivalue-1048576-0",
+        "niah_multivalue-1048576-1",
+        "niah_multiquery-1048576-0",
+        "niah_multiquery-1048576-1",
+        "vt-1048576-0",
+        "vt-1048576-1",
+        "cwe-1048576-0",
+        "cwe-1048576-1",
+        "fwe-1048576-0",
+        "fwe-1048576-1",
+        "qa_squad-1048576-0",
+        "qa_squad-1048576-1",
+        "qa_hotpot-1048576-0",
+        "qa_hotpot-1048576-1"
+      ],
+      "interface": "raw completion, shared locally rendered chat template, thinking off, greedy, MTP on, cold cache",
+      "minimum_free_MiB": 1536,
+      "response_diagnostics": "Report truncations and generated think markers separately; clean full credit also requires neither. Official RULER score remains unchanged.",
+      "sampling_plan": {
+        "long_samples_per_task": 2,
+        "rule": "Lowest fixed sample indices at longest nominal length; all shorter controls retained, independent of scores"
+      },
+      "reuse": {
+        "source": "logs/qualification-v2/long-accuracy-v2/00-host-1m/long-context",
+        "manifest_sha256": "7232711e602332a6834d5aa5a14119d2d50adc71db47214ec5b5f9e90dafa494",
+        "requests_sha256": "515894005197159b3799592205b02fbe1caa5b3825e44849e9d9d54c47913f1d"
+      }
+    },
+    "requests_sha256": "7a4ac33a39f914e921ff07afc0bea93fc0e6e2e11755114bbc719148d79aa167",
+    "scope": "Local RULER-derived screen using NVIDIA metrics; per-group sample counts and any reused results are explicit, not a full published leaderboard run. Report actual lengths; undersized tasks are not evidence at 1M. Short controls need not have identical synthetic golds; QA question IDs are shared. No inference about vLLM long-context accuracy."
+  },
+  "completion": {
+    "profile": "host-1m",
+    "protocol": {
+      "profiles_sha256": "29253bc0dcc45907aac77d73b89770d18da032a1fd0aad76fee3502b9e47b4e3",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 2,
+      "mtp": "on",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-8192",
+        "prefill-32768"
+      ],
+      "teacher_histories_sha256": null,
+      "quality": false,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": true,
+      "context_targets": [
+        2048,
+        8192
+      ],
+      "minimum_free_MiB": 1536,
+      "long_context_bank_sha256": "90ae1b9aed4a6b5649a4a2e8abcd258d4aaa7982ad08be23fc00253be74d0961",
+      "long_context_lengths": [
+        32768,
+        1048576
+      ],
+      "long_context_client_sha256": "ba164b0e2fa2e76d225b922ada532cd907c42ccc39bb8b6fd558b6cff4982a32",
+      "long_context_samples": 2,
+      "long_context_reuse_sha256": "515894005197159b3799592205b02fbe1caa5b3825e44849e9d9d54c47913f1d"
+    },
+    "started_unix": 1792880553.2315898,
+    "token_hashes": {},
+    "repeat_and_mtp_identical": null,
+    "status": "pass",
+    "elapsed_seconds": 4505.603396177292
+  },
+  "headroom": {
+    "required_free_MiB": 1536,
+    "sampled_min_free_MiB": {
+      "0": 1693,
+      "1": 1846
+    },
+    "passed": true,
+    "scope": "One-second samples across both source and continued runs; intervening transient peaks are not observed"
+  },
+  "source_run_headroom": {
+    "required_free_MiB": 1536,
+    "sampled_min_free_MiB": {
+      "0": 1693,
+      "1": 1846
+    },
+    "passed": true,
+    "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured"
+  },
+  "cohort_requests": 78,
+  "reused_requests": 62,
+  "new_requests": 16,
+  "short_controls": {
+    "n": 52,
+    "mean_task_score": 98.07692307692308,
+    "clean_full_credit": 51
+  },
+  "near_1m": {
+    "tasks": 11,
+    "n": 22,
+    "mean_task_score": 98.485,
+    "clean_full_credit": 21
+  },
+  "all_nonclean_or_incorrect_cases": [
+    {
+      "id": "qa_squad-32768-2",
+      "task": "qa_squad",
+      "prompt_tokens": 28591,
+      "score": 0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": false,
+      "response_sha256": "0024db565c5d444cff167b6a1effc49c72dcd458f9689709884803d554ac98bf"
+    },
+    {
+      "id": "fwe-1048576-0",
+      "task": "fwe",
+      "prompt_tokens": 1044481,
+      "score": 66.67,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": false,
+      "response_sha256": "5d299d382b7d75750179454faae625974a7b8cf05891e3a70d106eed7f78cbf6"
+    }
+  ],
+  "supplemental_completed_cases": [
+    {
+      "id": "niah_single_1-1048576-2",
+      "task": "niah_single_1",
+      "prompt_tokens": 1044476,
+      "score": 100.0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": true,
+      "response_sha256": "c0c97547d97c163e20432e6b72b2658e383f9b7a29a20f9e44f01119522939a8"
+    },
+    {
+      "id": "niah_single_1-1048576-3",
+      "task": "niah_single_1",
+      "prompt_tokens": 1044475,
+      "score": 100.0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": true,
+      "response_sha256": "cc4a9f72a67bb58663ae8df340951daf5163326e4b0f571d488d8a2c953ff29a"
+    },
+    {
+      "id": "niah_single_2-1048576-2",
+      "task": "niah_single_2",
+      "prompt_tokens": 1044482,
+      "score": 100.0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": true,
+      "response_sha256": "050487d6f6716b948ed87543b1267b46e46b665740be96692d11ef2ec34a7fac"
+    },
+    {
+      "id": "niah_single_2-1048576-3",
+      "task": "niah_single_2",
+      "prompt_tokens": 1044482,
+      "score": 100.0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": true,
+      "response_sha256": "8dd1467fa47a37aa9b03bc4ecee0b723ef872d5cca1d897cbed84417755e0247"
+    },
+    {
+      "id": "niah_single_3-1048576-2",
+      "task": "niah_single_3",
+      "prompt_tokens": 1044482,
+      "score": 100.0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": true,
+      "response_sha256": "05f3c9c4ed0ac5af1a2ce358d2212641f7ae9813de0bdd0f228ff2f53df8cd8c"
+    },
+    {
+      "id": "niah_single_3-1048576-3",
+      "task": "niah_single_3",
+      "prompt_tokens": 1044482,
+      "score": 100.0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": true,
+      "response_sha256": "1e24cc0e1255a662e08a4136719f621b3c787482df4ba14a2f543f7dd86edd16"
+    },
+    {
+      "id": "niah_multikey_1-1048576-2",
+      "task": "niah_multikey_1",
+      "prompt_tokens": 1044482,
+      "score": 100.0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": true,
+      "response_sha256": "1aab7fa52e6d0826e1c8f00e8eb748d5c649eb7efb7ecbe796b6812571ce593f"
+    },
+    {
+      "id": "niah_multikey_1-1048576-3",
+      "task": "niah_multikey_1",
+      "prompt_tokens": 1044482,
+      "score": 100.0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": true,
+      "response_sha256": "c4da054709a9b578de94beed84d209bc2c269f18382530593120ed5a001274e2"
+    },
+    {
+      "id": "niah_multikey_2-1048576-2",
+      "task": "niah_multikey_2",
+      "prompt_tokens": 1044478,
+      "score": 100.0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": true,
+      "response_sha256": "d12288efec3b97786168880705cf711aa3306df1217f117d409d9a5ee00cb8b2"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "logs/qualification-v2/long-accuracy-22/00-host-1m/launch-manifest.json",
+      "sha256": "37b5e1cfbf1615a7009528e5b243b45acc38dd17965a7d905abb9b4f5f6686eb"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy-22/00-host-1m/complete.json",
+      "sha256": "25bfad3bed4cfb02031c2d5dd3f2dd4cce64bdd7eab53d49d24b1b805c3bff5d"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy-22/00-host-1m/gpu.csv",
+      "sha256": "079e9db4d3a8ece81eb953e555ffcfb7c97d00128c1bf592c9045ff68ac2a13a"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy-22/00-host-1m/server.log",
+      "sha256": "0b260c8611c9897bda72407474790f5836654de3dbe73202f41de512f2483323"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy-22/00-host-1m/long-context/manifest.json",
+      "sha256": "8ca82f18272864ccc6455949bd509da961d39c3794e9a45ccfb305c4faa3c417"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy-22/00-host-1m/long-context/results.json",
+      "sha256": "c52491d608df31ae5ee4063128dd2987125aeaa5cc383244b56103d70524cce9"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy-22/00-host-1m/long-context/requests.jsonl",
+      "sha256": "7a4ac33a39f914e921ff07afc0bea93fc0e6e2e11755114bbc719148d79aa167"
+    },
+    {
+      "path": "logs/qualification-v2/ruler-bank-v2/manifest.json",
+      "sha256": "90ae1b9aed4a6b5649a4a2e8abcd258d4aaa7982ad08be23fc00253be74d0961"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy-v2/00-host-1m/long-context/manifest.json",
+      "sha256": "7232711e602332a6834d5aa5a14119d2d50adc71db47214ec5b5f9e90dafa494"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy-v2/00-host-1m/long-context/requests.jsonl",
+      "sha256": "515894005197159b3799592205b02fbe1caa5b3825e44849e9d9d54c47913f1d"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy-v2/00-host-1m/gpu.csv",
+      "sha256": "5e9302c234f85ca7da12f8003cde7b2fb89fb03fe64eee3a1e840bd933d69341"
+    }
+  ],
+  "reporter_sha256": "00d730403ac1038d757d2b019e493f9645fa7c1b5c1899b3a92fd5f8d6cb1cf8",
+  "limits": "User reduced long examples mid-run by fixed sample index, independent of scores. All shorter controls retained. Small local RULER-derived screen, not a leaderboard or universal qualification. No matched vLLM or older-TensorFold long scores exist for this bank. Substring scores and clean completion are separate."
+}

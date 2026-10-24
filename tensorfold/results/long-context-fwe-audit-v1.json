@@ -1,0 +1,215 @@
+{
+  "method": "Count complete six-lowercase-letter words in the immutable rendered prompts; generated vocabulary entries use this form. No prompts, golds or scores changed.",
+  "audits": [
+    {
+      "id": "fwe-32768-0",
+      "prompt_sha256": "ddc37b7fca66a78f35701100762c1431aaa816506218c8fce67cf82d5ac0b415",
+      "file_sha256": "a6b100a3ab3475f246177e5a51db141d7e436de6d38c94f5534ca3bd82b2faa9",
+      "gold": [
+        "smgano",
+        "jncaak",
+        "tnqwbz"
+      ],
+      "top_five_word_counts": [
+        [
+          "smgano",
+          2258
+        ],
+        [
+          "jncaak",
+          1003
+        ],
+        [
+          "tnqwbz",
+          564
+        ],
+        [
+          "jkboqc",
+          361
+        ],
+        [
+          "fcjtlk",
+          250
+        ]
+      ],
+      "gold_matches_actual_top_three": true
+    },
+    {
+      "id": "fwe-32768-1",
+      "prompt_sha256": "cb034eb36c65d1af117cd8b413b62a5bcdc92659ff29c249bff567dd2f0a587a",
+      "file_sha256": "5821d704e9f5345f06fdb642300814a837a0965b68d16594a630d981598d9eae",
+      "gold": [
+        "tfqfgu",
+        "joimxe",
+        "uhgkjv"
+      ],
+      "top_five_word_counts": [
+        [
+          "tfqfgu",
+          2201
+        ],
+        [
+          "joimxe",
+          978
+        ],
+        [
+          "uhgkjv",
+          550
+        ],
+        [
+          "jmsuze",
+          352
+        ],
+        [
+          "eksvcb",
+          244
+        ]
+      ],
+      "gold_matches_actual_top_three": true
+    },
+    {
+      "id": "fwe-32768-2",
+      "prompt_sha256": "6b1683fb2f17e819760b17c0551851f7de4d93ecbc5c69c63321b0d9b4637f53",
+      "file_sha256": "0ce7181768baaa721f1e24351bbc16b45a424e1b97f369c0708eca6abe3a2416",
+      "gold": [
+        "ueoshp",
+        "jqllyz",
+        "uvttxa"
+      ],
+      "top_five_word_counts": [
+        [
+          "ueoshp",
+          2266
+        ],
+        [
+          "jqllyz",
+          1007
+        ],
+        [
+          "uvttxa",
+          566
+        ],
+        [
+          "jlmuuh",
+          362
+        ],
+        [
+          "dywcte",
+          251
+        ]
+      ],
+      "gold_matches_actual_top_three": true
+    },
+    {
+      "id": "fwe-32768-3",
+      "prompt_sha256": "a7347bcaaa54dcfdc0744d9a6b365805b6bd51c8d05a8420232b47c0f1601f19",
+      "file_sha256": "4942399553b773f20d22141177b49397251e9d28b7c6ffe7304dcc11477f1400",
+      "gold": [
+        "ufmajv",
+        "jrlhdv",
+        "uzobos"
+      ],
+      "top_five_word_counts": [
+        [
+          "ufmajv",
+          2155
+        ],
+        [
+          "jrlhdv",
+          958
+        ],
+        [
+          "uzobos",
+          538
+        ],
+        [
+          "jovxme",
+          344
+        ],
+        [
+          "exdcyu",
+          239
+        ]
+      ],
+      "gold_matches_actual_top_three": true
+    },
+    {
+      "id": "fwe-1048576-0",
+      "prompt_sha256": "cc7bd9c6fa5c1a757f4eae792b3721605254754f3f14e7b8239b81907dc58984",
+      "file_sha256": "592b387f1b4b8e6cc245ecbefa9ffd823d40fe8238a4cd798a6cbf40821f3ece",
+      "gold": [
+        "bqpugo",
+        "onddoj",
+        "lqwtql"
+      ],
+      "top_five_word_counts": [
+        [
+          "bqpugo",
+          84817
+        ],
+        [
+          "onddoj",
+          37696
+        ],
+        [
+          "lqwtql",
+          21204
+        ],
+        [
+          "ucudvr",
+          13570
+        ],
+        [
+          "hdkzii",
+          9424
+        ]
+      ],
+      "gold_matches_actual_top_three": true
+    },
+    {
+      "id": "fwe-1048576-1",
+      "prompt_sha256": "5a48923497d06c259deb8b8995b52ef43eefcf577951e6dc1853a06d2a5b0a68",
+      "file_sha256": "052c7e4f4cf26e05be7fc0ad37b9ef49f3526b6b3e69c483a731bd2567d463ce",
+      "gold": [
+        "bqkzpc",
+        "olmttn",
+        "lmlcmn"
+      ],
+      "top_five_word_counts": [
+        [
+          "bqkzpc",
+          77186
+        ],
+        [
+          "olmttn",
+          34304
+        ],
+        [
+          "lmlcmn",
+          19296
+        ],
+        [
+          "udcvxb",
+          12349
+        ],
+        [
+          "gvrxwz",
+          8576
+        ]
+      ],
+      "gold_matches_actual_top_three": true
+    }
+  ],
+  "observed_miss": {
+    "case": "fwe-1048576-0",
+    "expected_third": [
+      "lqwtql",
+      21204
+    ],
+    "returned_third": [
+      "ucudvr",
+      13570
+    ],
+    "interpretation": "Returned the fourth-ranked word instead of third; a real aggregation miss under the reference, not a tie or missing-gold error. Does not attribute the cause to TensorFold versus the model/precision without a matched reference run."
+  }
+}

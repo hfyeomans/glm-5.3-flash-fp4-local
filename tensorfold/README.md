@@ -183,3 +183,9 @@ python3 tensorfold/scripts/cache_check.py --output logs/tensorfold/my-cached-pro
 The test requires 8K context, one slot, 1 GiB prompt cache, default reserve,
 profiling off and one warp. Run it on a fresh service to establish a cold first
 request. It checks actual cache reuse and output hashes, not merely HTTP success.
+
+
+The [initial 1M accuracy screen](../docs/LONG-CONTEXT-ACCURACY-V2.md) is complete:
+21/22 core cases fully correct, with one frequency-aggregation miss. This is a
+small regression baseline alongside the measured capacity qualification; it does
+not establish a quality advantage over vLLM.
