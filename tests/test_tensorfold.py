@@ -39,7 +39,8 @@ class TensorFoldTests(unittest.TestCase):
                     {'TF_CONTEXT': '1048577'}, {'TF_CONTAINER': 'glm53-fp4-tp2'},
                     {'TF_MEMORY_RESERVE_GIB': 'nan'}, {'TF_MEMORY_RESERVE_GIB': '0.49'},
                     {'TF_PROMPT_CACHE_GIB': '-1'}, {'TF_PROMPT_CACHE_GIB': 'inf'},
-                    {'TF_PROFILE': 'yes'}, {'TF_NCCL_DEBUG': 'TRACE'}):
+                    {'TF_PROFILE': 'yes'}, {'TF_NCCL_DEBUG': 'TRACE'},
+                    {'TF_NVFP4_DECODE_WARPS': '2'}):
             with self.subTest(env=env), self.assertRaises(ValueError):
                 tf.config(Path('/nonexistent'), env)
 
@@ -89,6 +90,11 @@ class TensorFoldTests(unittest.TestCase):
         self.assertEqual(args[-1], 'sha256:verified')
         self.assertNotIn('HF_TOKEN', ' '.join(args))
         self.assertNotIn('B12X', ' '.join(args))
+        self.assertIn('TF_NVFP4_DECODE_WARPS=1', args)
+        c['TF_NVFP4_DECODE_WARPS'] = '4'
+        candidate = tf.launch(c, {'mount_source': '/cache', 'mount_target': '/hf',
+                                 'container_path': '/hf/model'}, 'sha256:verified')
+        self.assertIn('TF_NVFP4_DECODE_WARPS=4', candidate)
 
     def test_pr1050_headers_accept_csf_and_fp8_but_reject_missing_components(self):
         with tempfile.TemporaryDirectory() as d:

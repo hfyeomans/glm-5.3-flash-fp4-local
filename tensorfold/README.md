@@ -80,7 +80,7 @@ docker logs glm53-fp4-tensorfold > logs/tensorfold/server-pr1050.log 2>&1
 
 ## Qualification and comparison
 
-The image includes `/opt/tensorfold/bin/tf-cuda-test`. The upstream `glm-loader-gate` compares actual GPU uploads against independently cut/packed checkpoint tensors, with `TF_GATE_WORLDS`, `TF_GATE_RANKS` and `TF_GATE_LAYERS` selecting TP geometry and layers. `glm-ref`, `mxfp8` and `projection-f32` check relevant arithmetic. Run them only with the intended GPUs free; a loader test does not establish served correctness.
+The image includes `/opt/tensorfold/bin/tf-cuda-test`. The upstream `glm-loader-gate` compares actual GPU uploads against independently cut/packed checkpoint tensors, with `TF_GATE_WORLDS`, `TF_GATE_RANKS` and `TF_GATE_LAYERS` selecting TP geometry and layers. `glm-ref`, `quant-ref`, `mxfp8` and `projection-f32` check relevant arithmetic. `quant-ref` includes NVFP4 expert decode and prefill against float64 references, using the selected decode warp setting. Run them only with the intended GPUs free; a loader test does not establish served correctness.
 
 API checks reuse the baseline's text, JSON, required-tool and streaming requests, adding native top-level `reasoning_effort=low`. Further tests should compare drafted/plain output, concurrent/solo requests, repeated-prefix behavior and progressively longer contexts. A successful short request does not qualify the model's 1M architectural context ceiling. Native `xhigh` and vLLM `max` reasoning settings are not guaranteed identical budgets; built-in MTP behavior also differs from vLLM's explicit MTP3 control.
 
@@ -105,7 +105,7 @@ Use `python3 tensorfold/scripts/context_check.py --help` for the cold multi-posi
 The tested 256K working profile (with the intended GPUs free) is:
 
 ```bash
-TF_CONTEXT=262144 TF_PROMPT_CACHE_GIB=0 TF_MEMORY_RESERVE_GIB=1.5 ./tensorfold/start.sh
+TF_NVFP4_DECODE_WARPS=4 TF_CONTEXT=262144 TF_PROMPT_CACHE_GIB=0 TF_MEMORY_RESERVE_GIB=1.5 ./tensorfold/start.sh
 ./tensorfold/smoke.sh --wait 1200 --suite
 python3 tensorfold/scripts/context_check.py --targets 261888 --compare-plain --output logs/tensorfold/recheck-256k
 ```
@@ -113,3 +113,59 @@ python3 tensorfold/scripts/context_check.py --targets 261888 --compare-plain --o
 The reserve is an admission setting, not a guaranteed physical free-memory floor for GLM's already-allocated first sequence. See the measured margins in the tuning notes.
 
 The [initial quality baseline](../docs/QUALITY-BASELINE.md) adds official GSM8K/IFEval scoring against vLLM with identical prompts. It complements the loader, arithmetic and retrieval checks; it does not qualify long-context accuracy or quantify loss against an unquantized reference.
+
+## Decode warp experiment
+
+`TF_NVFP4_DECODE_WARPS` accepts only `1` (measured SM120 recipe default) or `4`
+(upstream default and the setting used for the historical context ladder).
+The existing image contains both variants, and its launcher inherits the explicit
+container environment variable; no rebuild or checkpoint conversion is needed.
+The recipe passes the setting to serving and GPU checks and records it in launch
+evidence. Changing it requires restarting this owned TensorFold service.
+
+With the intended GPUs free, a fixed experiment run is:
+
+```bash
+TF_NVFP4_DECODE_WARPS=1 ./tensorfold/gpu-check.sh
+TF_CONTEXT=16384 TF_PROMPT_CACHE_GIB=0 TF_MEMORY_RESERVE_GIB= TF_PROFILE=0 TF_NVFP4_DECODE_WARPS=1 ./tensorfold/start.sh
+./tensorfold/smoke.sh --wait 1200 --suite
+python3 tensorfold/scripts/decode_bench.py --output logs/tensorfold/my-w1
+```
+
+Use fresh output directories. Repeat the same fixed configuration with `4`
+before and after the candidate, preserving full server logs before each stop.
+Each run excludes six warmup calls and measures four repeats of three prompts,
+each with drafts on and off. The client requires exactly 256 output tokens,
+zero cached tokens, matching prompt counts and repeatable output hashes. It
+reports server decode timing separately from client end-to-end time. These are
+synthetic performance workloads, not quality questions.
+
+```bash
+python3 tensorfold/scripts/compare_decode.py logs/tensorfold/my-w4-before logs/tensorfold/my-w1 logs/tensorfold/my-w4-after --output logs/tensorfold/my-warp-comparison.json
+```
+
+The comparison rejects changed requests, images, settings and incomplete runs;
+it reports output differences and baseline drift. Run the fixed
+[quality suite](../quality/README.md) for the candidate and preserve its actual
+warp setting alongside the quality manifest (the original quality client does
+not include that newer setting). Read measured conclusions in
+[SM120-NOTES.md](SM120-NOTES.md); an available setting is not a proven speedup.
+
+The bracketed experiment measured a 0.65–1.27% decode-rate gain for one warp,
+with all 256 fixed quality responses matching the original TensorFold token
+hashes. The normal 8K/1 GiB cache profile also passed cold/warm and drafted/plain
+retrieval checks. This small measured gain justifies the recipe default; it does
+not establish gains for every workload or save memory for 1M. The original
+long-context reproduction command above explicitly retains four warps.
+An existing `tensorfold/.env` or shell override takes precedence over the new
+default; use `TF_NVFP4_DECODE_WARPS=4` to roll back without rebuilding.
+
+To repeat the normal-profile cache qualification with that one-warp server:
+
+```bash
+python3 tensorfold/scripts/cache_check.py --output logs/tensorfold/my-cached-profile
+```
+
+The test requires 8K context, one slot, 1 GiB prompt cache, default reserve,
+profiling off and one warp. Run it on a fresh service to establish a cold first
+request. It checks actual cache reuse and output hashes, not merely HTTP success.

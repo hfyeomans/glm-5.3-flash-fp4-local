@@ -27,8 +27,9 @@ The comparison here is with the PR author's **DGX Spark / GB10 (SM121)** machine
 | Explicit native reserve override | Make any headroom reduction reviewable | 128K retains native default, about 3 GiB; 256K and 512K trials select 1.5 GiB; actual memory sampling is recorded separately |
 | Opt-in `TF_GLM_PROF` and NCCL INFO logging | Identify local bottlenecks and transport | Enabled for 128K only; instrumented wall times are not an unprofiled performance comparison |
 | Recipe image checks include launcher version | Older launchers would otherwise silently ignore new memory controls | Launcher label `2` required |
+| `TF_NVFP4_DECODE_WARPS=1` recipe default | Select the faster existing expert-decode grouping measured on our SM120 cards | 0.65–1.27% observed decode gain; all 256 quality token hashes unchanged; 8K cached-profile checks pass. Four warps remains the historical ladder setting |
 
-**No manual changes to upstream kernels, precision, split-K targets, expert tiles, clocks or power limits have been made.** The compressed-scale reader is the PR's implementation, not a local SM120 fix. The full target model retains its stored numerical values; the PR's existing speculative draft-head transformation is unchanged. This is a hardware qualification and recipe adaptation so far, not a demonstrated kernel speedup.
+**No manual changes to upstream kernels, precision, split-K targets, expert tiles, clocks or power limits have been made.** The compressed-scale reader is the PR's implementation, not a local SM120 fix. The full target model retains its stored numerical values; the PR's existing speculative draft-head transformation is unchanged. The initial qualification established hardware compatibility. The subsequent decode-grouping experiment below measures a small runtime-setting gain without editing upstream kernels.
 
 ## Upstream behavior already adapting to these cards
 
@@ -38,11 +39,11 @@ The comparison here is with the PR author's **DGX Spark / GB10 (SM121)** machine
 - `native/cuda_memory.zig` distinguishes discrete from unified memory. The discrete default is `max(1 GiB, total/32)`; the unified-memory default is `max(4 GiB, total/10)`.
 - `families/glm/cuda_q4.zig` enables one draft-head PDL path specifically on SM121; that path is off on SM120. In contrast, the BF16 `cuda_mm.zig` PDL default is already on. These are separate dispatch decisions, not a single global PDL switch.
 
-## Tuning candidates, not claimed improvements
+## Tuning candidates and qualification status
 
 | Candidate | Source / observation | Required experiment |
 |---|---|---|
-| NVFP4 decode warp grouping | `cuda/experts.zig` supports `TF_NVFP4_DECODE_WARPS=1` or `4`; default 4. Each warp owns independent tiles. Routed experts dominate our sampled verify passes. | Same-context 1-vs-4 A/B, arithmetic gates, drafted/plain and cached/cold consistency, then unprofiled throughput |
+| NVFP4 decode warp grouping | `cuda/experts.zig` supports `TF_NVFP4_DECODE_WARPS=1` or `4`; upstream default 4, now recipe default 1. Each warp owns independent tiles. Routed experts dominate our sampled verify passes. | Completed: small measured decode gain with arithmetic, quality and cache checks; see the experiment below |
 | Expert prefill tile geometry | `prompt_wn={8,4,8}` is explicitly described as GB10's fastest tiles in `cuda/experts.zig` | Benchmark actual SM120 prefill shapes; changing compiled kernels requires new contract/accuracy evidence |
 | Projection split-K | `families/glm/cuda_mm.zig` and `cuda/qmmf.zig` use a fixed target of 192 column tiles times K slices | Profile affected shapes; changing sums may change rounding, so use reference error bounds and deterministic output checks, not only speed |
 | Local communication / overlap | Actual path is PCIe P2P/IPC, topology `NODE` (same NUMA node, across host bridges). Current overlap pieces=3. | Measure overlap and NCCL choices at fixed workload/context; do not assume DGX RoCE tuning transfers or that more channels are better |
@@ -62,7 +63,8 @@ hardware with preserved correctness and task quality.
 1. **Expert decode grouping:** compare the existing 4-warp default with
    `TF_NVFP4_DECODE_WARPS=1`. This is the first bounded experiment because local
    profiling identifies routed experts as a substantial decode cost, and both
-   variants already exist upstream. Neither is established as faster here.
+   variants already exist upstream. Completed below: one warp gave a small
+   consistent decode gain and passed the quality/cache checks.
 2. **Expert prefill tiles:** sweep suitable compiled tile shapes around
    `prompt_wn={8,4,8}`, whose source explicitly identifies GB10 tuning. Change
    host launch geometry and matching device kernel instantiations together.
@@ -95,9 +97,9 @@ TensorFold baseline as well as the existing vLLM reference. Repeat long-context
 qualification for changes affecting allocation or attention. Keep only gains
 that exceed run-to-run variation without an unexplained correctness regression.
 
-**Status:** this is the recorded optimization plan. The completed SM120 build,
-local transport configuration, context ladder and quality baseline do not yet
-constitute a measured kernel retuning result.
+**Status:** the first decode-grouping experiment is complete and selects one warp
+for the recipe default. The remaining prefill, split-K, communication and
+capacity candidates are still untested; no upstream kernel source was changed.
 
 ## Measured profiling evidence
 
@@ -149,7 +151,7 @@ With the intended GPUs free:
 
 ```bash
 ./tensorfold/build.sh
-TF_CONTEXT=131072 TF_PROMPT_CACHE_GIB=0 TF_PROFILE=1 TF_NCCL_DEBUG=INFO ./tensorfold/start.sh
+TF_NVFP4_DECODE_WARPS=4 TF_CONTEXT=131072 TF_PROMPT_CACHE_GIB=0 TF_PROFILE=1 TF_NCCL_DEBUG=INFO ./tensorfold/start.sh
 ./tensorfold/smoke.sh --wait 1200 --suite --output logs/tensorfold/recheck-128k-api
 python3 tensorfold/scripts/context_check.py --targets 8192 32768 130816 --compare-plain --output logs/tensorfold/recheck-128k
 # Save complete Docker logs before stopping; stop removes only this owned TensorFold container.
@@ -182,3 +184,88 @@ Before a performance claim: measure the new resident layout, run the real-loader
 Final local state after this ladder: vLLM restored on port 8000, readiness and all four API checks passed. TensorFold stopped after preserving logs. No unrelated services, GPU power/clocks, model files or caches were changed. The recipe's 27 CPU checks passed; no upstream kernel edits or accuracy-harness scores are part of this change.
 
 Subsequent quality qualification: the initial paired sample measured TensorFold at 120/128 GSM8K and 113/128 strict IFEval, versus vLLM at 119/128 and 112/128. These one-item differences do not establish an accuracy advantage. Exact protocol and uncertainty are in the linked quality baseline; no target precision or kernel changes were made for the run.
+
+## Measured decode warp comparison — 2026-10-24 UTC
+
+We compared the existing upstream 4-warp and 1-warp NVFP4 expert decode kernels
+on this pinned SM120 image without rebuilding or changing precision. The order
+was 4 → 1 → 4, at 16K context, one slot, FP8 KV, no retained prompt cache, native
+default reserve and profiling disabled. Each run excluded six warmups and then
+measured four repeats of three identical prompts with MTP on and off: 24 measured
+requests per run, 72 overall. Every measured request generated exactly 256 tokens.
+Prompt lengths were 42, 43 and 6,931 tokens. The cap is deliberate for this speed
+workload; it is not an accuracy pass.
+
+| Prompt | MTP | 4 warps before (tok/s) | 1 warp (tok/s) | 4 warps after (tok/s) | 1-warp gain versus both baselines |
+|---|---|---:|---:|---:|---:|
+| archive | off | 69.35 | 70.04 | 69.36 | +0.98–0.99% |
+| archive | on | 126.70 | 127.83 | 126.48 | +0.89–1.07% |
+| database | off | 73.83 | 74.34 | 73.86 | +0.65–0.68% |
+| database | on | 144.11 | 145.17 | 144.13 | +0.72–0.73% |
+| hash-table | off | 73.80 | 74.46 | 73.69 | +0.90–1.05% |
+| hash-table | on | 145.83 | 147.68 | 146.15 | +1.05–1.27% |
+
+These are medians of **server-reported decode rates**, which count output tokens
+after the first token and exclude prefill. Full client latency and prefill times
+are retained separately. This is a small observed gain (0.65–1.27%), not a broad
+engine-speed ranking. The absolute change between the two 4-warp baseline medians
+was at most 0.22%. All measured output hashes match across settings, repetitions
+and drafted/plain modes; speculation counts also match between settings.
+
+The 1-warp candidate passed `glm-ref`, `quant-ref`, `mxfp8`, `projection-f32` and
+the selected real-checkpoint loader gate on both cards. Each rank had 115 direct
+checkpoint-cut uploads and 72 host-packed uploads matching, with three excluded
+uploads and zero unknown/mismatched uploads. The 4-warp reference additionally
+passed `quant-ref` on both cards. All three served runs passed the four API checks.
+
+The candidate also recovered all three hidden values at 8,182 and 16,125 actual
+prompt tokens with matching drafted/plain hashes. Its complete fixed quality run
+matched **all 256 original TensorFold output token hashes and every official
+score**: GSM8K 120/128, strict IFEval 113/128, loose IFEval 114/128. No truncation
+or missing reasoning closure occurred. The same original quality client, task
+and dataset pins, prompts, tokenizer IDs and image were verified. The newly
+exposed warp setting is recorded alongside the quality manifest in
+`w1-quality/experiment-settings.json`.
+
+One-second telemetry during measured requests found the same minimum free memory
+in all three runs: 3,975 / 4,128 MiB. Thus this experiment demonstrates no capacity
+saving toward 1M. GPU 0 median SM clock was 2,317 MHz in every run; GPU 1 medians
+were 2,283.5 / 2,287 / 2,280 MHz. Automatic clocks and temperatures varied; no
+power or clock controls were changed. The full quality run occurred between the
+candidate timing run and the returning baseline. The repeated baseline helps
+expose drift but cannot eliminate every thermal or temporal confounder.
+
+MTP was already active, using the checkpoint's own draft component. On these
+prompts it provided roughly 1.8–2.0× the plain decode rate; the warp change adds
+only the much smaller percentage above. Its draft acceptance rates were about
+64.9–73.1%, with 2.10–2.31 output tokens per verification round. No external
+DFlash model was loaded.
+
+Raw evidence: `logs/tensorfold/decode-warps-v1/`, including per-request responses,
+configuration manifests, `performance-comparison.json`, `quality-regression.json`,
+GPU telemetry and full server logs. The arithmetic/loader suite is under
+`logs/tensorfold/gpu-check-20261024T023808Z/`. These bounded checks do not qualify
+long-context task accuracy, multi-slot performance or all prompt/cache patterns.
+
+### Adoption and rollback
+
+The recipe now defaults to `TF_NVFP4_DECODE_WARPS=1`. After the speed/quality
+comparison, a separate normal-profile run (8K context, one slot, 1 GiB prompt
+cache, native reserve) passed all four API checks and cold/warm, drafted/plain
+retrieval at **3,648 and 7,993 prompt tokens**. The repeated requests reused
+**2,048 and 6,144 tokens**, respectively. All four output hashes at each length
+were identical and all three hidden values were recovered. Evidence:
+`cached-profile/report.json` and `cached-profile-{api,check,server}.log` under the
+experiment directory.
+
+This is selection of an existing upstream kernel variant for our SM120 cards,
+not a kernel rewrite or a precision change. The retained cache and memory
+budgets are unchanged. Set `TF_NVFP4_DECODE_WARPS=4` to restore the upstream
+setting without rebuilding. Historical 128K/256K/512K ladder results used four
+warps, and their reproduction commands keep that setting explicit. The one-warp
+choice has not been requalified at those lengths or at multiple active slots.
+The 1M allocation failure remains unresolved.
+
+Portable settings, scores and measurement summaries are in
+[results/decode-warps-v1.json](results/decode-warps-v1.json). Full responses remain
+in the ignored local evidence directory.

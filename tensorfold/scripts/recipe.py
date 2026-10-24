@@ -28,6 +28,7 @@ DEFAULTS = {
     'TF_CONTEXT': '8192', 'TF_PARALLEL': '1',
     'TF_PROMPT_CACHE_GIB': '1', 'TF_MEMORY_RESERVE_GIB': '',
     'TF_PROFILE': '0', 'TF_NCCL_DEBUG': 'WARN',
+    'TF_NVFP4_DECODE_WARPS': '1',
     'TF_MODEL_NAME': 'glm-5.3-flash-fp4-local', 'BUILD_JOBS': '4',
 }
 
@@ -62,6 +63,8 @@ def config(path=None, environ=None):
             raise ValueError(f'{key} must be from {low} to {high} GiB')
     if result['TF_PROFILE'] not in ('0', '1') or result['TF_NCCL_DEBUG'] not in ('WARN', 'INFO'):
         raise ValueError('TF_PROFILE must be 0/1 and TF_NCCL_DEBUG must be WARN/INFO')
+    if result['TF_NVFP4_DECODE_WARPS'] not in ('1', '4'):
+        raise ValueError('TF_NVFP4_DECODE_WARPS must be 1 or 4')
     if int(result['TF_PORT']) in (int(result['TF_COMM_PORT']), int(result['TF_COMM_PORT']) + 1):
         raise ValueError('HTTP, NCCL and NCCL watchdog ports must be distinct')
     if not re.fullmatch(r'\d+,\d+', result['TF_GPUS']) or len(set(result['TF_GPUS'].split(','))) != 2:
@@ -211,7 +214,8 @@ def launch(c, m, image_id):
             '--label', f'{LABEL}={HERE}', '--log-opt', 'max-size=100m', '--log-opt', 'max-file=3',
             '--mount', f'type=volume,src={c["TF_VOLUME"]},dst=/cache', *mount(m)]
     for k in ('TF_HOST', 'TF_PORT', 'TF_COMM_PORT', 'TF_CONTEXT', 'TF_PARALLEL', 'TF_MODEL_NAME',
-              'TF_PROMPT_CACHE_GIB', 'TF_MEMORY_RESERVE_GIB', 'TF_PROFILE', 'TF_NCCL_DEBUG'):
+              'TF_PROMPT_CACHE_GIB', 'TF_MEMORY_RESERVE_GIB', 'TF_PROFILE', 'TF_NCCL_DEBUG',
+              'TF_NVFP4_DECODE_WARPS'):
         args += ['-e', f'{k}={c[k]}']
     return args + ['-e', f'MODEL_PATH={m["container_path"]}', image_id]
 
@@ -222,12 +226,13 @@ def gpu_checks(c, m, ident):
     folder.mkdir(parents=True, exist_ok=False)
     results = []
     for rank, device in enumerate(c['TF_GPUS'].split(',')):
-        for case in ('info', 'glm-ref', 'mxfp8', 'projection-f32', 'glm-loader-gate'):
+        for case in ('info', 'glm-ref', 'quant-ref', 'mxfp8', 'projection-f32', 'glm-loader-gate'):
             name = c['TF_CONTAINER'] + '-check'
             args = ['docker', 'run', '--rm', '--name', name, '--init', '--network', 'none',
                     '--gpus', 'device=' + device, '--ipc', 'host', '--shm-size', '32g',
                     '--ulimit', 'memlock=-1', '--ulimit', 'stack=67108864:67108864',
                     '--label', f'{LABEL}={HERE}', *mount(m),
+                    '-e', f'TF_NVFP4_DECODE_WARPS={c["TF_NVFP4_DECODE_WARPS"]}',
                     '-e', 'TF_GATE_WORLDS=2', '-e', f'TF_GATE_RANKS={rank}',
                     '-e', 'TF_GATE_LAYERS=0,3,4,43,44',
                     '--entrypoint', '/opt/tensorfold/bin/tf-cuda-test', ident, case]
@@ -245,7 +250,8 @@ def gpu_checks(c, m, ident):
                         run(['docker', 'stop', '--time', '10', name])
                     raise
             results.append({'device': device, 'rank_geometry': rank, 'case': case,
-                            'exit_code': result.returncode, 'log': str(logfile)})
+                            'exit_code': result.returncode, 'log': str(logfile),
+                            'decode_warps': c['TF_NVFP4_DECODE_WARPS']})
             (folder / 'checks.json').write_text(json.dumps(results, indent=2) + '\n')
             if result.returncode:
                 raise RuntimeError(f'GPU check failed: {case}; inspect {logfile}')

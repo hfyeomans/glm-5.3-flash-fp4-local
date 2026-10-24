@@ -89,7 +89,64 @@ A memory-utilization fraction or reserve setting is a budgeting policy, not addi
 - **Decode context parallelism (DCP):** distributes attention-context work/storage across ranks when the engine implements it. vLLM's DCP setting is not a flag we can transplant into TensorFold.
 - **MTP/speculative decoding:** proposes tokens ahead, then checks them with the target model. It aims to accelerate decoding while preserving the target's behavior under the algorithm's conditions. We test drafted/plain agreement; that bounded evidence is not a proof for every sampling mode.
 
+### Does drafting require another downloaded model?
+
+Our TensorFold GLM path uses the **MTP component bundled in the same checkpoint**.
+Its loader builds the MTP layer/head, and the target model verifies the proposed
+tokens. The PR's existing draft-head transformation remains unchanged in our
+warp experiment. We have not downloaded or loaded an external draft model.
+The response records `drafts`, proposed/accepted token counts and a token hash;
+our tests explicitly compare `draft=true` with `draft=false`.
+
+A separate small autoregressive model is another way to supply draft tokens.
+**DFlash** instead uses a small diffusion drafter to propose a block in parallel,
+conditioned on the target's hidden states. Deploying that approach needs
+compatible draft weights and engine integration; an arbitrary small model is
+not a replacement for a trained DFlash drafter. See the
+[official DFlash algorithm documentation](https://github.com/vllm-project/speculators/blob/main/docs/user_guide/algorithms/dflash.md).
+
+Our vLLM command explicitly selects `method: "mtp"` with three speculative
+tokens. The accompanying `VLLM_GLM53_DFLASH_ATTN=1` environment variable does not
+by itself establish that DFlash draft weights are loaded. Neither engine in our
+measured comparison uses a separately downloaded DFlash model.
+
+Acceptance rate, verification cost and prompt length determine whether drafting
+helps. Measure it on/off at fixed precision and request settings; do not assume
+that a larger draft model or more speculative tokens will be faster. External
+drafter weights and state would also need their own memory budget.
+
 Changing FP4 weights to a different quantization is a numerical change. Moving an unchanged embedding table to host memory is principally a placement/performance change, though the implementation still needs correctness tests. Replacing BF16 activations with FP4 activations is an additional quantization and requires accuracy qualification.
+
+## Kernel tuning vocabulary
+
+A **warp** is a group of 32 CUDA threads. A **thread block** (also called a CTA)
+contains one or more warps. Our first TensorFold experiment changes the NVFP4
+expert decode block from four warps (128 threads) to one warp (32 threads).
+In this implementation, each warp owns independent matrix tiles. Changing that
+grouping changes scheduling and residency, while the source keeps each tile's
+arithmetic unchanged. That is an expectation to test, not a substitute for
+numerical and output comparisons.
+
+An **SM** is a GPU multiprocessor that executes thread blocks. **Occupancy**
+describes how much work can reside on an SM given limits such as registers,
+shared memory and threads. More occupancy does not always mean more speed:
+memory traffic, instruction dependencies and launch overhead also matter.
+TensorFold already detects our 188 SMs and uses kernel occupancy for this expert
+path; the warp-grouping choice remains a separate tuning variable.
+
+**Tiles** divide a matrix operation into smaller pieces. **Split-K** divides its
+summation dimension among workers and then combines partial results. It can
+expose more parallel work but adds reduction cost and can change rounding.
+Prefill and decode have different shapes, so a choice that helps one can hurt
+the other.
+
+A **bracketed A/B/A experiment** runs the baseline, candidate, then baseline
+again with identical requests. The second baseline helps reveal temperature,
+clock or other time-dependent drift. It does not eliminate every confounder.
+Warmup calls are excluded, repeated measurements are retained, and output hashes
+are checked separately from timing. In our bounded throughput test, hitting the
+256-token cap is intentional; in the quality suite, truncation is a diagnostic
+that must be reported.
 
 ## Startup speed is not inference speed
 

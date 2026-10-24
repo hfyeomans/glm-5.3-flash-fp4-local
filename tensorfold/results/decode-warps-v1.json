@@ -1,0 +1,592 @@
+{
+  "runs": [
+    "logs/tensorfold/decode-warps-v1/w4-before",
+    "logs/tensorfold/decode-warps-v1/w1",
+    "logs/tensorfold/decode-warps-v1/w4-after"
+  ],
+  "manifests": [
+    {
+      "image_id": "sha256:c829536f5a214755ff50f4e72e622814a9226b8aec43ed646cdc6cd20c418e11",
+      "settings": {
+        "TF_NVFP4_DECODE_WARPS": "4",
+        "TF_HOST": "0.0.0.0",
+        "TF_PORT": "8001",
+        "TF_COMM_PORT": "29600",
+        "TF_CONTEXT": "16384",
+        "TF_PROMPT_CACHE_GIB": "0",
+        "TF_NCCL_DEBUG": "WARN",
+        "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "TF_PARALLEL": "1",
+        "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+        "TF_MEMORY_RESERVE_GIB": "",
+        "TF_PROFILE": "0"
+      },
+      "rounds": 4,
+      "workload_sha256": "d4872c947424d85c2729b55ba6927c1cbe9d69469e9c497f4091b72a4a9a3266",
+      "client_sha256": "8266ca5c6a30e026f81d1032b116c95a3241d7eda4f69f0a0dc863580cb11818",
+      "started_utc": "2026-10-24T02:45:16Z",
+      "note": "Bounded 256-token synthetic workload, not an accuracy score. Server decode timing and client end-to-end time are distinct.",
+      "completed_utc": "2026-10-24T02:46:53Z"
+    },
+    {
+      "image_id": "sha256:c829536f5a214755ff50f4e72e622814a9226b8aec43ed646cdc6cd20c418e11",
+      "settings": {
+        "TF_NCCL_DEBUG": "WARN",
+        "TF_NVFP4_DECODE_WARPS": "1",
+        "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "TF_HOST": "0.0.0.0",
+        "TF_PARALLEL": "1",
+        "TF_PROMPT_CACHE_GIB": "0",
+        "TF_PROFILE": "0",
+        "TF_PORT": "8001",
+        "TF_COMM_PORT": "29600",
+        "TF_CONTEXT": "16384",
+        "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+        "TF_MEMORY_RESERVE_GIB": ""
+      },
+      "rounds": 4,
+      "workload_sha256": "d4872c947424d85c2729b55ba6927c1cbe9d69469e9c497f4091b72a4a9a3266",
+      "client_sha256": "8266ca5c6a30e026f81d1032b116c95a3241d7eda4f69f0a0dc863580cb11818",
+      "started_utc": "2026-10-24T02:49:59Z",
+      "note": "Bounded 256-token synthetic workload, not an accuracy score. Server decode timing and client end-to-end time are distinct.",
+      "completed_utc": "2026-10-24T02:51:35Z"
+    },
+    {
+      "image_id": "sha256:c829536f5a214755ff50f4e72e622814a9226b8aec43ed646cdc6cd20c418e11",
+      "settings": {
+        "TF_HOST": "0.0.0.0",
+        "TF_COMM_PORT": "29600",
+        "TF_CONTEXT": "16384",
+        "TF_PARALLEL": "1",
+        "TF_PROMPT_CACHE_GIB": "0",
+        "TF_MEMORY_RESERVE_GIB": "",
+        "TF_PORT": "8001",
+        "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+        "TF_PROFILE": "0",
+        "TF_NCCL_DEBUG": "WARN",
+        "TF_NVFP4_DECODE_WARPS": "4",
+        "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5"
+      },
+      "rounds": 4,
+      "workload_sha256": "d4872c947424d85c2729b55ba6927c1cbe9d69469e9c497f4091b72a4a9a3266",
+      "client_sha256": "8266ca5c6a30e026f81d1032b116c95a3241d7eda4f69f0a0dc863580cb11818",
+      "started_utc": "2026-10-24T03:02:51Z",
+      "note": "Bounded 256-token synthetic workload, not an accuracy score. Server decode timing and client end-to-end time are distinct.",
+      "completed_utc": "2026-10-24T03:04:29Z"
+    }
+  ],
+  "output_disagreements": [],
+  "draft_plain_disagreements": [],
+  "measurements_per_run": 24,
+  "summary": [
+    {
+      "case": "archive",
+      "draft": false,
+      "runs": [
+        {
+          "warps": "4",
+          "median_decode_tps": 69.35482788493864,
+          "min_decode_tps": 69.1559920519295,
+          "max_decode_tps": 69.53839029842592,
+          "median_client_seconds": 5.236861295503331,
+          "median_prefill_seconds": 1.561272383
+        },
+        {
+          "warps": "1",
+          "median_decode_tps": 70.04015240082478,
+          "min_decode_tps": 69.72776929702466,
+          "max_decode_tps": 70.08350851301768,
+          "median_client_seconds": 5.217117332009366,
+          "median_prefill_seconds": 1.573049849
+        },
+        {
+          "warps": "4",
+          "median_decode_tps": 69.36241828577707,
+          "min_decode_tps": 69.27285070716754,
+          "max_decode_tps": 69.47829676064362,
+          "median_client_seconds": 5.248404755984666,
+          "median_prefill_seconds": 1.570914605
+        }
+      ],
+      "one_warp_vs_before_percent": 0.9881424794581095,
+      "one_warp_vs_after_percent": 0.9770912430639545,
+      "baseline_after_vs_before_percent": 0.010944300591475553
+    },
+    {
+      "case": "archive",
+      "draft": true,
+      "runs": [
+        {
+          "warps": "4",
+          "median_decode_tps": 126.69539817589654,
+          "min_decode_tps": 126.54899744529435,
+          "max_decode_tps": 126.79624369618676,
+          "median_client_seconds": 3.5801734779961407,
+          "median_prefill_seconds": 1.5666075275
+        },
+        {
+          "warps": "1",
+          "median_decode_tps": 127.82603632162645,
+          "min_decode_tps": 127.67012733886591,
+          "max_decode_tps": 127.95432762302256,
+          "median_client_seconds": 3.568188231496606,
+          "median_prefill_seconds": 1.5711238335
+        },
+        {
+          "warps": "4",
+          "median_decode_tps": 126.47579690662678,
+          "min_decode_tps": 126.46035161843527,
+          "max_decode_tps": 126.63979306358563,
+          "median_client_seconds": 3.590451172494795,
+          "median_prefill_seconds": 1.5735200420000002
+        }
+      ],
+      "one_warp_vs_before_percent": 0.8924066398687813,
+      "one_warp_vs_after_percent": 1.0675871969373807,
+      "baseline_after_vs_before_percent": -0.17333010703741714
+    },
+    {
+      "case": "database",
+      "draft": false,
+      "runs": [
+        {
+          "warps": "4",
+          "median_decode_tps": 73.83499103382798,
+          "min_decode_tps": 73.77407420687169,
+          "max_decode_tps": 73.95735675423182,
+          "median_client_seconds": 3.5024991825048346,
+          "median_prefill_seconds": 0.0479631025
+        },
+        {
+          "warps": "1",
+          "median_decode_tps": 74.33809888900193,
+          "min_decode_tps": 74.25735304216047,
+          "max_decode_tps": 74.40669369549438,
+          "median_client_seconds": 3.4780975049652625,
+          "median_prefill_seconds": 0.046936232499999994
+        },
+        {
+          "warps": "4",
+          "median_decode_tps": 73.85810398788031,
+          "min_decode_tps": 73.80659331976976,
+          "max_decode_tps": 73.99197891490446,
+          "median_client_seconds": 3.499868484970648,
+          "median_prefill_seconds": 0.046339806
+        }
+      ],
+      "one_warp_vs_before_percent": 0.6813948889672794,
+      "one_warp_vs_after_percent": 0.6498879272616831,
+      "baseline_after_vs_before_percent": 0.031303523883075
+    },
+    {
+      "case": "database",
+      "draft": true,
+      "runs": [
+        {
+          "warps": "4",
+          "median_decode_tps": 144.112437273816,
+          "min_decode_tps": 143.97899882347815,
+          "max_decode_tps": 144.28134171800454,
+          "median_client_seconds": 1.8197860369982664,
+          "median_prefill_seconds": 0.0494057975
+        },
+        {
+          "warps": "1",
+          "median_decode_tps": 145.1713119528256,
+          "min_decode_tps": 145.02081342126476,
+          "max_decode_tps": 145.5529059675349,
+          "median_client_seconds": 1.8063427920278627,
+          "median_prefill_seconds": 0.0496460125
+        },
+        {
+          "warps": "4",
+          "median_decode_tps": 144.1330315352513,
+          "min_decode_tps": 143.19092193902978,
+          "max_decode_tps": 144.2364159069723,
+          "median_client_seconds": 1.820403007994173,
+          "median_prefill_seconds": 0.050257155
+        }
+      ],
+      "one_warp_vs_before_percent": 0.7347559301892348,
+      "one_warp_vs_after_percent": 0.7203625751258658,
+      "baseline_after_vs_before_percent": 0.01429041228147021
+    },
+    {
+      "case": "hash-table",
+      "draft": false,
+      "runs": [
+        {
+          "warps": "4",
+          "median_decode_tps": 73.79616630878485,
+          "min_decode_tps": 73.58962150711439,
+          "max_decode_tps": 74.08890485423113,
+          "median_client_seconds": 3.5028272645140532,
+          "median_prefill_seconds": 0.047180919
+        },
+        {
+          "warps": "1",
+          "median_decode_tps": 74.46214174933655,
+          "min_decode_tps": 74.23771046363987,
+          "max_decode_tps": 74.71367929361307,
+          "median_client_seconds": 3.4726308779790998,
+          "median_prefill_seconds": 0.0471592925
+        },
+        {
+          "warps": "4",
+          "median_decode_tps": 73.69188827370303,
+          "min_decode_tps": 73.66571770652818,
+          "max_decode_tps": 74.0144001279099,
+          "median_client_seconds": 3.5092172540316824,
+          "median_prefill_seconds": 0.047603777
+        }
+      ],
+      "one_warp_vs_before_percent": 0.902452625743555,
+      "one_warp_vs_after_percent": 1.045235091239194,
+      "baseline_after_vs_before_percent": -0.14130549091871947
+    },
+    {
+      "case": "hash-table",
+      "draft": true,
+      "runs": [
+        {
+          "warps": "4",
+          "median_decode_tps": 145.82695239315868,
+          "min_decode_tps": 145.54097361008658,
+          "max_decode_tps": 146.38216933467996,
+          "median_client_seconds": 1.7983885769790504,
+          "median_prefill_seconds": 0.0489250715
+        },
+        {
+          "warps": "1",
+          "median_decode_tps": 147.683949797014,
+          "min_decode_tps": 146.77042793350626,
+          "max_decode_tps": 147.95414603017468,
+          "median_client_seconds": 1.7778334074828308,
+          "median_prefill_seconds": 0.0500942605
+        },
+        {
+          "warps": "4",
+          "median_decode_tps": 146.14553469919792,
+          "min_decode_tps": 145.74751381547543,
+          "max_decode_tps": 146.9644033075237,
+          "median_client_seconds": 1.7961328069795854,
+          "median_prefill_seconds": 0.050227621
+        }
+      ],
+      "one_warp_vs_before_percent": 1.2734253671082385,
+      "one_warp_vs_after_percent": 1.0526596662583598,
+      "baseline_after_vs_before_percent": 0.218465997410644
+    }
+  ],
+  "scope": "Three synthetic prompts, 256 generated tokens, one slot, 16K context. Four repeats per case. Bracketed runs expose drift; they do not establish a universal speedup.",
+  "schema_version": 1,
+  "measured_date_utc": "2026-10-24",
+  "model": {
+    "repo_id": "nvidia/GLM-5.3-Flash-FP4-Local",
+    "revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+    "compressed_scale_format": "csf_32x2_v1"
+  },
+  "hardware": {
+    "gpus": 2,
+    "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q",
+    "architecture": "SM120",
+    "sms_per_gpu": 188,
+    "driver": "615.71.09"
+  },
+  "native_source": {
+    "base_commit": "36415df4f76e4458e82d0fa729ecb28e287ebf38",
+    "pr1050_commit": "9b23b6a2e7ff226ca61934189c4cd57bf2933980",
+    "tree": "1d52effd182d9319d775d5787904c36783e532f1",
+    "local_kernel_edits": false
+  },
+  "quality_regression": {
+    "baseline": "logs/quality/initial-v1-tensorfold",
+    "candidate": "logs/tensorfold/decode-warps-v1/w1-quality",
+    "paired_requests": 256,
+    "same_profile_prompts_token_ids_image_and_client": true,
+    "note": "Baseline used the native 4-warp default; candidate explicitly used 1. New setting recorded in experiment-settings.json, beyond the original quality manifest fields.",
+    "changed_output_token_hashes": [],
+    "changed_scored_answers": [],
+    "official_scores_identical": true,
+    "scores": {
+      "gsm8k_cot": {
+        "name": "gsm8k_cot",
+        "alias": "gsm8k_cot",
+        "sample_len": 128,
+        "exact_match,strict-match": 0.9375,
+        "exact_match_stderr,strict-match": "N/A",
+        "exact_match,flexible-extract": 0.9375,
+        "exact_match_stderr,flexible-extract": "N/A"
+      },
+      "ifeval": {
+        "name": "ifeval",
+        "alias": "ifeval",
+        "sample_len": 128,
+        "prompt_level_strict_acc,none": 0.8828125,
+        "prompt_level_strict_acc_stderr,none": "N/A",
+        "inst_level_strict_acc,none": 0.9195979899497487,
+        "inst_level_strict_acc_stderr,none": "N/A",
+        "prompt_level_loose_acc,none": 0.890625,
+        "prompt_level_loose_acc_stderr,none": "N/A",
+        "inst_level_loose_acc,none": 0.9246231155778895,
+        "inst_level_loose_acc_stderr,none": "N/A"
+      }
+    },
+    "truncated": 0,
+    "unclosed_reasoning": 0
+  },
+  "telemetry": {
+    "w4-before": {
+      "0": {
+        "samples": 78,
+        "minimum_free_mib": 3975.0,
+        "temperature_c_range": [
+          66.0,
+          81.0
+        ],
+        "sm_clock_mhz_range": [
+          1912.0,
+          2325.0
+        ],
+        "median_sm_clock_mhz": 2317.0
+      },
+      "1": {
+        "samples": 78,
+        "minimum_free_mib": 4128.0,
+        "temperature_c_range": [
+          69.0,
+          82.0
+        ],
+        "sm_clock_mhz_range": [
+          1935.0,
+          2295.0
+        ],
+        "median_sm_clock_mhz": 2283.5
+      }
+    },
+    "w1": {
+      "0": {
+        "samples": 78,
+        "minimum_free_mib": 3975.0,
+        "temperature_c_range": [
+          69.0,
+          82.0
+        ],
+        "sm_clock_mhz_range": [
+          1912.0,
+          2325.0
+        ],
+        "median_sm_clock_mhz": 2317.0
+      },
+      "1": {
+        "samples": 78,
+        "minimum_free_mib": 4128.0,
+        "temperature_c_range": [
+          70.0,
+          83.0
+        ],
+        "sm_clock_mhz_range": [
+          1950.0,
+          2295.0
+        ],
+        "median_sm_clock_mhz": 2287.0
+      }
+    },
+    "w4-after": {
+      "0": {
+        "samples": 78,
+        "minimum_free_mib": 3975.0,
+        "temperature_c_range": [
+          69.0,
+          82.0
+        ],
+        "sm_clock_mhz_range": [
+          1912.0,
+          2325.0
+        ],
+        "median_sm_clock_mhz": 2317.0
+      },
+      "1": {
+        "samples": 78,
+        "minimum_free_mib": 4128.0,
+        "temperature_c_range": [
+          70.0,
+          83.0
+        ],
+        "sm_clock_mhz_range": [
+          1920.0,
+          2295.0
+        ],
+        "median_sm_clock_mhz": 2280.0
+      }
+    }
+  },
+  "normal_profile_cache_check": {
+    "passed": true,
+    "settings": {
+      "TF_CONTEXT": "8192",
+      "TF_PARALLEL": "1",
+      "TF_PROMPT_CACHE_GIB": "1",
+      "TF_MEMORY_RESERVE_GIB": "",
+      "TF_PROFILE": "0",
+      "TF_NVFP4_DECODE_WARPS": "1"
+    },
+    "checks": [
+      {
+        "prompt_tokens": 3648,
+        "all_output_hashes_match": true,
+        "cached_tokens": [
+          0,
+          2048,
+          2048,
+          2048
+        ],
+        "draft_modes": [
+          true,
+          true,
+          false,
+          false
+        ],
+        "output_token_sha256": "cc7df0460471660dc4f8ca2aa44386723fb5110386f8dea5ed80429b91c61bf8"
+      },
+      {
+        "prompt_tokens": 7993,
+        "all_output_hashes_match": true,
+        "cached_tokens": [
+          0,
+          6144,
+          6144,
+          6144
+        ],
+        "draft_modes": [
+          true,
+          true,
+          false,
+          false
+        ],
+        "output_token_sha256": "9f7675c7773a221e2b2dae0dcca9e154bfa0d8a8ed57e40eff3536e3642b498c"
+      }
+    ]
+  },
+  "recipe_decision": {
+    "default_decode_warps": 1,
+    "rollback_decode_warps": 4,
+    "historical_context_ladder_warps": 4,
+    "reason": "Small consistent observed decode gain above bracketed baseline median drift; unchanged outputs and quality scores; normal-profile cache validation passed.",
+    "limits": "Three synthetic prompts and four repeats per case; no universal speedup, multi-slot qualification or long-context one-warp qualification. No capacity saving or 1M success."
+  },
+  "source_sha256": {
+    "tensorfold/scripts/recipe.py": "55c113c79e4c764051fb94bb1226d982812fa7785fb060f09e61fb3ee71e5d0a",
+    "tensorfold/scripts/decode_bench.py": "8266ca5c6a30e026f81d1032b116c95a3241d7eda4f69f0a0dc863580cb11818",
+    "tensorfold/scripts/compare_decode.py": "9b1c49e1073b35db29893f178e136e6612a9621cdc243f26ad7f0fa944bf5fa1",
+    "tensorfold/scripts/cache_check.py": "b00aaf898492f1a3d5c9a9550d4d2d686849a40e5409c73be524fcc85591a232",
+    "quality/run.py": "be5bc56049637aa5e118437536b58f17758bf10b2491b7342a82b43dc44c8a03",
+    "quality/uv.lock": "976f8ae9068918a7603debeede6a665a467b68ea4f392c279a64ca00e8ace150"
+  },
+  "one_warp_gpu_gates": [
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "info",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu0-info.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "glm-ref",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu0-glm-ref.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "quant-ref",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu0-quant-ref.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "mxfp8",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu0-mxfp8.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "projection-f32",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu0-projection-f32.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "glm-loader-gate",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu0-glm-loader-gate.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "info",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu1-info.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "glm-ref",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu1-glm-ref.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "quant-ref",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu1-quant-ref.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "mxfp8",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu1-mxfp8.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "projection-f32",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu1-projection-f32.log",
+      "decode_warps": "1"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "glm-loader-gate",
+      "exit_code": 0,
+      "log": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/tensorfold/gpu-check-20261024T023808Z/gpu1-glm-loader-gate.log",
+      "decode_warps": "1"
+    }
+  ],
+  "four_warp_quant_ref_passed_on_both_gpus": true,
+  "final_service_state": {
+    "vllm_container": "glm53-fp4-tp2",
+    "port": 8000,
+    "readiness_and_four_api_checks_passed": true,
+    "tensorfold_container_stopped": true,
+    "evidence": "logs/tensorfold/decode-warps-v1/final-vllm-api.log"
+  }
+}

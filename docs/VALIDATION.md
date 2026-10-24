@@ -237,3 +237,62 @@ Evidence: `logs/quality/initial-v1-{vllm,tensorfold}/{manifest.json,requests.jso
 Verification: `./scripts/check.sh` passed **32/32** CPU tests, including final-answer extraction, uncertainty calculation, changed-token rejection and paired-score direction. TensorFold passed all four API checks before benchmarking. After preserving its logs it was stopped; vLLM was restored and passed readiness and all four API checks again (`logs/quality/vllm-restored-start.log`, `logs/quality/vllm-restored-acceptance/` and `.log`). Final running service: `glm53-fp4-tp2` on port 8000.
 
 Optimization status remains unchanged: the recipe compiles for SM120 and configures local P2P/NCCL, but no GB10-derived kernel tiles, split-K constants or arithmetic have been manually tuned/replaced. This accuracy baseline qualifies the existing integration and supplies a regression reference for future performance work; it is not evidence of a custom kernel speedup.
+
+
+## 2026-10-24 — first SM120 decode-grouping optimization
+
+The recipe now selects `TF_NVFP4_DECODE_WARPS=1`, with `4` available for rollback.
+The NVIDIA checkpoint/revision/CSF32 format, native source tree, image
+`sha256:c829536f5a214755ff50f4e72e622814a9226b8aec43ed646cdc6cd20c418e11`,
+precision, memory budgets, GPU clocks/power settings and vLLM settings are unchanged.
+This selects an existing compiled kernel variant; no upstream kernel was edited
+or rebuilt. Details and portable receipts are in
+[SM120-NOTES.md](../tensorfold/SM120-NOTES.md) and
+[decode-warps-v1.json](../tensorfold/results/decode-warps-v1.json).
+
+- **GPU gates:** the one-warp variant passed `info`, `glm-ref`, `quant-ref`,
+  `mxfp8`, `projection-f32` and selected real-checkpoint `glm-loader-gate` on both
+  cards. Each rank matched 115 checkpoint-cut and 72 host-packed uploads, with
+  three exclusions and zero unknown/mismatched uploads. Four-warps `quant-ref`
+  also passed on both cards. Evidence: `logs/tensorfold/gpu-check-20261024T023808Z/`
+  and `logs/tensorfold/decode-warps-v1/gpu{0,1}-quant-ref-w4.log`.
+- **Performance:** 4 → 1 → 4, identical image and settings except warp count:
+  16K context, one slot, FP8 KV, zero retained cache, default reserve, profiling
+  off. Three prompts (42, 43, 6,931 tokens), drafts on/off, four measured repeats
+  each, exactly 256 output tokens: 72 measured requests plus 18 excluded warmups.
+  One-warp median server decode rates were **0.65–1.27% higher** than the two
+  references; absolute baseline median drift was at most **0.22%**. All measured
+  output hashes and speculation counts matched across settings; drafted/plain
+  outputs matched. This small observed gain is limited to the recorded workloads.
+- **Quality:** all **256 output token hashes**, extracted answers and official
+  scores matched the original four-warp TensorFold quality run. GSM8K 120/128;
+  strict IFEval 113/128; loose IFEval 114/128. Zero truncations or missing reasoning
+  closures. Prompts, tokenizer IDs, dataset/harness/client pins and image matched.
+- **Cold context checks:** 8,182 and 16,125 actual prompt tokens recovered all
+  three hidden values with matching drafted/plain hashes.
+- **Normal-profile cache gate before adoption:** 8K context, one slot, 1 GiB
+  prompt cache, default reserve and one warp. All four API checks passed. At
+  3,648 and 7,993 prompt tokens, cold/warm and drafted/plain retrieval recovered
+  all values and produced identical hashes. Warm calls reused **2,048 / 6,144
+  tokens**, respectively. Evidence: `cached-profile/report.json` and logs.
+- **Memory and scope:** measured speed-run free-memory minima were unchanged at
+  3,975 / 4,128 MiB. No capacity saving or 1M success is claimed. Automatic clock
+  and temperature variation is recorded; clocks/power were never adjusted.
+  The old long-context reproduction commands explicitly retain four warps.
+- **Code checks:** `./scripts/check.sh` passed shell lint, Python syntax and all
+  **32 CPU tests** after selecting the new default. `git diff --check` passed.
+
+Raw requests, responses, launch records, server logs, comparison reports and GPU
+telemetry remain under `logs/tensorfold/decode-warps-v1/`. The native benchmark
+reports server decode timing separately from prefill and client latency. Hitting
+the output cap is intentional for that synthetic speed test, not an accuracy pass.
+The precision guide now explains warps, occupancy, tiles, split-K and the
+checkpoint's bundled MTP versus an external DFlash drafter. No draft model was
+downloaded and no upstream comment or PR was posted.
+
+Final service state: vLLM restored on port 8000; readiness, completion, JSON,
+required-tool and streaming checks all passed. TensorFold is stopped, with its
+logs preserved. Final restoration evidence: `final-vllm-restore.log`,
+`final-vllm-api.log` and `final-vllm-api/` under the experiment directory; vLLM
+run folder `logs/run-20261024T031041Z-391354/`. No unrelated service, model file,
+cache volume, GPU power setting or clock setting was changed.

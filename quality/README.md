@@ -27,7 +27,7 @@ The setup requires `uv` and selects Python 3.12. It installs only client/tokeniz
 
 # Switch only the recipe-owned model services:
 ./stop.sh
-TF_CONTEXT=16384 TF_PARALLEL=1 TF_PROMPT_CACHE_GIB=0 ./tensorfold/start.sh
+TF_NVFP4_DECODE_WARPS=4 TF_CONTEXT=16384 TF_PARALLEL=1 TF_PROMPT_CACHE_GIB=0 ./tensorfold/start.sh
 ./tensorfold/smoke.sh --wait 1200 --suite
 ./quality/run.sh --backend tensorfold --output logs/quality/my-tensorfold
 
@@ -59,3 +59,9 @@ Official labels remain unchanged. Manual inspection of the initial vLLM GSM8K mi
 - Test row 119 describes one salary as 30% higher than the other, but the reference reverses that relationship as 30% lower, which is not algebraically equivalent.
 
 These annotations do not remove items or revise scores after seeing the answers. They illustrate why benchmark-label agreement is not identical to correctness on every question. The raw responses and dataset rows remain available for review.
+
+The original quality baseline used four decode warps. The command above pins
+that historical setting explicitly; the newer SM120 recipe default is one warp.
+A complete one-warp rerun matched all 256 original TensorFold output hashes; see
+[the tuning record](../tensorfold/SM120-NOTES.md). Record any non-default warp
+setting alongside the original quality client manifest, which predates that knob.
