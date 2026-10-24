@@ -185,3 +185,34 @@ Final artifact SHA256s:
 - Grammar library: `9e6d7b7a649e79ad8150704c2f143e49f0c75a4c87d794bf1968b28780974419`
 
 Rollback verification: vLLM was restored in `logs/run-20261024T011259Z-266204/`. Its readiness and all four API checks passed again (`logs/tensorfold/vllm-restored-acceptance/`). Final running model service: `glm53-fp4-tp2` on port 8000. The TensorFold service was stopped and removed after its logs were saved; its PR image and runtime volume remain available.
+
+## SM120 context ladder and profiling (2026-10-24 UTC)
+
+This continuation preserves the same NVIDIA revision, PR head, merged engine tree, native binary and CUDA kernels. [SM120-NOTES.md](../tensorfold/SM120-NOTES.md) is the detailed local change/tuning journal for a possible future upstream report. No report has been posted.
+
+The separate `glm53-fp4-tensorfold:1.1.3-pr1050-sm120-context` image (`sha256:c829536f5a214755ff50f4e72e622814a9226b8aec43ed646cdc6cd20c418e11`) adds launcher controls for prompt-cache budget, native reserve and profiling. Its native server and CUDA test-runner hashes match the previous image (`logs/tensorfold/context-image-artifacts.log`). The initial 8K defaults remain available. vLLM's configuration is unchanged.
+
+| Configured context | Actual prompt tokens exercised | Result | Minimum sampled free VRAM, GPU 0 / 1 |
+|---|---|---|---|
+| 131,072 | 8,182; 32,764; 130,812 | Three-position retrieval and drafted/plain token equality passed at every length; all four API checks passed | 3,153 / 3,306 MiB |
+| 262,144 | 261,888 | Three-position retrieval, drafted/plain token equality, and all four API checks passed | 2,215 / 2,368 MiB |
+| 524,288 | 524,027 | Same checks passed; capacity experiment with minimal remaining VRAM | 339 / 492 MiB |
+| 1,048,576 | None | CUDA out of memory during startup; no readiness or inference | Not a successful resident footprint |
+
+Each synthetic archive contains three distinct secrets near 10%, 50% and 90% of its records. The client counts the rendered chat with `/tokenize`, verifies the completion usage matches that count, and requires zero cached tokens. Requests are greedy, thinking disabled, with 128 output tokens allowed. Each cold prompt is sent with MTP enabled and then `draft=false`; the complete generated token SHA256s match. This proves these exercised requests, not broad model accuracy at every position or task.
+
+128K uses no retained prompt cache, the unchanged native reserve (~3 GiB), `TF_PROFILE=1` and `TF_NCCL_DEBUG=INFO`. Startup took 164.3 s, model allocations were reported as 90.66 GiB and sequence state as 1.03 GiB. Near-window cold wall times: 31.38 / 32.13 s (drafted/plain). NCCL reports P2P/IPC in both directions. Representative 3–4-row verification summaries put routed experts at 6.28–7.07 ms out of 15.18–16.21 ms GPU time. The diagnostic 8-request decode workload overlapped submission with the last long request and had profiling enabled: do not use its client throughput as a clean engine comparison.
+
+256K uses no retained prompt cache, an explicit 1.5 GiB native reserve and profiling disabled. Startup took 176.8 s, model allocations were 91.58 GiB and sequence state 1.88 GiB. Near-window cold wall times: 64.09 / 66.22 s. The reserve change is specific to this native experiment; vLLM remains at 0.985 and its original fixed KV budget.
+
+512K retains no prompt cache and requests the same 1.5 GiB reserve. Startup took 174.3 s, reported model allocations were 93.41 GiB and sequence state 3.57 GiB. Both cold retrievals passed in 138.32 / 140.79 s, with identical generated token hashes. The 1.5 GiB reserve was **not** maintained as physical free VRAM: GLM allocates its first sequence before admission, then admits it as an existing stream even when remaining budget is zero. No upstream code was changed to obtain this result. The 339 / 492 MiB sampled margin makes this a capacity test, not a comfortable default service configuration.
+
+Evidence: `logs/tensorfold/context-{128k,256k,512k}-{start.log,server.log,acceptance.log,memory.csv,memory-summary.json}`, the corresponding `acceptance/` and `retrieval/` directories, and `run-*/launch.json`. Retrieval folders contain gzipped exact request bodies, request SHA256s and full response/usage/token-hash reports. Memory was sampled every 500 ms; this is not a continuous allocation trace. Recipe checks: 27/27 passed after adding the controls and retrieval client, including rejection of incorrect retrieval, prompt-count mismatch and warm-cache evidence.
+
+The full 1M attempt used the same native binary, exact NVIDIA revision, FP8 KV, one slot, no retained cache and a 1.5 GiB requested reserve. Both ranks reported `cuMemAlloc: CUDA_ERROR_OUT_OF_MEMORY` at 01:50:40 UTC; the container exited code 1 at 01:50:41, with `OOMKilled=false`. Readiness failed, so no near-1M prompt was sent. The shutdown path additionally reported a 136-byte SafeAllocator leak with an empty stack trace; its origin is not established. GPU memory was released when the processes exited, and the following vLLM preflight passed. See `logs/tensorfold/context-1m-{attempt.json,start.log,acceptance.log,server.log,stop.log,memory.csv,memory-summary.json}`.
+
+The pinned source increases identified allocations by 7,500 bytes per additional capacity token per rank once fixed ring thresholds are exceeded. From the measured 512K run, 1M needs approximately 3.66 GiB more per GPU against only 339 MiB free on GPU 0. Roughly 3.33 GiB/rank must be saved just to fit, or 4.83 GiB to retain a 1.5 GiB margin, excluding new implementation overhead. These are allocation estimates; actual startup OOM independently confirms this configuration does not fit. Device-side lossless compressed scales, embedding placement and live-KV sharding/offload remain unimplemented capacity candidates. The KV-paging PRs discussed in the notes do not currently page GLM's FP8 cache.
+
+The accuracy-harness research is recorded in the notes: lm-evaluation-harness for generated-answer tasks such as GSM8K/IFEval and NVIDIA RULER for broader long-context tasks. Those suites have **not** been run and no scores are claimed. The passed retrieval ladder must not be presented as a general accuracy benchmark.
+
+Restoration after the ladder: vLLM started successfully in `logs/run-20261024T015042Z-306221/` and all four API checks passed again (`logs/tensorfold/context-vllm-restored-acceptance/`, matching `.log`). `context-1m-attempt.json` records both restore exit codes as zero. The final running service is `glm53-fp4-tp2` on port 8000. TensorFold and the owned memory samplers were stopped; all model files, images, runtime volumes and evidence were retained.

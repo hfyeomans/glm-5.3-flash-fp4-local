@@ -36,7 +36,10 @@ class TensorFoldTests(unittest.TestCase):
     def test_rank_and_watchdog_port_collisions_refused(self):
         for env in ({'TF_GPUS': '0,0'}, {'TF_GPUS': 'all'},
                     {'TF_PORT': '29600'}, {'TF_PORT': '29601'},
-                    {'TF_CONTEXT': '1048577'}, {'TF_CONTAINER': 'glm53-fp4-tp2'}):
+                    {'TF_CONTEXT': '1048577'}, {'TF_CONTAINER': 'glm53-fp4-tp2'},
+                    {'TF_MEMORY_RESERVE_GIB': 'nan'}, {'TF_MEMORY_RESERVE_GIB': '0.49'},
+                    {'TF_PROMPT_CACHE_GIB': '-1'}, {'TF_PROMPT_CACHE_GIB': 'inf'},
+                    {'TF_PROFILE': 'yes'}, {'TF_NCCL_DEBUG': 'TRACE'}):
             with self.subTest(env=env), self.assertRaises(ValueError):
                 tf.config(Path('/nonexistent'), env)
 

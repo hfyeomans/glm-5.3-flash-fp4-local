@@ -23,6 +23,7 @@ FROM build AS runtime
 LABEL org.opencontainers.image.source="https://github.com/ashhart/TensorFold"       org.opencontainers.image.revision="36415df4f76e4458e82d0fa729ecb28e287ebf38"       org.opencontainers.image.version="1.1.3-pr1050"       lab.glm53.tensorfold.pr1050="9b23b6a2e7ff226ca61934189c4cd57bf2933980"       lab.glm53.tensorfold.tree="1d52effd182d9319d775d5787904c36783e532f1"       lab.glm53.tensorfold.recipe="native-fp4-tp2"
 COPY scripts/loader_probe.zig /opt/recipe/loader_probe.zig
 RUN zig build-exe --dep core -Mroot=/opt/recipe/loader_probe.zig --dep sys --dep checkpoint_config --dep save_guard -Mcore=/src/tensorfold/zig/src/core/root.zig --dep checkpoint_config --dep save_guard -Msys=/src/tensorfold/zig/src/platform/sys.zig --dep save_guard -Mcheckpoint_config=/src/tensorfold/zig/src/core/checkpoint_config.zig -Msave_guard=/src/tensorfold/zig/src/core/save_guard.zig -lc -femit-bin=/opt/tensorfold/bin/glm-loader-probe
+LABEL lab.glm53.tensorfold.launcher="2"
 COPY scripts/runner.sh /opt/recipe/runner.sh
 ENV XDG_CACHE_HOME=/cache NVIDIA_DRIVER_CAPABILITIES=compute,utility
 WORKDIR /opt/tensorfold

@@ -1,6 +1,6 @@
 # TensorFold · PR #1050 on two RTX PRO 6000 Blackwell cards
 
-This recipe builds **TensorFold 1.1.3 plus [PR #1050](https://github.com/ashhart/TensorFold/pull/1050)** for SM120 and reuses the exact NVIDIA `GLM-5.3-Flash-FP4-Local` checkpoint. It passed the initial two-card test: 8K context, one active slot, all four API checks, draft/queue consistency and retrieval through 7,481 prompt tokens. It remains an experimental integration of an open PR. Local GPU results are recorded separately in [VALIDATION.md](../docs/VALIDATION.md).
+This recipe builds **TensorFold 1.1.3 plus [PR #1050](https://github.com/ashhart/TensorFold/pull/1050)** for SM120 and reuses the exact NVIDIA `GLM-5.3-Flash-FP4-Local` checkpoint. It passed the initial 8K two-card test and a later context ladder through **524,027 prompt tokens** with one active slot and identical drafted/plain retrieval outputs. **256K is the preferable tested working profile**: the 512K capacity experiment left only 339 / 492 MiB of VRAM free. **The 1M configuration was attempted and failed during CUDA allocation before readiness.** It remains an experimental integration of an open PR. Local GPU results are recorded separately in [VALIDATION.md](../docs/VALIDATION.md).
 
 The plain 1.1.3 image built previously cannot load this checkpoint. It contains a CSF32 decoder and a mixed-format config reader, but its GLM CUDA path still calls the older NVFP4 reader. PR #1050 connects the formats to the actual model loader, preserves FP32 norms and handles MTP's mixed layout. No weights are converted or replaced.
 
@@ -18,7 +18,7 @@ The plain 1.1.3 image built previously cannot load this checkpoint. It contains 
 | Model | `nvidia/GLM-5.3-Flash-FP4-Local@76348ddb2be2e35e39ecfc00e75dc07703f4f3d5` |
 | Checkpoint format | ModelOpt mixed precision: NVFP4 with `csf_32x2_v1` scales, W4A16_NVFP4, MXFP8, FP8_PB_WO and FP32 norms |
 | Cache root | `/models_engrams/huggingface`, read-only model mount |
-| Image | `glm53-fp4-tensorfold:1.1.3-pr1050-sm120` |
+| Image | `glm53-fp4-tensorfold:1.1.3-pr1050-sm120-context` (launcher v2; native binary unchanged) |
 | Container / cache volume | `glm53-fp4-tensorfold` / `glm53-fp4-tensorfold-pr1050` |
 | HTTP / NCCL / watchdog | `8001` / `29600` / `29601` |
 
@@ -93,3 +93,21 @@ Upstream [tracker #1015](https://github.com/ashhart/TensorFold/issues/1015) maps
 On 2026-10-24 UTC the upstream repository listed `main`, `ds41-four-ranks` and `codex/beta9-google-recovery`; the relevant work is the contributor fork's `pr/glm-fp4local` branch. Related fork branches address KV paging and TP3 transport; they are not included in this first TP2 test. The PR's older base also needed nested-shard support (#1179), which our 1.1.3 base already includes.
 
 Header accounting on the actual snapshot found 36,288 compressed expert scale matrices: 10,321,055,136 stored bytes expand losslessly to 19,025,362,944 scale bytes, an extra 8.11 GiB across the model (about 4.05 GiB per rank if split equally). That is representation accounting, not measured runtime VRAM. Decompressing scales alone cannot make the old loader work: FP8 projections, MTP formats and precision-preserving norms also need the PR's implementation. The recipe preserves the downloaded files.
+
+## SM120 tuning and the context ladder
+
+[SM120-NOTES.md](SM120-NOTES.md) records every local adaptation, upstream behavior already selected for our cards, measured evidence, and untested optimization candidates. It is intended to support a future upstream report; nothing has been posted.
+
+The default remains the reproducible 8K envelope. For context experiments, the launcher now accepts `TF_PROMPT_CACHE_GIB` (default 1), `TF_MEMORY_RESERVE_GIB` (empty keeps native default), `TF_PROFILE` (0/1, default 0) and `TF_NCCL_DEBUG` (WARN/INFO, default WARN). The new image uses the same native binary and kernels; it adds explicit launcher controls and a version label to reject older launchers that would ignore them.
+
+Use `python3 tensorfold/scripts/context_check.py --help` for the cold multi-position retrieval test. It obtains rendered token counts from `/tokenize`, saves compressed request bodies and response evidence, and can compare MTP and plain token hashes. Leave at least 128 tokens for output below the configured window. A passing synthetic retrieval test does not establish broad accuracy at that length.
+
+The tested 256K working profile (with the intended GPUs free) is:
+
+```bash
+TF_CONTEXT=262144 TF_PROMPT_CACHE_GIB=0 TF_MEMORY_RESERVE_GIB=1.5 ./tensorfold/start.sh
+./tensorfold/smoke.sh --wait 1200 --suite
+python3 tensorfold/scripts/context_check.py --targets 261888 --compare-plain --output logs/tensorfold/recheck-256k
+```
+
+The reserve is an admission setting, not a guaranteed physical free-memory floor for GLM's already-allocated first sequence. See the measured margins in the tuning notes.

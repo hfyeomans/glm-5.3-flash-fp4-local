@@ -6,9 +6,13 @@ set -euo pipefail
 /opt/tensorfold/bin/glm-loader-probe "$MODEL_PATH"
 export TF_GLM_WORLD=2 NCCL_COMM_ID="127.0.0.1:${TF_COMM_PORT}"
 export TF_ROCE=0 NCCL_IB_DISABLE=1 NCCL_SOCKET_IFNAME=lo CUDA_DEVICE_ORDER=PCI_BUS_ID
+export TF_GLM_PROF="${TF_PROFILE:-0}" NCCL_DEBUG="${TF_NCCL_DEBUG:-WARN}"
+if [[ -n "${TF_MEMORY_RESERVE_GIB:-}" ]]; then
+    export TENSORFOLD_MEMORY_RESERVE_GIB="$TF_MEMORY_RESERVE_GIB"
+fi
 args=(serve "$MODEL_PATH" --backend cuda --host "${TF_HOST:-0.0.0.0}" --port "$TF_PORT"
       --name "${TF_MODEL_NAME:-glm-5.3-flash-fp4-local}" --context "$TF_CONTEXT"
-      --parallel "$TF_PARALLEL" --kv-cache fp8 --prompt-cache-gib 1
+      --parallel "$TF_PARALLEL" --kv-cache fp8 --prompt-cache-gib "${TF_PROMPT_CACHE_GIB:-1}"
       --thinking --reasoning-effort xhigh --temperature 1 --top-p 0.95 --no-update-check)
 pids=()
 cleanup() {

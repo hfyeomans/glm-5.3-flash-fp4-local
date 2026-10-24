@@ -3,6 +3,7 @@
 import contextlib
 import fcntl
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -21,10 +22,12 @@ LABEL = 'lab.glm53.tensorfold.root'
 BINARY = '/opt/tensorfold/bin/tensorfold-native'
 DEFAULTS = {
     'HF_CACHE_ROOT': '/models_engrams/huggingface', 'MODEL_DIR': '',
-    'TF_IMAGE': 'glm53-fp4-tensorfold:1.1.3-pr1050-sm120',
+    'TF_IMAGE': 'glm53-fp4-tensorfold:1.1.3-pr1050-sm120-context',
     'TF_CONTAINER': 'glm53-fp4-tensorfold', 'TF_VOLUME': 'glm53-fp4-tensorfold-pr1050',
     'TF_GPUS': '0,1', 'TF_HOST': '0.0.0.0', 'TF_PORT': '8001', 'TF_COMM_PORT': '29600',
     'TF_CONTEXT': '8192', 'TF_PARALLEL': '1',
+    'TF_PROMPT_CACHE_GIB': '1', 'TF_MEMORY_RESERVE_GIB': '',
+    'TF_PROFILE': '0', 'TF_NCCL_DEBUG': 'WARN',
     'TF_MODEL_NAME': 'glm-5.3-flash-fp4-local', 'BUILD_JOBS': '4',
 }
 
@@ -48,6 +51,17 @@ def config(path=None, environ=None):
                            ('BUILD_JOBS', 1, 32)]:
         if not result[key].isdigit() or not low <= int(result[key]) <= high:
             raise ValueError(f'{key} must be an integer from {low} to {high}')
+    for key, low, high in [('TF_PROMPT_CACHE_GIB', 0, 96), ('TF_MEMORY_RESERVE_GIB', 0.5, 96)]:
+        if key == 'TF_MEMORY_RESERVE_GIB' and result[key] == '':
+            continue
+        try:
+            value = float(result[key])
+        except ValueError as exc:
+            raise ValueError(f'{key} must be a number of GiB') from exc
+        if not math.isfinite(value) or not low <= value <= high:
+            raise ValueError(f'{key} must be from {low} to {high} GiB')
+    if result['TF_PROFILE'] not in ('0', '1') or result['TF_NCCL_DEBUG'] not in ('WARN', 'INFO'):
+        raise ValueError('TF_PROFILE must be 0/1 and TF_NCCL_DEBUG must be WARN/INFO')
     if int(result['TF_PORT']) in (int(result['TF_COMM_PORT']), int(result['TF_COMM_PORT']) + 1):
         raise ValueError('HTTP, NCCL and NCCL watchdog ports must be distinct')
     if not re.fullmatch(r'\d+,\d+', result['TF_GPUS']) or len(set(result['TF_GPUS'].split(','))) != 2:
@@ -81,7 +95,8 @@ def image(c):
     if (labels.get('org.opencontainers.image.revision') != COMMIT or
             labels.get('lab.glm53.tensorfold.recipe') != 'native-fp4-tp2' or
             labels.get('lab.glm53.tensorfold.pr1050') != PR_COMMIT or
-            labels.get('lab.glm53.tensorfold.tree') != MERGED_TREE):
+            labels.get('lab.glm53.tensorfold.tree') != MERGED_TREE or
+            labels.get('lab.glm53.tensorfold.launcher') != '2'):
         raise ValueError('Image is not this pinned native recipe; run ./tensorfold/build.sh')
     return data['Id']
 
@@ -195,7 +210,8 @@ def launch(c, m, image_id):
             '--ulimit', 'memlock=-1', '--ulimit', 'stack=67108864:67108864',
             '--label', f'{LABEL}={HERE}', '--log-opt', 'max-size=100m', '--log-opt', 'max-file=3',
             '--mount', f'type=volume,src={c["TF_VOLUME"]},dst=/cache', *mount(m)]
-    for k in ('TF_HOST', 'TF_PORT', 'TF_COMM_PORT', 'TF_CONTEXT', 'TF_PARALLEL', 'TF_MODEL_NAME'):
+    for k in ('TF_HOST', 'TF_PORT', 'TF_COMM_PORT', 'TF_CONTEXT', 'TF_PARALLEL', 'TF_MODEL_NAME',
+              'TF_PROMPT_CACHE_GIB', 'TF_MEMORY_RESERVE_GIB', 'TF_PROFILE', 'TF_NCCL_DEBUG'):
         args += ['-e', f'{k}={c[k]}']
     return args + ['-e', f'MODEL_PATH={m["container_path"]}', image_id]
 
