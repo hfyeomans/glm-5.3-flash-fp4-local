@@ -1,6 +1,6 @@
 # PR #1050 discussion brief: RTX PRO 6000 Blackwell SM120
 
-Prepared locally on 2026-10-24; **not posted upstream**. This is a record of measured local changes and proposed follow-up work, not a claim of exhaustive optimization or qualification on GB10/other GPUs. TensorFold is the engine name; TensorFlow is not involved.
+Updated on 2026-10-24 for the `hfyeomans/glm-5.3-flash-fp4-local` recipe; **not submitted to upstream PR #1050**. This is a record of measured local changes and proposed follow-up work, not a claim of exhaustive optimization or qualification on GB10/other GPUs. TensorFold is the engine name; TensorFlow is not involved.
 
 ## Reproduction baseline and credit
 
@@ -9,6 +9,31 @@ The checkpoint integration is the work of PR #1050's author, Bizuayeu: [PR #1050
 Hardware: two RTX PRO 6000 Blackwell Max-Q cards, 188 SMs/card, SM120, PCIe NODE topology; observed native transport NCCL P2P/IPC. CUDA 13.3, Zig 0.17.0, NCCL 2.31.2. No GPU power/clock changes, copied GB10 clock caps/CPU-affinity policies, NVLink or RoCE assumptions.
 
 Model: `nvidia/GLM-5.3-Flash-FP4-Local@76348ddb2be2e35e39ecfc00e75dc07703f4f3d5`, ModelOpt mixed precision with CSF32 NVFP4 routed experts, BF16 activations, FP32 accumulation and FP8 KV. No checkpoint conversion, precision substitution or external draft model. MTP uses the checkpoint's own draft component.
+
+## Integration and iteration history
+
+This is a local companion record for a possible future upstream contribution.
+Publishing this recipe does not update the author's branch, PR or issue discussion.
+The author owns the checkpoint integration; the experiments below extend that
+pinned work on our two PCIe SM120 cards.
+
+| Stage | What we did and learned | Reproduction/history |
+|---|---|---|
+| Establish vLLM baseline | Locked the NVIDIA revision/image, kept B12X bootstrap, qualified safetensors after InstantTensor failed during MTP loading. Recorded API, short-concurrency, speed and quality baselines. | `4d4c8ff`, `5d22ff4`; [validation](../docs/VALIDATION.md) |
+| Diagnose native loader | Plain TensorFold 1.1.3 had codec/config support but the GLM CUDA loader still used the older reader. Integrated the pinned PR's mixed-format projection/scale/norm/MTP handling without converting weights. | `8f529bd`, `a46b398`; [build recipe](README.md) |
+| Establish SM120 capacity | Built for the actual cards and ran the context ladder. Original 512K barely fit (339/492 MiB free); original 1M failed before readiness. That failure motivated storage work, not a reduced precision contract. | `4e83623`; [validation](../docs/VALIDATION.md) |
+| Tune existing controls | Qualified one-warp expert decode and four-piece prefill overlap; screened tiles, split-K, PDL, KDA, collectives and cuMem. Retained measured winners and recorded rejected variants. Did not copy GB10 clock caps or CPU pinning. | `7e06307`, `ba1a549`, `f19564d`; [tuning results](TUNING-RESULTS.md) |
+| Move embeddings experimentally | Added immutable host-mapped BF16 embeddings and ownership/cleanup to a separately pinned image; saved 1,208 MiB/card with a small prefill cost. Alone this still did not close the 1M gap. | `ba1a549`, `f19564d`; [source patch](tuning/sm120-experiments.patch) |
+| Keep scales compressed on GPU | Extended the upstream load-time expansion design with compact TP slices, resident descriptors/codes and shared GPU expansion scratch; preserved scale bytes and expert arithmetic. Recovered about 3,896 MiB/card physically. | `32fc48a`; [resident patch and tests](csf-resident/README.md) |
+| Reach 1M, measure the cost | Completed the 640K→768K→896K→near-1M ladder with host embeddings and MTP both ways. Returning controls confirmed the resident-scale throughput penalty rather than calling memory savings a speedup. | `209b485`; [results](csf-resident/RESULTS.md) |
+| Restore GPU embeddings below 1M | Qualified the separate 512K GPU-embedding profile. Reproduced older native short-quality outputs/probabilities; profiled the remaining expert, projection and attention costs. | `f7aab64`, `e330201`; [profiles](serving/README.md), [prefill investigation](../docs/PREFILL-INVESTIGATION-V2.md) |
+| Correct and complete long-task screening | Rejected an invalid prompt-wrapper cohort; explicitly closed reasoning and preserved task bodies/golds. Reduced the core by fixed sample index to 22 cases; reused valid evidence without selecting by score. Final core: 21 full credit, one partial. | `1ae4731`, `bc33561`, `111ee7c`, `13556fb`; [long-task results](../docs/LONG-CONTEXT-ACCURACY-V2.md) |
+| Document concurrency boundary | Specified four × 262,144 tokens as a future candidate. Current resident-scale recipe/native guards require one slot; scratch/state ordering and concurrent capacity/accuracy remain unqualified. No guard removed or profile enabled. | [Four-stream proposal](serving/FOUR-STREAMS.md) |
+
+The original GB10 results establish evidence for the author's tested hardware,
+not performance targets or qualification inherited by SM120. Likewise our local
+resident-scale restriction does not imply that the original PR lacks concurrent
+serving; it belongs to our newer storage extension.
 
 ## What changed and what we retained
 
@@ -44,7 +69,7 @@ Local history separates `7e06307` (one-warp adoption), `ba1a549` (isolated sourc
 
 Portable evidence: [decode](results/decode-warps-v1.json), [screen](results/served-screen-v1.json), [overlap confirmation](results/overlap4-confirmation-v1.json), [normal quality](results/overlap4-quality-v1.json), [normal cache](results/overlap4-cache-v1.json), [mapped quality](results/host-embedding-quality-v1.json), [capacity](results/host-embedding-capacity-v1.json). The chronological [validation record](../docs/VALIDATION.md) includes actual GPU checks and failures; raw local logs remain outside Git.
 
-At 8K input/256 output, the current matched benchmark reports:
+At 8K input/256 output, the archived normal-storage matched benchmark reports (these are not the latest resident-scale profile timings):
 
 | Engine | MTP | Decode tok/s | Prefill tok/s | Client TTFT, seconds |
 |---|---|---:|---:|---:|
@@ -74,7 +99,7 @@ resource-record failures and original HTTP-fixture failures remain in the receip
 
 Questions for eventual maintainer coordination: preferred descriptor/owner boundary; scratch lifetime across native stream modes; supported TP slicing envelope; whether storage separation should land independently; required platforms and performance gates. These are topics for a later authorized upstream discussion, not requests already sent.
 
-As checked on 2026-10-24, PR #1050 is still open and GitHub reports merge conflicts against current main. Refresh that state and coordinate with its author before rebasing or proposing an upstream change. No public posting, issue claim, merge or release was performed.
+Read-only GitHub metadata checked on 2026-10-24 still reports PR #1050 open, unmerged and not mergeable, with head `9b23b6a2e7ff226ca61934189c4cd57bf2933980` against main `bd264368ae7382672faef6cc99c2add8b24c5ec0`. This matches our pinned PR head; it does not replace our qualified v1.1.3 merge tree. [Metadata receipt](results/pr1050-status-20261024.json). Refresh the status before a future rebase. No upstream comment, issue, branch change, PR update, merge or release was performed; this write-up is maintained in the hfyeomans recipe repository only.
 
 ## Resident-scale implementation record
 
@@ -119,3 +144,37 @@ full release qualification, a statistical quality advantage or a matched
 vLLM long-context result. The inherited CUDA resource-record findings remain as
 previously documented; this phase changed recipe/evaluation tooling, not native
 kernel arithmetic. No upstream posting has been made.
+
+
+## Current contribution boundary and next candidates
+
+The resident image remains pinned by [serving/profiles.json](serving/profiles.json):
+source tree `b02cfca0f02235fa8f4b87c0ae921664a73d1807`, patch
+`567b5953034033ed5432fc31255149c9315d5e7fc93e1aaaffbc2f05c5d46905`, image
+`sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f`.
+It is the current capacity/quality experiment; the archived normal-storage image
+and earlier results remain reproducible independently.
+
+Latest isolated resident-scale/GPU-embedding controls measured approximately
+4,442/4,481 prefill tok/s and 1.845/7.313 s TTFT at 8K/32K, with request-level MTP
+decoding off and a 128K allocation. The archived vLLM-off cells measured
+10,422/10,387 tok/s and 0.791/3.166 s. These are separate recorded cohorts, not a
+new simultaneous test or a four-client result. Expert work accounts for about
+27% of the traced native chunk wall time; projections and attention also warrant
+investigation. Instrumented timings are excluded from performance controls.
+
+The full native GPU0 suite passed 146 numerical kernels and caught 33 planted
+controls but exited 1 on 949 inherited incomplete/stale resource records, reproduced
+on the parent on both cards. All 14 new launch records passed. The full numerical
+suite did not reach GPU1; targeted new operators and loader checks covered both
+cards. These results must accompany any proposed patch instead of claiming a
+clean full-suite pass. [Detailed limits](csf-resident/RESULTS.md).
+
+Potential upstream contributions should stay separable: RTX tuning evidence for
+existing controls; optional embedding ownership/placement; resident-scale storage,
+consumer contracts and tests. Four-slot support is a subsequent implementation and
+qualification task, not part of the completed one-slot result. Proposed concurrency
+settings and memory/isolation/quality/performance gates are in
+[FOUR-STREAMS.md](serving/FOUR-STREAMS.md). New fusion, A4 arithmetic, wider split-K
+or cross-platform defaults need their own evidence; none are established by these
+measurements. No new inference or kernel work was run for this documentation update.

@@ -1,199 +1,195 @@
-# GLM-5.3-Flash FP4 Local · the two-GPU recipe
+# GLM-5.3-Flash FP4 Local on two RTX PRO 6000 Blackwell GPUs
 
-A repeatable service recipe for **`nvidia/GLM-5.3-Flash-FP4-Local`** on **two 96 GB NVIDIA RTX PRO 6000 Blackwell GPUs**. The first course uses the model card's supported Local Inference Lab vLLM image, B12X kernels and MTP3. [A separate native TensorFold recipe](tensorfold/README.md) integrates pinned PR #1050 for this checkpoint; its local qualification is recorded independently from the measured vLLM baseline.
+Run **`nvidia/GLM-5.3-Flash-FP4-Local`** on two NVIDIA RTX PRO 6000 Blackwell
+Max-Q cards. Start with the measured vLLM recipe. TensorFold is a separately
+qualified experiment with explicit memory, quality and concurrency limitations.
 
-The kitchen rule: weigh the ingredients, check the station, then fire the service. Every launch records its checkpoint identity, image ID, settings and results. The measured acceptance checks, loading results and bounded concurrency sample are recorded in [the validation record](docs/VALIDATION.md).
+This repository contains launch scripts, source patches and compact result
+receipts. Model weights, credentials, local builds and raw run logs stay out of Git.
 
-The matched [MTP on/off performance report](docs/PERFORMANCE-CURRENT.md) separates decode speed, prefill and client TTFT. The [quality benchmark](docs/QUALITY-BASELINE.md) measures answer accuracy separately. Local SM120 experiments have their own [pinned tuning recipe](tensorfold/tuning/README.md).
+## vLLM quick start
 
-## The ingredients
+Requirements: Linux x86_64, working NVIDIA drivers and Container Toolkit, Docker,
+Bash, Python 3.10+, `flock`, and the downloaded checkpoint. Both GPUs must have
+sufficient free memory; the preflight reports other users without stopping them.
 
-| Ingredient | Fixed starting point |
-| --- | --- |
-| Checkpoint | [`nvidia/GLM-5.3-Flash-FP4-Local`](https://huggingface.co/nvidia/GLM-5.3-Flash-FP4-Local) |
-| Model revision | `76348ddb2be2e35e39ecfc00e75dc07703f4f3d5` |
-| Weight files | 42 safetensors shards, 177,463,841,024 bytes including headers (165.28 GiB) |
-| Container | `ghcr.io/local-inference-lab/vllm:release-10152026` |
-| Parallelism | TP2 / DCP2, selected host GPUs `0,1` |
-| Weights / attention | ModelOpt mixed precision with compressed FP4 scales; B12X attention, MoE and linear kernels |
-| Loader | CPU-staged `safetensors`; the original and bounded InstantTensor runs failed during MTP loading on this host |
-| Speculation | Checkpoint's MTP head, three draft tokens; no separate drafter download |
-| Context ceiling | 1,048,576 tokens per request, subject to shared cache capacity |
-| Scheduler | 8 active sequences; 4,096 batched tokens; one parallel prefill |
-| KV budget | FP8, **7,650,410,496 bytes per GPU** (7.125 GiB) |
-| GPU memory fraction | `0.985` |
-| Request defaults | Temperature `1.0`, top-p `0.95`, reasoning effort `max`, `clear_thinking=false` |
-| Endpoint | `http://127.0.0.1:8000/v1` |
-| API model name | `glm-5.3-flash-fp4-local` |
-
-Eight slots do not mean eight simultaneous million-token prompts fit. Read the capacity reported by vLLM at startup. The context ceiling and total KV capacity are different limits.
-
-NVIDIA's card lists `release-10142026` in its heading, but its actual launch commands use **`release-10152026`**. This recipe follows the commands and pins the verified Linux/amd64 registry digest:
-
-```text
-sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29
-```
-
-The default image reference includes both the release tag and this digest. The compressed scale format needs the specialized image; replacing it with an arbitrary upstream vLLM image is not a supported substitution. [Sources and deliberate choices](docs/PROVENANCE.md).
-
-## Mise en place
-
-Use Linux x86_64 with working NVIDIA drivers, Docker, NVIDIA Container Toolkit, Bash, Python 3.10+, `flock` and ordinary GNU utilities. The service smoke/performance clients use only the standard library; the optional quality benchmark installs its own isolated client environment. ShellCheck is needed for the repository checks.
-
-Keep both GPUs almost empty. The preflight requires the greater of `MIN_GPU_FREE_MIB=96000` and the configured vLLM memory fraction on each GPU. On this host's 97,887 MiB cards, the default fraction requires **96,419 MiB free per card**. It reports other containers and never stops them.
-
-The checkpoint already lives here:
-
-```text
-/models_engrams/huggingface/
-└── hub/
-    └── models--nvidia--GLM-5.3-Flash-FP4-Local/
-        ├── blobs/
-        ├── refs/main
-        └── snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5/
-            ├── config.json
-            ├── model.safetensors.index.json
-            ├── tokenizer.json
-            └── model-*.safetensors -> ../../blobs/...
-```
-
-This is the standard Hub layout for the namespace `nvidia/`; a second literal `nvidia/` directory is unnecessary. The complete cache entry was moved from `/data/huggingface/hub/` into this shared cache. All **42 weight-shard SHA-256 checksums passed after the move**.
-
-The recipe's **`HF_CACHE_ROOT`** defaults to `/models_engrams/huggingface`. It derives host `HF_HOME` and `HF_HUB_CACHE` from that setting so an older login-shell cache setting cannot send it back to `/data`. The container sees the Hub cache at `/root/.cache/huggingface/hub`, mounted read-only. Relative blob links stay intact. Kernels and compilation caches go into the separate Docker volume `glm53-fp4-runtime-10152026`.
-
-**`HF_TOKEN` is a credential, not a directory.** Serving these local files does not need it. The launcher runs with `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`; it does not forward a token or download replacement weights. Reserve disk space for the image and JIT caches on Docker's filesystem; use `docker system df` and `df -h` before pulling. A 60 GiB planning allowance is a starting budget, not a measured image size.
-
-## The first service
-
-From this repository:
+Run from the repository root:
 
 ```bash
-# Optional: customize the literal KEY=value settings.
-cp .env.example .env
+# Create local settings only if they do not already exist.
+test -f .env || cp .env.example .env
+# Edit .env for your model cache, GPU IDs, bind address and context limits.
 
-# Inspect the full launch without Docker calls, writes or GPU work.
-./start.sh --dry-run
-
-# Pull the supported image; record its exact image ID and registry digest.
-# This uses no GPUs and does not download model weights.
-./prepare.sh
-
-# Read-only checks. Resolve every FAIL before starting.
-./doctor.sh
-
-# Load weights, compile kernels, capture graphs, wait, then send a completion.
-./start.sh
-
-# The small acceptance suite: identity, text, JSON, tools and streaming.
+./start.sh --dry-run       # inspect the launch; no GPU work or Docker calls
+./prepare.sh               # pull/pin the image; does not download weights
+./doctor.sh                # check model, image, GPUs and port
+./start.sh                 # start, wait for readiness, send a short completion
 ./smoke.sh --suite --output logs/acceptance
 ```
 
-If another model service occupies the selected GPUs, arrange its shutdown before the GLM launch. `./doctor.sh` reports the memory blocker. The pinned image is prepared locally; repeat the preflight before startup because GPU and port availability can change.
+The checkpoint is read from `HF_CACHE_ROOT=/models_engrams/huggingface`, using its
+standard Hugging Face Hub layout. For a standalone complete snapshot, set
+`MODEL_DIR=/absolute/path/to/checkpoint` in `.env`. Keep Hub snapshot symlinks and
+their blobs together. **`HF_TOKEN` is a credential, not a path**; this offline
+launcher needs no token for the already downloaded model.
 
-First startup can spend minutes loading and compiling; the default readiness deadline is one hour. The script prints a heartbeat while waiting. Follow progress from a second terminal with `./logs.sh`. A readiness failure retains the container and saves its logs for inspection. The first-run restart policy is `no`, which keeps a failed run inspectable. After acceptance, set `RESTART_POLICY=on-failure:3` in `.env` and run `./start.sh restart` if bounded automatic retries are desired.
+| Fixed ingredient | Value |
+|---|---|
+| Checkpoint revision | `76348ddb2be2e35e39ecfc00e75dc07703f4f3d5` |
+| Container | `ghcr.io/local-inference-lab/vllm:release-10152026` |
+| Image pin | Tag plus verified registry digest in [.env.example](.env.example) |
+| Weight format | Original NVIDIA mixed ModelOpt / CSF32 compressed scales |
+| GPU execution | TP2 / DCP2; supplied B12X kernels and bootstrap |
+| Loader | `safetensors`; InstantTensor failed at MTP loading on this host |
+| Speculation | Built-in MTP, three draft tokens; no separate draft model |
+| Client endpoint | `http://127.0.0.1:8000/v1` |
+| API model name | `glm-5.3-flash-fp4-local` |
 
-The explicit `vllm serve` command is passed through the image's normal entrypoint, retaining its CUDA/NCCL bootstrap. **`PRESET=glm53-tp2` is deliberately omitted:** that preset selects a different Local Inference Lab checkpoint and may start an additional LMCache RAM tier. This recipe selects the NVIDIA snapshot directly and uses GPU prefix caching.
+The model card's launch command uses release **10152026**, despite its older
+heading. The recipe selects the NVIDIA snapshot explicitly; it does not use the
+preset that selects a different checkpoint. [Provenance](docs/PROVENANCE.md).
 
-## Taste before serving
+## vLLM settings and lifecycle
 
-A successful `./start.sh` proves `/health` responds, `/v1/models` lists the expected model, and a short greedy completion returns `ready`. It does not establish long-context capacity or model quality.
+Put literal, unquoted `KEY=value` lines in root **`.env`**. Exported values take
+precedence. Restart to apply changes; plain `start` leaves an already-running
+container's configuration unchanged.
 
-`./smoke.sh --suite` additionally requires:
+| Setting | Default | Purpose |
+|---|---|---|
+| `HF_CACHE_ROOT` | `/models_engrams/huggingface` | Existing host model cache |
+| `GPUS` | `0,1` | Two host GPU IDs |
+| `HOST` / `PORT` | `0.0.0.0` / `8000` | Listen address; use `127.0.0.1` for local-only access |
+| `MAX_MODEL_LEN` | `1048576` | Per-request prompt **plus output** token ceiling |
+| `MAX_NUM_SEQS` | `8` | Maximum active sequences; not a memory guarantee |
+| `MAX_NUM_BATCHED_TOKENS` | `4096` | Scheduler token budget per iteration |
+| `GPU_MEMORY_UTILIZATION` | `0.985` | Preserve the measured baseline fraction |
+| `KV_CACHE_MEMORY_BYTES` | `7650410496` | Fixed FP8 KV allocation **per GPU** |
+| `MTP_ENABLED` | `1` | Use `0` for a controlled plain-decoding comparison |
+| `LOAD_FORMAT` | `safetensors` | Qualified loader; InstantTensor remains experimental here |
+| `RESTART_POLICY` | `no` | Inspect failures; optional `on-failure:3` after acceptance |
 
-- A JSON response with `{"answer":42}` for a small arithmetic prompt.
-- One parsed `get_temperature` tool call with the requested city and unit. It never executes a tool.
-- A nonempty streaming response terminating with `[DONE]`.
+For **262,144 tokens per request and four active sequences**, change only these
+lines in `.env`, retaining the baseline memory and kernel settings:
 
-Every failed check counts; the suite does not retry model-output failures. Read [the test service plan](docs/TESTING.md) before scaling the workload.
+```dotenv
+MAX_MODEL_LEN=262144
+MAX_NUM_SEQS=4
+```
 
-Try the API:
+Then run `./start.sh restart`. Leaving the defaults also permits four 262K
+requests, but permits larger requests and up to eight active sequences too.
+The recipe retains one parallel prefill (`--max-parallel-prefills 1`); active
+streams need not prefill simultaneously. This is a configuration option, **not a
+completed four-full-context capacity test**.
+
+The MTP-on baseline reported **1,844,162 shared KV tokens**, or 1.76 full 1M
+windows. Eight slots do not imply eight resident 1M contexts. Two independent
+full 1M windows exceed that reported pool; shared prefixes and scheduler
+preemption can change observed completion behavior. Validate actual overlap,
+queueing, recomputation and memory, not just whether all clients eventually finish.
+Reducing the memory fraction alone does not reduce the explicitly fixed KV budget.
 
 ```bash
-curl -fsS http://127.0.0.1:8000/v1/models
+./status.sh                # container and API readiness
+./logs.sh                  # follow server logs
+./smoke.sh --suite         # identity, text, JSON, tool parsing and streaming
+./start.sh restart         # recreate only this recipe's container
+./stop.sh                  # stop; preserve container, model and runtime cache
+```
+
+Startup can spend minutes loading/compiling. Logs and launch receipts go to
+`logs/run-<UTC>-<pid>/`, linked by `logs/latest`. Failed startup retains evidence.
+No command stops unrelated containers, changes power/clocks or prunes caches.
+[Detailed operations](docs/VLLM-OPERATIONS.md) · [Troubleshooting](docs/TROUBLESHOOTING.md).
+
+## API example
+
+The default bind accepts network clients and has no API key. Set `HOST=127.0.0.1`
+for local use, or export `VLLM_API_KEY` before startup to require authentication.
+Keep credentials out of `.env` and Git; the supplied Python clients read the
+exported key. If authentication is enabled, add its bearer header to curl requests.
+
+```bash
 curl -fsS http://127.0.0.1:8000/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
     "model":"glm-5.3-flash-fp4-local",
-    "messages":[{"role":"user","content":"Write a short Python fibonacci function."}],
+    "messages":[{"role":"user","content":"Explain tensor parallelism briefly."}],
     "temperature":0,
     "max_tokens":512,
     "chat_template_kwargs":{"reasoning_effort":"low","clear_thinking":false}
   }'
 ```
 
-The short checks select `reasoning_effort=low` with a 512-token budget. This image's template always opens a reasoning block; do not send `enable_thinking=false`, which disables parser separation without removing the template's reasoning prefix. Normal requests retain the server's `max` reasoning default. The default bind is `0.0.0.0`, matching the model card, and the API has no key by default. Set `HOST=127.0.0.1` for local-only clients. Export `VLLM_API_KEY` before startup to enable API authentication; the supplied Python clients read it without printing it.
+Normal requests default to maximum reasoning effort. Short checks use low effort.
+Do not use `enable_thinking=false` as a shortcut: the pinned template still opens
+its reasoning block, which previously caused incorrect output/parser behavior.
 
-## During service
+## TensorFold: current status and limitations
 
-```bash
-./status.sh                 # container state plus API/model readiness
-./logs.sh                   # timestamped server logs, follow mode
-./smoke.sh                  # one short completion
-./start.sh restart          # recreate only this recipe's container
-./stop.sh                   # stop; preserve container, logs, model and runtime cache
-```
+The native recipe builds pinned TensorFold **v1.1.3 + PR #1050** for SM120. The PR
+supplies NVIDIA checkpoint integration; our local work adds measured RTX settings,
+optional mapped embeddings and a separate resident compressed-scale implementation.
+TensorFold is the engine name; TensorFlow is not involved.
 
-Lifecycle operations use a lock and verify an ownership label before stopping or removing a container. `restart` stops this recipe's existing server before checking free GPU memory and the port; if the checks fail, the service stays stopped. Plain `start` checks an already-running recipe's readiness and leaves its configuration in place.
+| Current resident-CSF32 profile | Placement / concurrency | Measured status |
+|---|---|---|
+| `gpu-512k` | GPU embeddings; one slot; 524,288-token window | Capacity/retrieval passed with MTP on/off; minimum free VRAM 4,177 / 4,330 MiB including probability diagnostic |
+| `host-1m` | Host-mapped embeddings; one slot; 1,048,576-token window | Near-window retrieval passed; initial long-task screen 21/22 fully correct, one partial; minimum free 1,693 / 1,846 MiB |
+| Proposed `host-262k-x4` | Four 262,144-token windows; host embeddings candidate | **Blocked / not runnable**: current resident-scale recipe and engine permit one slot only |
 
-Each new launch writes `logs/run-<UTC>-<pid>/` and updates `logs/latest`:
-
-```text
-model.json             selected snapshot, shard sizes and metadata hashes
-image.json             exact Docker image ID and registry digest
-launch-command.txt     shell-escaped command; credentials are passed by name
-runtime.env            frozen B12X/runtime environment, no credentials
-gpus.csv               GPU identity, driver and memory before startup
-container-id.txt       container identity
-completion-response.json / checks.json
-server.log             captured on startup failure; stop/restart also save logs
-```
-
-`prepare.sh` records `.state/image.json`. If the tag later points at a different local image ID, `start.sh` refuses silent drift; review the image and rerun `prepare.sh` to update the lock. Normal launch resolves the image to its immutable local ID and does not pull it automatically.
-
-## Change one ingredient at a time
-
-`.env` is literal `KEY=value` data. No shell expansion, quote removal or shell execution occurs. Use `.env.example` as the template; exported recipe settings take precedence. Keep credentials in the exported environment.
-
-For another shared cache, set `HF_CACHE_ROOT=/absolute/path`. For a complete standalone checkpoint directory, set `MODEL_DIR=/absolute/path/to/checkpoint`. Do not detach just a snapshot directory from its Hub blobs; the validator rejects links that would escape the container mount. Automatic local-folder discovery also recognizes `nvidia/glm-5.3-flash-fp4-local` and `glm-5.3-flash-fp4-local` under the cache root, but the standard Hub layout is preferred.
-
-`config/model-lock.json` pins the NVIDIA config and index hashes. Startup checks metadata identity, required tokenizer files, shard presence, sizes and container-visible links; it does not rehash 165 GiB on every launch. An intentional checkpoint upgrade needs reviewed metadata and its own full revision. `config/b12x.env` holds the supplied kernel/NCCL settings. The default `LOAD_FORMAT=safetensors` passed on this host. Both the original InstantTensor settings and a 256 MiB/eight-slot staging experiment failed while loading MTP; `LOAD_FORMAT=instanttensor` remains available for further investigation. Inference uses the same B12X kernels with either loader. Keep those fixed for the initial baseline.
-
-If graph capture runs out of memory, preserve the failure logs first. Check other GPU users before experimenting with fewer sequences or a smaller graph configuration. Reducing `GPU_MEMORY_UTILIZATION` alone does **not** reduce the explicitly allocated `KV_CACHE_MEMORY_BYTES`.
-
-## Kitchen checks and next course
+Use the [build guide](tensorfold/README.md) and
+[resident-scale build recipe](tensorfold/csf-resident/README.md) to prepare the
+pinned experimental image first; it is a local image, not a published image pull.
+Once built, switch deliberately from vLLM:
 
 ```bash
-./scripts/check.sh         # shell syntax, ShellCheck, Python syntax and CPU-only tests
+./stop.sh
+python3 tensorfold/serving/run.py gpu-512k start
+python3 tensorfold/serving/run.py gpu-512k smoke --wait 1200 --suite
+python3 tensorfold/serving/run.py gpu-512k stop
+# Explicit larger-context alternative: substitute host-1m in those commands.
 ```
 
-The repository checks use fixtures and a local mock HTTP server. They perform no model inference or Docker operations on the host. See [validation status](docs/VALIDATION.md), [troubleshooting](docs/TROUBLESHOOTING.md), and the [TensorFold build/qualification plan](docs/TENSORFOLD.md).
+Current limits:
 
-The operational structure is inspired by the neighboring [Aevonix/Mia's AI Lab two-GPU TensorFold recipe](https://github.com/Aevonix/GLM-5.3-Flash-EXL3-2x-RTX-PRO-6000-TensorFold). Its EXL3 patches and performance results belong to that checkpoint/runtime. The NVIDIA weights, container and TensorFold retain their respective licenses; see [provenance](docs/PROVENANCE.md).
+- Resident compressed scales are qualified only for TP2, one slot, no external
+  draft model or vision. Native MTP uses this checkpoint's draft component.
+- The 1M profile has only 157 MiB above our 1,536 MiB sampled headroom floor on
+  the limiting card. The reserve setting alone does not enforce that floor.
+- Compressed scales save about 3,896 MiB/card but cost 6.6–7.9% decode and 3.2–4.1%
+  longer-prompt prefill throughput in controlled same-image comparisons.
+- vLLM remains substantially faster on measured long-prefill workloads. The
+  short matched quality comparison found **no convincing TensorFold advantage**;
+  new native results reproduced all 256 older native answers and 1,439 scored
+  probabilities. No matched vLLM near-1M quality comparison has been completed.
+- The full native CUDA suite is not clean: numerical checks passed, but inherited
+  resource-record failures remain. Small task screens do not establish universal
+  accuracy, multi-slot safety or an upstream release qualification.
 
-## Quality and accuracy
+[Serving profiles](tensorfold/serving/README.md) ·
+[Four-stream proposal and qualification gates](tensorfold/serving/FOUR-STREAMS.md) ·
+[PR #1050 integration, RTX changes and iteration history](tensorfold/PR1050-SM120-BRIEF.md).
+The brief is documentation in this repository; no upstream PR/comment has been
+submitted as part of this work.
 
-The [initial quality benchmark](quality/README.md) compares 128 fixed GSM8K questions and 128 fixed IFEval prompts between the two engines using official pinned task graders and identical rendered prompts. It saves per-item evidence and reports paired differences and uncertainty. The [measured initial baseline](docs/QUALITY-BASELINE.md) records the completed two-engine comparison. Use it separately from the throughput benchmark and long-context retrieval tests.
+## Evidence and development
 
-[Precision and quality notes](docs/PRECISION-AND-QUALITY.md) explain W4A16, BF16, NVFP4, lossless scale compression, KV-cache precision, speculative decoding, memory headroom and what each test does—and does not—measure.
+```bash
+./scripts/check.sh         # shell lint, Python syntax and CPU-only recipe tests
+```
 
+GPU inference is a separate validation step. Compact receipts are tracked;
+raw logs, datasets, local builds and checkpoints are not distributed here.
 
-The separate [TensorFold resident-CSF32 experiment](tensorfold/csf-resident/RESULTS.md)
-now passes a 1,048,311-token prompt in a 1M window on these two cards, with unchanged
-short-quality hashes and 1,693/1,846 MiB sampled free. It trades about 7% decode speed
-and 3–4% longer-prompt prefill throughput for memory, using one slot, mapped embedding
-and no retained prompt cache. It is an explicit capacity profile; the vLLM recipe
-above remains the supported starting point.
-
-
-The newer [TensorFold serving profiles](tensorfold/serving/README.md) qualify 512K
-with embeddings in VRAM; only the explicit 1M profile maps them to host memory.
-The [three-way short-quality comparison](docs/QUALITY-BAKEOFF-V2.md) shows no
-convincing accuracy advantage over the archived vLLM baseline. The
-[prefill trace](docs/PREFILL-INVESTIGATION-V2.md) records the remaining native
-performance costs. Broader 1M accuracy is measured separately from capacity.
-
-
-The [reduced long-context accuracy screen](docs/LONG-CONTEXT-ACCURACY-V2.md)
-finished with 21/22 near-1M core cases fully correct and one partial aggregation
-answer. This is a small native regression baseline, separate from capacity and
-from the archived matched vLLM comparison.
+- [Validation record](docs/VALIDATION.md): actual checks, failures and scope.
+- [Performance](docs/PERFORMANCE-CURRENT.md) and [prefill investigation](docs/PREFILL-INVESTIGATION-V2.md).
+- [Three-way short-quality comparison](docs/QUALITY-BAKEOFF-V2.md) and [initial long-context screen](docs/LONG-CONTEXT-ACCURACY-V2.md).
+- [Precision guide](docs/PRECISION-AND-QUALITY.md): W4A16, BF16, FP4, compressed scales and MTP.
+- [Credits and model terms](docs/PROVENANCE.md). PR #1050's checkpoint integration
+  is credited to Bizuayeu; the operational guide was inspired by
+  [Aevonix's two-GPU EXL3 recipe](https://github.com/Aevonix/GLM-5.3-Flash-EXL3-2x-RTX-PRO-6000-TensorFold).
+  These are different checkpoints; their weights, licenses and measurements are
+  not interchangeable. This repository distributes neither model weights nor
+  container images and does not grant new rights to upstream components.

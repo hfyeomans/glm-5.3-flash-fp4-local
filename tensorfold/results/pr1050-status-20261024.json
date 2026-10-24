@@ -1,0 +1,18 @@
+{
+  "checked_date_utc": "2026-10-24",
+  "source": "https://github.com/ashhart/TensorFold/pull/1050",
+  "method": "Read-only GitHub get_pr_info metadata",
+  "state": "open",
+  "merged": false,
+  "mergeable": false,
+  "author": "Bizuayeu",
+  "head_repository": "Bizuayeu/TensorFold",
+  "head_ref": "pr/glm-fp4local",
+  "head_sha": "9b23b6a2e7ff226ca61934189c4cd57bf2933980",
+  "base_ref": "main",
+  "base_sha": "bd264368ae7382672faef6cc99c2add8b24c5ec0",
+  "upstream_updated_at": "2026-10-22T23:13:16Z",
+  "local_base_sha": "36415df4f76e4458e82d0fa729ecb28e287ebf38",
+  "local_merged_tree": "1d52effd182d9319d775d5787904c36783e532f1",
+  "note": "Read-only status snapshot, not a compatibility test against current main. No upstream repository or PR mutation. Runtime pins unchanged."
+}

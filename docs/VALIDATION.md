@@ -831,3 +831,29 @@ vLLM. The short matched bakeoff remains unchanged and shows no convincing qualit
 advantage. [Results](LONG-CONTEXT-ACCURACY-V2.md) ·
 [Portable receipt](../tensorfold/results/long-context-accuracy-v2.json) ·
 [Word-count audit](../tensorfold/results/long-context-fwe-audit-v1.json).
+
+
+## Public recipe documentation preparation (2026-10-24)
+
+Refreshed the root vLLM quick start/settings guide, retained detailed operations
+in `docs/VLLM-OPERATIONS.md`, and updated the local PR #1050 companion brief with
+integration history, RTX-specific decisions, rejected experiments and current
+qualification limits. The four-stream TensorFold proposal is documentation only;
+its existing single-slot refusal and runnable profiles are unchanged. Read-only
+upstream metadata still identifies the pinned PR head; no upstream mutation or
+comment was made.
+
+`./scripts/check.sh` passed shell lint, Python syntax and all 56 CPU-only tests.
+The sweep fixture emitted existing unclosed-lock-file ResourceWarnings, without
+test failures. Documentation link checks and ignore-rule checks passed. A pattern
+scan of all 288 reachable historical Git blobs (3,348,883 bytes before this docs
+commit) found no matches for the tested credential/private-key patterns, no
+sensitive checkpoint/credential filenames and no blobs over 5 MiB. This is a
+bounded publication check, not a comprehensive security audit. `.env` variants,
+editor swap/backup files, model payloads, local environments, builds, caches and
+raw logs are ignored; example settings, B12X configuration and compact receipts
+remain tracked. Pre-existing unrelated untracked notes are excluded from this
+publication change.
+
+No GPU tests, service restarts, new performance/accuracy measurements, engine
+changes or model revisions were made in this documentation phase.

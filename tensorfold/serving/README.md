@@ -47,3 +47,10 @@ No corrected-cohort truncations or reasoning-marker outputs occurred. Sampled
 free memory remained at least **1,693/1,846 MiB**. These are two examples per task,
 not an exhaustive 1M quality qualification or a comparison to vLLM at 1M.
 [Accuracy results](../../docs/LONG-CONTEXT-ACCURACY-V2.md).
+
+
+The proposed **four streams × 262,144 tokens** configuration is documented in
+[FOUR-STREAMS.md](FOUR-STREAMS.md), including settings, scratch/state requirements
+and capacity/quality qualification gates. It is blocked by the current resident-
+CSF32 single-slot restriction and is not an executable profile. Existing serving
+profiles and embedding placement are unchanged.
