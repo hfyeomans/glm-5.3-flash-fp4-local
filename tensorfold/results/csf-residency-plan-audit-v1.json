@@ -1,0 +1,127 @@
+{
+  "model_id": "nvidia/GLM-5.3-Flash-FP4-Local",
+  "revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+  "metadata_sha256": {
+    "config.json": "dbf6aaf0d3651a5a297e6672bed57979c20528e2aa7475b80df5ba63d5402ba8",
+    "model.safetensors.index.json": "1981941b2fabb9271ae3a3cb76be6ea41927f730b6633471d3c147106703aeea"
+  },
+  "audit_client_sha256": "a31606a20b617ef48e3b6c6efcee72200f64abd8a5e0ab85cccec48146fb100f",
+  "matrices": 36288,
+  "layers": 42,
+  "shapes": {
+    "down_proj:4096x128": 12096,
+    "gate_proj:2048x256": 12096,
+    "up_proj:2048x256": 12096
+  },
+  "checkpoint_bytes": {
+    "bases": 99090432,
+    "codes": 9512681472,
+    "page_bases": 4644864,
+    "offsets": 596865024,
+    "exceptions": 107773344,
+    "decoded_scales": 19025362944,
+    "weight_codes": 152202903552
+  },
+  "tp2_rank_bytes": [
+    {
+      "decoded_scales": 9512681472,
+      "weight_codes": 76101451776,
+      "bases": 74317824,
+      "codes": 4756340736,
+      "page_bases": 2322432,
+      "offsets": 298432512,
+      "exceptions": 53900090,
+      "compressed_scales": 5185313594,
+      "gross_scale_saving": 4327367878
+    },
+    {
+      "decoded_scales": 9512681472,
+      "weight_codes": 76101451776,
+      "bases": 74317824,
+      "codes": 4756340736,
+      "page_bases": 2322432,
+      "offsets": 298432512,
+      "exceptions": 53873254,
+      "compressed_scales": 5185286758,
+      "gross_scale_saving": 4327394714
+    }
+  ],
+  "scratch_bytes_per_rank": {
+    "separate_up_down": 226492416,
+    "aliased_serial": 150994944,
+    "two_full_layer_sets": 452984832,
+    "full_interleaved_layer_copy": 2038431744
+  },
+  "projected_scenarios": {
+    "separate_up_down": [
+      {
+        "rank": 0,
+        "net_saving_GiB": 3.81923789344728,
+        "projected_free_at_1m_GiB": 1.66787070594728
+      },
+      {
+        "rank": 1,
+        "net_saving_GiB": 3.8192628864198923,
+        "projected_free_at_1m_GiB": 1.8173097614198923
+      }
+    ],
+    "aliased_serial": [
+      {
+        "rank": 0,
+        "net_saving_GiB": 3.88955039344728,
+        "projected_free_at_1m_GiB": 1.73818320594728
+      },
+      {
+        "rank": 1,
+        "net_saving_GiB": 3.8895753864198923,
+        "projected_free_at_1m_GiB": 1.8876222614198923
+      }
+    ],
+    "two_full_layer_sets": [
+      {
+        "rank": 0,
+        "net_saving_GiB": 3.60830039344728,
+        "projected_free_at_1m_GiB": 1.45693320594728
+      },
+      {
+        "rank": 1,
+        "net_saving_GiB": 3.6083253864198923,
+        "projected_free_at_1m_GiB": 1.6063722614198923
+      }
+    ],
+    "full_interleaved_layer_copy": [
+      {
+        "rank": 0,
+        "net_saving_GiB": 2.13173789344728,
+        "projected_free_at_1m_GiB": -0.01962929405272007
+      },
+      {
+        "rank": 1,
+        "net_saving_GiB": 2.1317628864198923,
+        "projected_free_at_1m_GiB": 0.1298097614198923
+      }
+    ]
+  },
+  "projection_inputs": {
+    "baseline_context": 524288,
+    "target_context": 1048576,
+    "baseline_free_MiB_by_rank": [
+      1547,
+      1700
+    ],
+    "incremental_bytes_per_capacity_token_per_rank": 7500,
+    "desired_free_GiB": 1.5,
+    "evidence": [
+      "tensorfold/results/host-embedding-capacity-v1.json",
+      "tensorfold/TUNING-RESULTS.md"
+    ]
+  },
+  "assumptions": [
+    "Preserve compact u16 page prefixes and u32 page origins after aligned TP2 slicing.",
+    "Down-projection row bases are duplicated across ranks; exceptions partition by actual page prefixes.",
+    "New packed weight codes remove the old persistent scale slots; no persistent expanded scale copy remains.",
+    "Scratch reuse requires proven stream ownership; these are estimates, not implemented allocations.",
+    "Excludes new metadata, allocator padding, launch/graph state and retained loading staging.",
+    "Reads headers and scale indexes only; not a complete codec-integrity or GPU test."
+  ]
+}

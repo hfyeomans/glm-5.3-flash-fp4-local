@@ -8,6 +8,8 @@ The plain 1.1.3 image built previously cannot load this checkpoint. It contains 
 
 For matched vLLM/TensorFold MTP on/off timings, see [the performance report](../docs/PERFORMANCE-CURRENT.md). Further prefill, split-K, communication and embedding experiments live in [tuning/](tuning/README.md), with a separate image and explicit source pins. Those controls do not replace the qualified default image.
 
+The [PR #1050 / SM120 discussion brief](PR1050-SM120-BRIEF.md) separates our measured settings, source patches and retained upstream choices. The [resident compressed-scale plan](COMPRESSED-SCALES-PLAN.md) documents the next loader/kernel work and its audited memory budget; it is not an implemented feature.
+
 ## Fixed ingredients
 
 | Ingredient | Pin |

@@ -544,3 +544,37 @@ Evidence: `logs/tuning/final-vllm-restore.log`, `final-vllm-api/`,
 now four overlap pieces; mapped embedding remains an explicit experimental
 capacity profile. All changes and portable receipts are local to this repository;
 no upstream issue, comment or PR was published.
+
+## 2026-10-24 — compressed-scale research and contribution record
+
+Added the [SM120 PR discussion brief](../tensorfold/PR1050-SM120-BRIEF.md) and
+[resident-CSF32 implementation/validation plan](../tensorfold/COMPRESSED-SCALES-PLAN.md).
+These distinguish adopted settings, isolated source patches, rejected candidates
+and future work. Live upstream inspection found PR #1050 open at our pinned
+head, with GitHub reporting merge conflicts against current main. Nothing was
+posted or claimed upstream.
+
+The CPU-only [inventory utility](../tensorfold/tuning/csf_inventory.py) read
+safetensors headers and compressed-scale page indexes from the exact pinned
+NVIDIA checkpoint. All 36,288 routed matrices across 42 layers were accounted
+for, including actual TP2 exception splits and duplicated down-projection row
+bases. [The result](../tensorfold/results/csf-residency-plan-audit-v1.json)
+records source/metadata hashes, raw byte totals and projection assumptions.
+It checks relevant page boundaries/extents, not every codec record or weight.
+
+Projected net savings with 216 MiB shared scale scratch are 3.819 GiB/rank;
+combined with the previously qualified mapped-embedding profile, the projected
+1M free memory is 1.668 / 1.817 GiB before new metadata/padding/graph overhead.
+This is an accounting result, **not a measured GPU allocation or 1M inference
+pass**. Compressed residency and new expert kernels remain unimplemented.
+
+`./scripts/check.sh` passed shell lint, Python syntax and **41 CPU tests**,
+including five new accounting tests for TP cuts, byte/record units, empty
+exceptions and invalid extents/origins/boundaries. Local document links,
+inventory provenance and accounting totals also passed checks.
+
+A read-only `./status.sh` confirmed the existing vLLM container running with
+zero restarts, image `sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29`,
+and passing readiness/model identity. No service restart, new GPU inference,
+checkpoint write, power/clock change or engine configuration change occurred
+in this research step.

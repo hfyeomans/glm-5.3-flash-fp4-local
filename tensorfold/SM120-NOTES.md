@@ -288,3 +288,7 @@ The separate mapped-embedding profile saves 1,208 MiB per GPU and passed near
 explicit experimental image/profile, not the default weight placement. The
 qualified image, checkpoint, precision, GPU clocks/power and vLLM memory budget
 remain unchanged. The 1M target still needs additional engine allocation savings.
+
+## Consolidated contribution record and next scope
+
+See [PR1050-SM120-BRIEF.md](PR1050-SM120-BRIEF.md) for the dated, evidence-linked record of adopted RTX settings, experimental source patches, retained GB10-associated choices and unrun platforms. The [compressed-scale plan](COMPRESSED-SCALES-PLAN.md) scopes the next TensorFold-only loader/kernel work. Nothing has been posted upstream; compressed GPU residency and 1M remain unimplemented/unqualified.
