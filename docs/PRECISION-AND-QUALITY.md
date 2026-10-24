@@ -201,3 +201,51 @@ arithmetic is unchanged. Fixed-history comparisons therefore report target-token
 log probabilities, top-one changes and the original top-two margin. They help
 locate numerical effects, but agreement on sampled histories does not prove
 identical behavior for all prompts or replace task accuracy measurements.
+
+## What the measured engine speed gap tells us
+
+Both recipes run locally on the same two GPUs. At 8K input / 256 output, the
+current vLLM/B12X recipe is about 42% faster in MTP-enabled decode and 2.27 times
+as fast in reported prefill throughput. With MTP disabled its decode is still
+about 69% faster. Speculation alone therefore does not explain the gap.
+
+Concrete implementation differences include vLLM's selected B12X attention,
+expert and linear backends, CUDA-graph configuration, specialized PCIe all-reduce
+and KDA prefill settings. TensorFold uses its own kernels and communication
+schedule. Its diagnostic profile identifies routed experts as the largest
+measured stage, followed by KDA and MLA. These identify plausible optimization
+areas; matched cross-engine GPU traces and controlled ablations have not been
+run, so we cannot assign a measured percentage of the gap to each mechanism.
+The same checkpoint does not imply identical runtime representations or arithmetic.
+See [the measured comparison](PERFORMANCE-CURRENT.md) and
+[the profiling notes](../tensorfold/SM120-NOTES.md).
+
+## NCCL device-cuMem and host-cuMem
+
+NCCL is NVIDIA's GPU communication library. Our `cumem-device` experiment sets
+`NCCL_CUMEM_ENABLE=1`, selecting CUDA `cuMem*` allocation functions for NCCL.
+The separate `NCCL_CUMEM_HOST_ENABLE` flag selects cuMem allocation for NCCL's
+host-memory side. These control allocation mechanisms for communication; they
+do not increase physical VRAM, compress model weights or automatically move
+embeddings/KV to CPU memory. [NVIDIA's definitions](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/env.html#nccl-cumem-enable).
+
+Both flags were tested separately on this host without a clear performance
+benefit, so the native recipe retains its explicit zero values. The mapped BF16
+embedding experiment is separate code that places the immutable embedding table
+in pinned host memory; enabling NCCL's host-cuMem flag does not implement that.
+
+## Which engine has the 1M memory shortfall?
+
+The approximately 2.15 GiB shortfall concerns the experimental TensorFold
+configuration after mapped embedding. Going from configured 512K to 1M requires
+an estimated 3.66 GiB more per rank; the limiting GPU had about 1.51 GiB free.
+Thus another 2.15 GiB of allocation savings would only reach a theoretical fit;
+about 3.65 GiB would preserve 1.5 GiB free. This is additional memory to save,
+not memory already available. Retaining compressed scales on device has an
+estimated 4.05 GiB/rank opportunity, but requires new loader/kernel support and
+actual validation; it is not an existing toggle.
+
+vLLM already starts with a configured 1,048,576-token limit and reports roughly
+1.84 million tokens of shared KV capacity. A near-1M vLLM request has not been
+validated in this project. Configured capacity, successful near-window inference
+and broad long-context accuracy are three separate claims.
