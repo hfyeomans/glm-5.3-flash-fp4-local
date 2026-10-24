@@ -1,0 +1,2364 @@
+{
+  "manifest_sha256": "1938fcbb437bdcb87e9cc54eb57fc8e59d0068c0109ab45f4638533217154ef5",
+  "bank": {
+    "protocol": {
+      "name": "local-ruler-13-v1",
+      "harness_commit": "d6de81643928d653435c431bae19945d41d32520",
+      "official_scorer_commit": "c3f5e3b4f87f97e048793bb510a3a6b19a46bf3a",
+      "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "model_path": "/mnt/models_engrams/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "tokenizer_sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+      "template_sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+      "client_sha256": "f59cb3c94b219d478f10835af0e3373ead9b1e2678d25cf10656ebc20386087b",
+      "lengths": [
+        32768,
+        1048576
+      ],
+      "samples_per_task": 4,
+      "tasks": [
+        "niah_single_1",
+        "niah_single_2",
+        "niah_single_3",
+        "niah_multikey_1",
+        "niah_multikey_2",
+        "niah_multikey_3",
+        "niah_multivalue",
+        "niah_multiquery",
+        "vt",
+        "cwe",
+        "fwe",
+        "qa_squad",
+        "qa_hotpot"
+      ],
+      "seed": 1729,
+      "max_output_tokens": 256,
+      "essay_revision": "792d672b77d1a67720f7e9820d646358fc18792e",
+      "essay_repeats": 3,
+      "qa_indices": {
+        "qa_squad": [
+          5355,
+          368,
+          3365,
+          4106
+        ],
+        "qa_hotpot": [
+          5355,
+          7248,
+          368,
+          3365
+        ]
+      },
+      "sources": {
+        "prepare_niah.py": "beb37d90132ce928eca803818e5b4940468d1f9b25fa98f0ede8442ffd099ca3",
+        "niah_utils.py": "f0c219af1139e7f1cef96ce1e13e80083be0e47e5e848440d2ec931a97bcdd9b",
+        "vt_utils.py": "9d71679b554751266436b5aef328ae772c2196398eea869988e3f4e51b78fbcb",
+        "cwe_utils.py": "e27159df13850979f262ca2dc1b5eee0501dea6dbcf84f4a0571e3d55d0ab337",
+        "fwe_utils.py": "f0bb18891e4d68157512c84f6255695ee03a3e3643371ac6b4ff3287eb492ec5",
+        "qa_utils.py": "e12e3220899cb885811cad8593ef03fe08cff8e0a61d774fedd29525c6b5d1c5"
+      },
+      "data_sha256": {
+        "hotpot.json": "e3da074df24e8369009918aa5cdbdd254dadcde4c63f7569d36afd6f2268caa8",
+        "squad.json": "80a5225e94905956a6446d296ca1093975c4d3b3260f1d6c8f68bc2ab77182d8"
+      },
+      "adaptations": [
+        "Pinned upstream task-construction functions with deterministic per-case seeds and binary sizing of complete examples.",
+        "Shared NVIDIA chat template, thinking off, assistant answer prefix; 256-token output cap for all tasks.",
+        "Four cases/task/length, not a full published RULER run. QA indices shared across lengths; other length controls need not share identical golds.",
+        "Essay distractors repeated if needed at 1M. CWE vocabulary cap retained; undersized examples explicitly excluded from near-window macro summaries.",
+        "No silent truncation, retry-based answer selection or kernel/precision changes."
+      ]
+    },
+    "cases": [
+      {
+        "id": "niah_single_1-32768-0",
+        "task": "niah_single_1",
+        "length": 32768,
+        "sample": 0,
+        "seed": 1729,
+        "construction_size": 1190,
+        "prompt_tokens": 28650,
+        "near_window": false,
+        "prompt_sha256": "d222453706d2c5b856a29aab8d2d718b876901f33c8a86b7ae0c8be232f82b10",
+        "token_sha256": "11ff0c8ca144ce1dd41fd4cf2588fb0182ed2bd68af455474b50428109e0d7c5",
+        "max_tokens": 256,
+        "file": "niah_single_1-32768-0.json.gz",
+        "sha256": "a91507d50c0ec93abe0ee935c745a5b05a8c2ac1cc59eee9650d20749d568541"
+      },
+      {
+        "id": "niah_single_1-32768-1",
+        "task": "niah_single_1",
+        "length": 32768,
+        "sample": 1,
+        "seed": 1746,
+        "construction_size": 1190,
+        "prompt_tokens": 28651,
+        "near_window": false,
+        "prompt_sha256": "e5e8b67308d3b881de07631af61d75f9af8e9c5becddc41994fa7837abdaabde",
+        "token_sha256": "ecd418143967d2b0773d9d5b3068bece39bfe955f3848ffda7c61bb9f481eae1",
+        "max_tokens": 256,
+        "file": "niah_single_1-32768-1.json.gz",
+        "sha256": "bbffbaa14f25ddaec9ab69e5ea5dbae4ae731eeb5a133f88ddbf3dde5bcb8842"
+      },
+      {
+        "id": "niah_single_1-32768-2",
+        "task": "niah_single_1",
+        "length": 32768,
+        "sample": 2,
+        "seed": 1763,
+        "construction_size": 1190,
+        "prompt_tokens": 28650,
+        "near_window": false,
+        "prompt_sha256": "c0038aabc9e7a7129df499704698ab59f965208af08a5e588dcb58ddb7b2f182",
+        "token_sha256": "6da338d3dd5c7cbfc2b896ad4ff00642481fce43cb3de4028eb6c3902b28ddb6",
+        "max_tokens": 256,
+        "file": "niah_single_1-32768-2.json.gz",
+        "sha256": "faa12905f006fc6b8d10dd7296bdb56c466e6c5c47bd695c0bea86f41082f3ff"
+      },
+      {
+        "id": "niah_single_1-32768-3",
+        "task": "niah_single_1",
+        "length": 32768,
+        "sample": 3,
+        "seed": 1780,
+        "construction_size": 1190,
+        "prompt_tokens": 28649,
+        "near_window": false,
+        "prompt_sha256": "442d8465ee54a8838fcf7e9b8803d11b16fb36e89bdc0cc6a239d0f8070403c1",
+        "token_sha256": "879b7ceeefe111d7125ca8129e832b1996b382540051134a98679b48ae0f64f0",
+        "max_tokens": 256,
+        "file": "niah_single_1-32768-3.json.gz",
+        "sha256": "2194058a83024f8153ecc696a76e065e51ade167c63d28f6fa15f75d72e58839"
+      },
+      {
+        "id": "niah_single_2-32768-0",
+        "task": "niah_single_2",
+        "length": 32768,
+        "sample": 0,
+        "seed": 2738,
+        "construction_size": 23079,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "232d02858d56b3655f179741d5756a202c2a9cd8c3b969ceddc1e89b9709246c",
+        "token_sha256": "66922d02e2e5371add29d38c8235dff81135d42eb95bf520d29cce5a32c15af3",
+        "max_tokens": 256,
+        "file": "niah_single_2-32768-0.json.gz",
+        "sha256": "4fe295f1f1c0771b2b6ff167e42f4487ab21db6b00429e89cc11c75b8aecff02"
+      },
+      {
+        "id": "niah_single_2-32768-1",
+        "task": "niah_single_2",
+        "length": 32768,
+        "sample": 1,
+        "seed": 2755,
+        "construction_size": 23075,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "108556b6af4bba9631ce453763ee670f2fcd3b7a7a9547e5952317a5e627435a",
+        "token_sha256": "24211d3e5974cd561d404f29689afd2e3bb29749ecb44fd7f5852795bee9ddf2",
+        "max_tokens": 256,
+        "file": "niah_single_2-32768-1.json.gz",
+        "sha256": "34df5b5126b58097ce98cbda1a5929d112e73af93b5cffbfda105b3df8384188"
+      },
+      {
+        "id": "niah_single_2-32768-2",
+        "task": "niah_single_2",
+        "length": 32768,
+        "sample": 2,
+        "seed": 2772,
+        "construction_size": 23075,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "39bde4b8d19f39417039ea7b5ab64c004d812f0e90f75ac8e586e73becc2c53c",
+        "token_sha256": "0705be739a796275759ee1841e1d76b62a626f617d38bc148389e2d4fb61388b",
+        "max_tokens": 256,
+        "file": "niah_single_2-32768-2.json.gz",
+        "sha256": "7e2d1f698ed83ee1ceaad7034a2d75928170d36ddb0707c2981a8ced0bd624d1"
+      },
+      {
+        "id": "niah_single_2-32768-3",
+        "task": "niah_single_2",
+        "length": 32768,
+        "sample": 3,
+        "seed": 2789,
+        "construction_size": 23073,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "c7966f82bccdd82c0109fa76d357fc0083af9e241097ff1c4c51420b4abd6ff2",
+        "token_sha256": "42400b0a7ab7c33dca97ccdd03ca8619fd545e1f2a6bb9a9ba1ac2a586d91f87",
+        "max_tokens": 256,
+        "file": "niah_single_2-32768-3.json.gz",
+        "sha256": "5a6ac78265ece865a01fda1c0ea18817ea8630ad224ebf565ffcc43b28cecdce"
+      },
+      {
+        "id": "niah_single_3-32768-0",
+        "task": "niah_single_3",
+        "length": 32768,
+        "sample": 0,
+        "seed": 3747,
+        "construction_size": 23063,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "01f05156bb267f19c5c0657f64c7d822a5b73566d129f5cb33e5374219dbee37",
+        "token_sha256": "60b1f458ef606d896c3d8b6bf35250ceb451d2abd0d45502b5594925892d2f52",
+        "max_tokens": 256,
+        "file": "niah_single_3-32768-0.json.gz",
+        "sha256": "f629122db48cfdc0a721a9b22123a5197592a97dbf4f85e8f83213a4fcfa0f22"
+      },
+      {
+        "id": "niah_single_3-32768-1",
+        "task": "niah_single_3",
+        "length": 32768,
+        "sample": 1,
+        "seed": 3764,
+        "construction_size": 23058,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "d86b98d2b6caf44bbdd0a4fa9d5286a60d672f95a92fbb74d90c92466331b8fd",
+        "token_sha256": "ca96cf908ab24a589e11f88d4a762f7bcad612c0e84fb5591d12f30f6dd6f23d",
+        "max_tokens": 256,
+        "file": "niah_single_3-32768-1.json.gz",
+        "sha256": "e3fe7f338e8260724c8493b1b3223515fbca7667f0212ff0a2c612721b690c3c"
+      },
+      {
+        "id": "niah_single_3-32768-2",
+        "task": "niah_single_3",
+        "length": 32768,
+        "sample": 2,
+        "seed": 3781,
+        "construction_size": 23055,
+        "prompt_tokens": 28671,
+        "near_window": false,
+        "prompt_sha256": "93465cd684c0e25a268fc6673e89529768aeae87f0122239f48d9a2fc7c2488e",
+        "token_sha256": "c910c756337d786e2c9ad69bfe879a450580ca382723d77c009fa5eb70be1ebe",
+        "max_tokens": 256,
+        "file": "niah_single_3-32768-2.json.gz",
+        "sha256": "1e6396e35ef77c85a01151f61cef98e8161505c76cf8884d5a3b6c542e4f73b9"
+      },
+      {
+        "id": "niah_single_3-32768-3",
+        "task": "niah_single_3",
+        "length": 32768,
+        "sample": 3,
+        "seed": 3798,
+        "construction_size": 23059,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "da7e2dbd55e1067080954a08124c5bb30a13b994b36e1a5e01add8950ef9332c",
+        "token_sha256": "d7d9f21a4816868be8d370544ae813452ceecde307c1cd4ce33e31843c407ea2",
+        "max_tokens": 256,
+        "file": "niah_single_3-32768-3.json.gz",
+        "sha256": "90b81504e9bd82b3735573c6140cdabc84aea92b6433c3f260e59d2792d49738"
+      },
+      {
+        "id": "niah_multikey_1-32768-0",
+        "task": "niah_multikey_1",
+        "length": 32768,
+        "sample": 0,
+        "seed": 4756,
+        "construction_size": 23026,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "b07fe91affbea6dc489b5f22a127f8ca25b84f856575c432c81f60802f08f540",
+        "token_sha256": "fa6b008104ff4ecc116394cdac26d43ca698f45be6f65cae306488c79168282a",
+        "max_tokens": 256,
+        "file": "niah_multikey_1-32768-0.json.gz",
+        "sha256": "42b98dfeaec858b596c6a9b6ac3a8aa984e9e150f351bfb66be97e48f5b6c21b"
+      },
+      {
+        "id": "niah_multikey_1-32768-1",
+        "task": "niah_multikey_1",
+        "length": 32768,
+        "sample": 1,
+        "seed": 4773,
+        "construction_size": 23029,
+        "prompt_tokens": 28671,
+        "near_window": false,
+        "prompt_sha256": "f6e1eace7ba3297fef47c4ab6aed6d7a651aee1b809f3ae2a557a23f53de72d0",
+        "token_sha256": "41118d126fbb83e0520fd6eea989a226d4faf724ad349db2ed411bff1633cad7",
+        "max_tokens": 256,
+        "file": "niah_multikey_1-32768-1.json.gz",
+        "sha256": "dce04f6f7f9dbe4cc7e698db432bece39b52316e4e864ef17e5b0db0301eda61"
+      },
+      {
+        "id": "niah_multikey_1-32768-2",
+        "task": "niah_multikey_1",
+        "length": 32768,
+        "sample": 2,
+        "seed": 4790,
+        "construction_size": 23031,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "38a2bcb7b8a528acddd2262f01d5354ca2baf24019c373d87fdf7b39fa3555e0",
+        "token_sha256": "dc8f4e729d1eedaf6522505b4dfb4be0e85e13e24281035ed398264bec391d7b",
+        "max_tokens": 256,
+        "file": "niah_multikey_1-32768-2.json.gz",
+        "sha256": "2dc19d7f89829ae91a3be1b8ad13a9b63b81d94ae6e7ca28bd4e0f2dd558eeea"
+      },
+      {
+        "id": "niah_multikey_1-32768-3",
+        "task": "niah_multikey_1",
+        "length": 32768,
+        "sample": 3,
+        "seed": 4807,
+        "construction_size": 23035,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "69de7c3108e320afdf712235e4d41969019fe6192d84033e9b4a55d710c3c978",
+        "token_sha256": "11bc540e209c0ee974a14033a210bee55c1cd825ee32b1783adfcb0908184be4",
+        "max_tokens": 256,
+        "file": "niah_multikey_1-32768-3.json.gz",
+        "sha256": "72d2cb9adde1a8d9bff100bb56577f1064e51974756b12af352b458fae9d87e1"
+      },
+      {
+        "id": "niah_multikey_2-32768-0",
+        "task": "niah_multikey_2",
+        "length": 32768,
+        "sample": 0,
+        "seed": 5765,
+        "construction_size": 1474,
+        "prompt_tokens": 28664,
+        "near_window": false,
+        "prompt_sha256": "bbbdea68eadc2d1b58ef03b156689eb2b64a7a4cb2fd584e875928ffe36d38e2",
+        "token_sha256": "3e3ea411582f12e6c5979dedcc0d0f2b82306bce5d6fd6b03296c737d109bdc6",
+        "max_tokens": 256,
+        "file": "niah_multikey_2-32768-0.json.gz",
+        "sha256": "56c011f4a82a284d7040defd1a63552296e4ff47d3299cdde87c101f706576ad"
+      },
+      {
+        "id": "niah_multikey_2-32768-1",
+        "task": "niah_multikey_2",
+        "length": 32768,
+        "sample": 1,
+        "seed": 5782,
+        "construction_size": 1472,
+        "prompt_tokens": 28658,
+        "near_window": false,
+        "prompt_sha256": "d61d8c2c63622392ee20b362a8ca5b6245806eb01dc4e9b1e4d3f06eae8c3aba",
+        "token_sha256": "aa232a257be6ecebc577c07f3310bf6d7307fcaa265acc635937811bfb804c58",
+        "max_tokens": 256,
+        "file": "niah_multikey_2-32768-1.json.gz",
+        "sha256": "62ef608cb196c0cc914ed80c55da8b954f50ed36420bc6ca58b78c8501d6334d"
+      },
+      {
+        "id": "niah_multikey_2-32768-2",
+        "task": "niah_multikey_2",
+        "length": 32768,
+        "sample": 2,
+        "seed": 5799,
+        "construction_size": 1471,
+        "prompt_tokens": 28662,
+        "near_window": false,
+        "prompt_sha256": "2de42f4113cb019f06d72691ba36fde7576f14f6012529c31ec79d6193aa6328",
+        "token_sha256": "dd9c8df83de8f8edc6b403c05fced7ef5bab5b0bc75941bc954305c0a71f5cbd",
+        "max_tokens": 256,
+        "file": "niah_multikey_2-32768-2.json.gz",
+        "sha256": "5d783ab1c761c82fbb587d0228212966aa9684a27ba45729936d748265760960"
+      },
+      {
+        "id": "niah_multikey_2-32768-3",
+        "task": "niah_multikey_2",
+        "length": 32768,
+        "sample": 3,
+        "seed": 5816,
+        "construction_size": 1472,
+        "prompt_tokens": 28669,
+        "near_window": false,
+        "prompt_sha256": "0a3c45a915ae19de8c435b8b9e00e1a1235f68fae88973b2e15552490189bdbd",
+        "token_sha256": "5a0ea260e259253e7a0db5aca93dbc1145a1ff659134380e032380d1b2983f29",
+        "max_tokens": 256,
+        "file": "niah_multikey_2-32768-3.json.gz",
+        "sha256": "17c2e9d8dfb796c986551491cb2765236688e0a2006385aec27a2af238ab8a2f"
+      },
+      {
+        "id": "niah_multikey_3-32768-0",
+        "task": "niah_multikey_3",
+        "length": 32768,
+        "sample": 0,
+        "seed": 6774,
+        "construction_size": 449,
+        "prompt_tokens": 28608,
+        "near_window": false,
+        "prompt_sha256": "c9dc0f9f490c8d535a4cc0343b4eadf1832cc9e7b927733f145b4f61dffe90ba",
+        "token_sha256": "33b5648822d8447a556440d1916042319e099bf9a8467acd67260094e0ab6de8",
+        "max_tokens": 256,
+        "file": "niah_multikey_3-32768-0.json.gz",
+        "sha256": "217182849ded1b11f656dd0308e279c9969e488b6e0bb4e80174a721c0c73eca"
+      },
+      {
+        "id": "niah_multikey_3-32768-1",
+        "task": "niah_multikey_3",
+        "length": 32768,
+        "sample": 1,
+        "seed": 6791,
+        "construction_size": 450,
+        "prompt_tokens": 28645,
+        "near_window": false,
+        "prompt_sha256": "fecb1ecba3ef8776d11c9e854644710f8923b0d4858625a68d482781646fa775",
+        "token_sha256": "08739e68cb3d907b519da0e258b60bcd995f252b065197ae72f36e7fcc551279",
+        "max_tokens": 256,
+        "file": "niah_multikey_3-32768-1.json.gz",
+        "sha256": "4c6711f43792afaf7905d0c7698be4d4720390af8c857c28847fcac6f197f6d9"
+      },
+      {
+        "id": "niah_multikey_3-32768-2",
+        "task": "niah_multikey_3",
+        "length": 32768,
+        "sample": 2,
+        "seed": 6808,
+        "construction_size": 451,
+        "prompt_tokens": 28645,
+        "near_window": false,
+        "prompt_sha256": "99599de780b5624ed97390c767815ededb4672c29dfd2c339482e4b6efedf7f5",
+        "token_sha256": "ce5dcf9f28004e9c3a150d84f86c04b238fc482ff41f91557f0de562acbf6053",
+        "max_tokens": 256,
+        "file": "niah_multikey_3-32768-2.json.gz",
+        "sha256": "14bba1c93958a203de3c4ea7eaad50f1b9314040298c912564f75f7118b7003d"
+      },
+      {
+        "id": "niah_multikey_3-32768-3",
+        "task": "niah_multikey_3",
+        "length": 32768,
+        "sample": 3,
+        "seed": 6825,
+        "construction_size": 450,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "bd8c55243509c380c398598ec6f1cad2e269c0791d91f800ddff06409e1aed30",
+        "token_sha256": "f2760ef425cd72adaa9de30bf40aadcf75dacb73b1d5c50c9f8eea6d454fe4a4",
+        "max_tokens": 256,
+        "file": "niah_multikey_3-32768-3.json.gz",
+        "sha256": "cd6c4b5d3692a0fc4edf262ab51ae78e32e0ae6b622533affbaac3ec79590ea1"
+      },
+      {
+        "id": "niah_multivalue-32768-0",
+        "task": "niah_multivalue",
+        "length": 32768,
+        "sample": 0,
+        "seed": 7783,
+        "construction_size": 23028,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "9d167c774fbe687c1791e2fd68fc4e49318157cb5791f8ed0dc5819d059d2b2f",
+        "token_sha256": "335f93fc00e326da54d6efdb11df88f6ba9febb716f04f97ebf27cc8410bb87d",
+        "max_tokens": 256,
+        "file": "niah_multivalue-32768-0.json.gz",
+        "sha256": "3b0da1d722eb6feecfa475ca99d6bf76e23fefbd339fa7eb481c5683b2eee4ee"
+      },
+      {
+        "id": "niah_multivalue-32768-1",
+        "task": "niah_multivalue",
+        "length": 32768,
+        "sample": 1,
+        "seed": 7800,
+        "construction_size": 23027,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "556c7e7d7a4e7fb942d8fe827ff1a685958f6dee9ffb5a8bacd44c440034a022",
+        "token_sha256": "582fc0755bf62f653c58719736a987ed227ed991c87e57f9aef1cd46512e21e3",
+        "max_tokens": 256,
+        "file": "niah_multivalue-32768-1.json.gz",
+        "sha256": "123ff4b057f4f91cbdf06fa09a7a2f81a231e80c5dfa87008a37a19ab09da4ff"
+      },
+      {
+        "id": "niah_multivalue-32768-2",
+        "task": "niah_multivalue",
+        "length": 32768,
+        "sample": 2,
+        "seed": 7817,
+        "construction_size": 23022,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "723277309df35e05f8fa368b77ee7bfdfaa5321419faae89a7730075f0534053",
+        "token_sha256": "f6276cc8edb0be3089c76342a64b3dc1b44f04b426009c2cc38323b4366ba778",
+        "max_tokens": 256,
+        "file": "niah_multivalue-32768-2.json.gz",
+        "sha256": "f84233b96f0e8f75ab60e990239f3e49146445d955cf91aa33d4c17748545e4b"
+      },
+      {
+        "id": "niah_multivalue-32768-3",
+        "task": "niah_multivalue",
+        "length": 32768,
+        "sample": 3,
+        "seed": 7834,
+        "construction_size": 23032,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "af86a1d3d2306655201d7a3f6818c5706f4aa75fb0f380d6206f4f326b073cc6",
+        "token_sha256": "4986f6777d49f0bb6e336cb4ebfabaa19857c192994883cf72515bc7a80e0f28",
+        "max_tokens": 256,
+        "file": "niah_multivalue-32768-3.json.gz",
+        "sha256": "2e1dae97fe018f0b22913d5ff855abd9868dc71693d2f4d7b2dc6c89e1f1e4a7"
+      },
+      {
+        "id": "niah_multiquery-32768-0",
+        "task": "niah_multiquery",
+        "length": 32768,
+        "sample": 0,
+        "seed": 8792,
+        "construction_size": 22999,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "937d7e83c43bf0d5459c4cd32639ebb13696a01027baf49ed01ed0c018ea3aa4",
+        "token_sha256": "22dca22d4cdb16c19af8374c7a226e42dd39dd3d399c22ae10613180a61d0707",
+        "max_tokens": 256,
+        "file": "niah_multiquery-32768-0.json.gz",
+        "sha256": "b99b09cb6e3d4c5672b4eefcbad68d622f48ab804bf0bc72f000532865f79ff3"
+      },
+      {
+        "id": "niah_multiquery-32768-1",
+        "task": "niah_multiquery",
+        "length": 32768,
+        "sample": 1,
+        "seed": 8809,
+        "construction_size": 22996,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "7bfeb455d79df035cc470029e663171d5bb1329554df8700e97638c89015603f",
+        "token_sha256": "30ca565504c05a21be7216639d616d63eb642a72e41fac10146744d111172840",
+        "max_tokens": 256,
+        "file": "niah_multiquery-32768-1.json.gz",
+        "sha256": "00f6c87922e810e6195f491b8d38ab9536ce77e1a3277dbdbabe4aaf555073b6"
+      },
+      {
+        "id": "niah_multiquery-32768-2",
+        "task": "niah_multiquery",
+        "length": 32768,
+        "sample": 2,
+        "seed": 8826,
+        "construction_size": 22993,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "3d29929dd431008f1b72948c2994a95698020e8ae9b69b7c25e0e1da8e72d19d",
+        "token_sha256": "92d698927ada2b98d5eae08b70cb3a3af522d469fdbbf3f67a292c442a30cca0",
+        "max_tokens": 256,
+        "file": "niah_multiquery-32768-2.json.gz",
+        "sha256": "de2ac0a6d182ad697290755ffff2f34858526eb2521af15867e334b8709118a1"
+      },
+      {
+        "id": "niah_multiquery-32768-3",
+        "task": "niah_multiquery",
+        "length": 32768,
+        "sample": 3,
+        "seed": 8843,
+        "construction_size": 22994,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "0d15d623f9b5fa69e6e2268b77a5d2228ea2898058b4ec52a35c236922677447",
+        "token_sha256": "4ee16bb26cf6afda3b4b1eb6b7f6572e4b0515c03a0c49b856eacc42ce09ead0",
+        "max_tokens": 256,
+        "file": "niah_multiquery-32768-3.json.gz",
+        "sha256": "bf4d771e9274cf55066c89f4f20165feaccc99aabb586431038788e4a9c4b95b"
+      },
+      {
+        "id": "vt-32768-0",
+        "task": "vt",
+        "length": 32768,
+        "sample": 0,
+        "seed": 9801,
+        "construction_size": 1174,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "a17430a475464c93422ae01dec6421e2ce652a257fdf26e7c9b3e5b811e2a24a",
+        "token_sha256": "f700774c973f84db3f97f82e59e2f6cd600e391f8eac695c0cd8372d2ab40f87",
+        "max_tokens": 256,
+        "file": "vt-32768-0.json.gz",
+        "sha256": "6f79b074fe61f07937a4f73b7cc184e7ddd387fcc229a5954c5726d9b8bad00f"
+      },
+      {
+        "id": "vt-32768-1",
+        "task": "vt",
+        "length": 32768,
+        "sample": 1,
+        "seed": 9818,
+        "construction_size": 1174,
+        "prompt_tokens": 28671,
+        "near_window": false,
+        "prompt_sha256": "50448619890dafcb5c5910700a0f98eff9f735a39866a71f8d06774d4ab2a939",
+        "token_sha256": "def941b55356f3cd7ef79f03fd54e11635ce51ea338b6d938beaa69b3c336a9e",
+        "max_tokens": 256,
+        "file": "vt-32768-1.json.gz",
+        "sha256": "2e9739f239ac8b6e469e58f212acc61edd523e50491d70354c47cf7d55a3c14a"
+      },
+      {
+        "id": "vt-32768-2",
+        "task": "vt",
+        "length": 32768,
+        "sample": 2,
+        "seed": 9835,
+        "construction_size": 1174,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "991f5a1eb3e5dad38e4a679e8319e41a09d919e0e76280b336a4e27608497e7e",
+        "token_sha256": "bda7de12c0b3b333aa4ad2112f8cc1b2a9db9a218d9f7e67a5c5bbeeb0ef26c9",
+        "max_tokens": 256,
+        "file": "vt-32768-2.json.gz",
+        "sha256": "d435f333f533ad2c74940ff02b15e6bbb23b88a5f3bb471e3aa8fb24a257312f"
+      },
+      {
+        "id": "vt-32768-3",
+        "task": "vt",
+        "length": 32768,
+        "sample": 3,
+        "seed": 9852,
+        "construction_size": 1173,
+        "prompt_tokens": 28650,
+        "near_window": false,
+        "prompt_sha256": "5433fbe8f8f42ac445e2bd64c4fce0a20343c7260ad49e8dbf5c90958d7241e0",
+        "token_sha256": "3d03bad97ea371197b50fdb5c645642718351181c6d6ed4770917c9adf39e4e6",
+        "max_tokens": 256,
+        "file": "vt-32768-3.json.gz",
+        "sha256": "51230321ad9713487f6e8caa6347a47899d221fd8a79ed644109d54bd1b1ea21"
+      },
+      {
+        "id": "cwe-32768-0",
+        "task": "cwe",
+        "length": 32768,
+        "sample": 0,
+        "seed": 10810,
+        "construction_size": 1538,
+        "prompt_tokens": 28667,
+        "near_window": false,
+        "prompt_sha256": "4685411f1b7ae75de60986528825dc07a472f6fea01e57fe8dd931856b7bee17",
+        "token_sha256": "969e74d2cb2ddfdb504c07726df8712842b484f5ae1b0c4692496440eba3a08a",
+        "max_tokens": 256,
+        "file": "cwe-32768-0.json.gz",
+        "sha256": "01e148cc834213c65a7a542dddaf4f66f6416b8178be57a589906ab65b085b49"
+      },
+      {
+        "id": "cwe-32768-1",
+        "task": "cwe",
+        "length": 32768,
+        "sample": 1,
+        "seed": 10827,
+        "construction_size": 1536,
+        "prompt_tokens": 28655,
+        "near_window": false,
+        "prompt_sha256": "355a2f71d1db86dea22c1fad9b0d8a8aa742c2d5cfc4c44b153ea93eaad36c8d",
+        "token_sha256": "025f4a367eaea739dceb8e7e7078c8a3c191acbd7b0d3aebc7c2884aa82474f8",
+        "max_tokens": 256,
+        "file": "cwe-32768-1.json.gz",
+        "sha256": "014a94602893a60f7147691f6cca355e5d00f8df88722d55f7f63f5898c07db9"
+      },
+      {
+        "id": "cwe-32768-2",
+        "task": "cwe",
+        "length": 32768,
+        "sample": 2,
+        "seed": 10844,
+        "construction_size": 1545,
+        "prompt_tokens": 28661,
+        "near_window": false,
+        "prompt_sha256": "9894543b574e99f48d4f152a6e055a8b6ee6797be1b95555e7568580677b524f",
+        "token_sha256": "d6b5fc3ceb223f549e91871244447f418a858a8a6bb0611d65e971e330c17b87",
+        "max_tokens": 256,
+        "file": "cwe-32768-2.json.gz",
+        "sha256": "6ead1033e3bcf96b4543d26e26a1f374f0c8286d9b125fc1ac8eec1208a88b73"
+      },
+      {
+        "id": "cwe-32768-3",
+        "task": "cwe",
+        "length": 32768,
+        "sample": 3,
+        "seed": 10861,
+        "construction_size": 1536,
+        "prompt_tokens": 28661,
+        "near_window": false,
+        "prompt_sha256": "fc214fc32385f54aaa1e4ce5a2fd3ca11dd8af4e55a7260666f704eefb912c3b",
+        "token_sha256": "bb891d83a8c6629b2622c2dc6593ee1e44eab5d69134b12e1f2ea567125f3a27",
+        "max_tokens": 256,
+        "file": "cwe-32768-3.json.gz",
+        "sha256": "a87bbcdbf2ecf4b903aaf777ee93a150c9871e7b8e7aa486708f31937bc9b812"
+      },
+      {
+        "id": "fwe-32768-0",
+        "task": "fwe",
+        "length": 32768,
+        "sample": 0,
+        "seed": 11819,
+        "construction_size": 14863,
+        "prompt_tokens": 28661,
+        "near_window": false,
+        "prompt_sha256": "a74a6bb05853db6cc9f75a452314e3fa19bc6b030f6d51022caef7eb0abbabec",
+        "token_sha256": "a4ebd607953a84a9b154b49da9e19379601da281e02e8105329153d8b7fa8106",
+        "max_tokens": 256,
+        "file": "fwe-32768-0.json.gz",
+        "sha256": "19fb4d40d85a2b05756046e1a7b4be1f13865c8772e4b5d269fe35208b2624f6"
+      },
+      {
+        "id": "fwe-32768-1",
+        "task": "fwe",
+        "length": 32768,
+        "sample": 1,
+        "seed": 11836,
+        "construction_size": 14488,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "9d9188d4f2b8eb752dee6eb93c0e7da3a266af3529c4679889f709cd5cd98df3",
+        "token_sha256": "218bdbf365c80714e055abd7d352337fc6ca0d295cc570e4eae85dc49d0ed95a",
+        "max_tokens": 256,
+        "file": "fwe-32768-1.json.gz",
+        "sha256": "76b93721e2da992f1101923c8c5fb65d42c47cc953bc794cc05b411e9cbb3d4d"
+      },
+      {
+        "id": "fwe-32768-2",
+        "task": "fwe",
+        "length": 32768,
+        "sample": 2,
+        "seed": 11853,
+        "construction_size": 14916,
+        "prompt_tokens": 28671,
+        "near_window": false,
+        "prompt_sha256": "446b11c373af514262629941f0ccea4902da224a7871044da67e5c092b1a6d24",
+        "token_sha256": "1b15cd6264383dc69682ada9483138d9c2df4b3c9d91e3bec43f15e54e8b7c78",
+        "max_tokens": 256,
+        "file": "fwe-32768-2.json.gz",
+        "sha256": "585f0ccb5c17a0edfbb197e490cf45a75a64c0f6e274497817ee24e5c238ba98"
+      },
+      {
+        "id": "fwe-32768-3",
+        "task": "fwe",
+        "length": 32768,
+        "sample": 3,
+        "seed": 11870,
+        "construction_size": 14185,
+        "prompt_tokens": 28658,
+        "near_window": false,
+        "prompt_sha256": "3aac44da59ee21726fbc2557f2c0b17002d94af5dc6ca3c2340e668b83f10520",
+        "token_sha256": "fbe3daa0fd537886ad3104acb2da647dff642630a065743872347b85ce76dd18",
+        "max_tokens": 256,
+        "file": "fwe-32768-3.json.gz",
+        "sha256": "dc2fceaf210850704319ceab686b82907f8c65855d6dbae26992a9f6546f754f"
+      },
+      {
+        "id": "qa_squad-32768-0",
+        "task": "qa_squad",
+        "length": 32768,
+        "sample": 0,
+        "seed": 12828,
+        "construction_size": 167,
+        "prompt_tokens": 28672,
+        "near_window": false,
+        "prompt_sha256": "606518fc74ebc23b0c0f6ffda47612f93d09118dcf6d3d2719f568a2989367f2",
+        "token_sha256": "af78a4f3a086b09a456545bfc65311490f8d2490ef12b122fcf842de58af3ec7",
+        "max_tokens": 256,
+        "file": "qa_squad-32768-0.json.gz",
+        "sha256": "232217d068222d0519c6a87566eadc1b6e4a25956a408915a7210a35c74c9f4c"
+      },
+      {
+        "id": "qa_squad-32768-1",
+        "task": "qa_squad",
+        "length": 32768,
+        "sample": 1,
+        "seed": 12845,
+        "construction_size": 177,
+        "prompt_tokens": 28503,
+        "near_window": false,
+        "prompt_sha256": "3f5a8afd9cfbcc71dd21acc222782316eec753e13c7fd559dc256b887ee8423b",
+        "token_sha256": "dd4172b361dea5a5b5ef4ef89c933132addbd6d191a03104f77f611ef617f564",
+        "max_tokens": 256,
+        "file": "qa_squad-32768-1.json.gz",
+        "sha256": "1bdfe922d74fa2f4f4310b73cb5f4a8fd4e142d0bf27761b826569d982d04bc4"
+      },
+      {
+        "id": "qa_squad-32768-2",
+        "task": "qa_squad",
+        "length": 32768,
+        "sample": 2,
+        "seed": 12862,
+        "construction_size": 171,
+        "prompt_tokens": 28589,
+        "near_window": false,
+        "prompt_sha256": "5ff89b9eefa4742a1c7e107428e7099f81a9fa74e1e67b5346ebc8d5419afb95",
+        "token_sha256": "d719d884cf6f8c72ec337579e09df590061f7a1549a95a67c7d6ae224aa546db",
+        "max_tokens": 256,
+        "file": "qa_squad-32768-2.json.gz",
+        "sha256": "036895f6a3032b30e6bb49407a2b1dd9e489263d5408232f4df0f9f447eca6e2"
+      },
+      {
+        "id": "qa_squad-32768-3",
+        "task": "qa_squad",
+        "length": 32768,
+        "sample": 3,
+        "seed": 12879,
+        "construction_size": 166,
+        "prompt_tokens": 28648,
+        "near_window": false,
+        "prompt_sha256": "bce4ee4e066dfef0754b91dfbf0f6ab0213bb99d8e21f23d27d2898f017fee7b",
+        "token_sha256": "3133846c88d2f6bf4942ea1a0bbd54b1b3ee07cb9a67f9cd58ac8c9c8e440374",
+        "max_tokens": 256,
+        "file": "qa_squad-32768-3.json.gz",
+        "sha256": "d73ab92ea230d2c7949edbfc276dffd00b87cfa4722d97e681d8eebc550c35e5"
+      },
+      {
+        "id": "qa_hotpot-32768-0",
+        "task": "qa_hotpot",
+        "length": 32768,
+        "sample": 0,
+        "seed": 13837,
+        "construction_size": 209,
+        "prompt_tokens": 28585,
+        "near_window": false,
+        "prompt_sha256": "c0c579cba11ee7037707aefc064a687b510f726568357ffbad599660fb0a6ffd",
+        "token_sha256": "57f2802afa2d853e97820a13fe3b2f8dea9033adce02a94febe6852710bd2b1b",
+        "max_tokens": 256,
+        "file": "qa_hotpot-32768-0.json.gz",
+        "sha256": "00c31dcb33d1a790b8c3e4fd7ddd99e8fdc89dd6ad2a1e19ab7169c482ff8091"
+      },
+      {
+        "id": "qa_hotpot-32768-1",
+        "task": "qa_hotpot",
+        "length": 32768,
+        "sample": 1,
+        "seed": 13854,
+        "construction_size": 224,
+        "prompt_tokens": 28664,
+        "near_window": false,
+        "prompt_sha256": "9aabaad9e519dce1e079d80f1ea81d4469441071051f514cd79790223a4218be",
+        "token_sha256": "e49880cc17316ab740caecf5668ea280d0a8c82abec17cf18cd5394bcb5938c3",
+        "max_tokens": 256,
+        "file": "qa_hotpot-32768-1.json.gz",
+        "sha256": "09024827d822d475c5699d8be887cf3eb7a835a9803085247f6cd5bcd9bb4613"
+      },
+      {
+        "id": "qa_hotpot-32768-2",
+        "task": "qa_hotpot",
+        "length": 32768,
+        "sample": 2,
+        "seed": 13871,
+        "construction_size": 221,
+        "prompt_tokens": 28579,
+        "near_window": false,
+        "prompt_sha256": "d69e4053b6387944ef90283218fc49a7f6b8013de4a7523398d1b6806048ee80",
+        "token_sha256": "45ff9d7945ffb8f31a1185355fe2ee1709bd728fd2f5b8f72c1f90c44713818e",
+        "max_tokens": 256,
+        "file": "qa_hotpot-32768-2.json.gz",
+        "sha256": "d9ac6099f03002daad255ddfc89a84fff53b70d3d7b42c9c98e1fbc28ece0bf4"
+      },
+      {
+        "id": "qa_hotpot-32768-3",
+        "task": "qa_hotpot",
+        "length": 32768,
+        "sample": 3,
+        "seed": 13888,
+        "construction_size": 211,
+        "prompt_tokens": 28469,
+        "near_window": false,
+        "prompt_sha256": "9560c0522004e6501234958fe1967a7b34b5ba3d4d95590643154e52906ca532",
+        "token_sha256": "981f04f97a94aa2961eed03198d0d91519a871b8e2350e0e1b5b202a1d7a87f7",
+        "max_tokens": 256,
+        "file": "qa_hotpot-32768-3.json.gz",
+        "sha256": "be8384f6bc9e52295cd52577413fcd6039a9b80003ee4f657a221687bdf2e171"
+      },
+      {
+        "id": "niah_single_1-1048576-0",
+        "task": "niah_single_1",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 1729,
+        "construction_size": 43516,
+        "prompt_tokens": 1044474,
+        "near_window": true,
+        "prompt_sha256": "873d3385b3dddf06aed263f6e6db0ecd2f4ffd541593976e8bebed987dea261e",
+        "token_sha256": "241af612c70b3baeef8d08631c3c17735a050116ee8e71621a1d7ff87366a225",
+        "max_tokens": 256,
+        "file": "niah_single_1-1048576-0.json.gz",
+        "sha256": "f2ac445b6f4e0fa07af2d024abaed14914ea3f502038111661c76855fdd2a25d"
+      },
+      {
+        "id": "niah_single_1-1048576-1",
+        "task": "niah_single_1",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 1746,
+        "construction_size": 43516,
+        "prompt_tokens": 1044475,
+        "near_window": true,
+        "prompt_sha256": "5fd831973a1ec439f7544ba63ab9e4cf8e865c1db0fbfe8577482bb3188c2464",
+        "token_sha256": "5e51cc5766d0635984f9f4c43591a9b0f50607850ebe6ba6b29c343642386970",
+        "max_tokens": 256,
+        "file": "niah_single_1-1048576-1.json.gz",
+        "sha256": "8639ea313a3aa36e9e512d0e0e9a207b288e23f292149467f280c7c4cb80a15b"
+      },
+      {
+        "id": "niah_single_1-1048576-2",
+        "task": "niah_single_1",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 1763,
+        "construction_size": 43516,
+        "prompt_tokens": 1044474,
+        "near_window": true,
+        "prompt_sha256": "3696d5616085e8bad4ecb957416fefb763d5253afefa535b1ef43f96bdf6899e",
+        "token_sha256": "913e775f2e0ca8e397fd29ebcffdb40bb461edd4745543e5a6b9c29c72a5a02d",
+        "max_tokens": 256,
+        "file": "niah_single_1-1048576-2.json.gz",
+        "sha256": "5188c43a8825fe56be70a114fa27f4a4f544665aace409414d8fd7dccc54f528"
+      },
+      {
+        "id": "niah_single_1-1048576-3",
+        "task": "niah_single_1",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 1780,
+        "construction_size": 43516,
+        "prompt_tokens": 1044473,
+        "near_window": true,
+        "prompt_sha256": "62785105cb0bebbc0d85aee43baff9719f122b4dfdc3df1a1e58aaed4caef36b",
+        "token_sha256": "64804db97b7ebf471bd18da5ffe666fffa26bdf3005b73e47d83d75a8412b185",
+        "max_tokens": 256,
+        "file": "niah_single_1-1048576-3.json.gz",
+        "sha256": "27a789cf913577a05a6e103492e3ae5d04111649452cf9240d0488f1864cd465"
+      },
+      {
+        "id": "niah_single_2-1048576-0",
+        "task": "niah_single_2",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 2738,
+        "construction_size": 853115,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "2e7152fba5e40ff39cc2e3314a774ca19d18d31fa50a5124a5c9e99e90b0506b",
+        "token_sha256": "e000b23c60aae248bf6bcb91b0ffba48885999b82930b494ef753ee151e28b00",
+        "max_tokens": 256,
+        "file": "niah_single_2-1048576-0.json.gz",
+        "sha256": "9e93809c934318a6ebef436ba10357b28649f88f481b746f9d11f61bfa3060a9"
+      },
+      {
+        "id": "niah_single_2-1048576-1",
+        "task": "niah_single_2",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 2755,
+        "construction_size": 853111,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "f27f8165e69e9dc4918adbdf49ec914a953dc363f0952a6221098b68cb5f6b60",
+        "token_sha256": "89beb7539b276f3f9c86d509bcd49161c3381ca4928d42546c7a2f8c544a33c1",
+        "max_tokens": 256,
+        "file": "niah_single_2-1048576-1.json.gz",
+        "sha256": "9b54ab2dfa0068c6132f92678abd8ecf5913f71ac02ac610872bf9b4b4a1fbce"
+      },
+      {
+        "id": "niah_single_2-1048576-2",
+        "task": "niah_single_2",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 2772,
+        "construction_size": 853111,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "548d051b7d1c9007611468a75a6459be10dc0d2ee0227c1f9494bda47a27fee6",
+        "token_sha256": "f013908a9d29fa0c8fa6a9c7b2b5601ac6e2a2f16d6a6c4fdbe20da4cdce7581",
+        "max_tokens": 256,
+        "file": "niah_single_2-1048576-2.json.gz",
+        "sha256": "d23e7cc66a56e51ab8bcd424737630eba4e53ff20c18b3447793104f49b6c376"
+      },
+      {
+        "id": "niah_single_2-1048576-3",
+        "task": "niah_single_2",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 2789,
+        "construction_size": 853109,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "bb81e6a7ad3666b65749f81b3424d86a56032e2e4a807751b8c82e4cb5f42e1a",
+        "token_sha256": "eab06648cdec8fe2c3a94da7371133c06633747c3835588663db00f9601fcdaa",
+        "max_tokens": 256,
+        "file": "niah_single_2-1048576-3.json.gz",
+        "sha256": "161124640d6ff503785ee60ab3bc99b67e778232cfde8e7439a11d1f6ae4eb1b"
+      },
+      {
+        "id": "niah_single_3-1048576-0",
+        "task": "niah_single_3",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 3747,
+        "construction_size": 853095,
+        "prompt_tokens": 1044479,
+        "near_window": true,
+        "prompt_sha256": "ffd54c36b9f0393154ebcc45e8717e078d93ae0f686c0fa366fd5aea2fa55d32",
+        "token_sha256": "eeb34879e0249b1968bb71dc6e2b41ce5bfb4461f77e0fbfb9d38e0d9d4490ae",
+        "max_tokens": 256,
+        "file": "niah_single_3-1048576-0.json.gz",
+        "sha256": "86907fd390115b04d329dfd89b514f2bc25f29c828a1e84ddff073d73f7f5521"
+      },
+      {
+        "id": "niah_single_3-1048576-1",
+        "task": "niah_single_3",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 3764,
+        "construction_size": 853091,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "ada31bf1d01097977417eab645713955603f727d5f23ff91efb752f3750c20e3",
+        "token_sha256": "6d6da96862c47437b12c937916b5022f4ef4cba9591840853a767bbe5b7b68b6",
+        "max_tokens": 256,
+        "file": "niah_single_3-1048576-1.json.gz",
+        "sha256": "6c2769cf74c19741164815d96c6dbfb7d411ba6de43a8b423c98b74ab904ad6d"
+      },
+      {
+        "id": "niah_single_3-1048576-2",
+        "task": "niah_single_3",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 3781,
+        "construction_size": 853088,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "b4ac67cf7666c8e8db8594847bbae917550c5ed69590a224f4230ecc9bcd1ef0",
+        "token_sha256": "efdfa86a2e4c62bba608baafe69c041eea7a9bbd5163fd553f3f7d2dc9b61bb3",
+        "max_tokens": 256,
+        "file": "niah_single_3-1048576-2.json.gz",
+        "sha256": "1502a8f5af77eb5f8dfcdf40f0dd7bb43ff821bab9c5aaa41277553d98652d8c"
+      },
+      {
+        "id": "niah_single_3-1048576-3",
+        "task": "niah_single_3",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 3798,
+        "construction_size": 853092,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "f95711061f58e46f6b3f1bb54e92e48fd5daa6f40b8341358ef46b70300fd301",
+        "token_sha256": "05f63bb9dfcf78f905603e416f6c42a03f95fa9b17216fd24dcc5a79c2797612",
+        "max_tokens": 256,
+        "file": "niah_single_3-1048576-3.json.gz",
+        "sha256": "80214cb983be209dcac90a8cdb2a844685674de431aabd96eb502420d909e89f"
+      },
+      {
+        "id": "niah_multikey_1-1048576-0",
+        "task": "niah_multikey_1",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 4756,
+        "construction_size": 853059,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "d5cff95e7a3f4cdde828a925818d0b2545814dc55d2faf376d1c2a3a4804f7b1",
+        "token_sha256": "1e5171fae9e03a52597434f415a0af92b85fb68c144945913fdba7390f4cb027",
+        "max_tokens": 256,
+        "file": "niah_multikey_1-1048576-0.json.gz",
+        "sha256": "d55e18fee84724755dcc0291f12b0f7528fa28b880debea63c40e321d0e3a79f"
+      },
+      {
+        "id": "niah_multikey_1-1048576-1",
+        "task": "niah_multikey_1",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 4773,
+        "construction_size": 853062,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "bad5e8da32ee9d6492e6afc510a5c085dc9d8eeec4981d54fef9c2c32f4df71d",
+        "token_sha256": "2783b52c02c0e8a80c7c3452dd528b6f67781abfde128eecdc5e9fc8916da4f6",
+        "max_tokens": 256,
+        "file": "niah_multikey_1-1048576-1.json.gz",
+        "sha256": "6e6dc80f74043324fca0c318a6e568056cadab2dba4394e5ecfc8c465a329438"
+      },
+      {
+        "id": "niah_multikey_1-1048576-2",
+        "task": "niah_multikey_1",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 4790,
+        "construction_size": 853064,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "28ce923417c8f69ddb169b188766c3efadfb5900744f6f945441331eafc0425c",
+        "token_sha256": "2524c926e97fe1a5758ec2edb2d99803db6a1399d2577620bbad389a2757cf7e",
+        "max_tokens": 256,
+        "file": "niah_multikey_1-1048576-2.json.gz",
+        "sha256": "9389768395f274e54b98d2d1187ba6000f8bb69c8dc558a64521736ce6eee472"
+      },
+      {
+        "id": "niah_multikey_1-1048576-3",
+        "task": "niah_multikey_1",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 4807,
+        "construction_size": 853068,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "acda3b017d69176149c04a5a63b14257845b61ae660d6ec04dc014f37d92b06a",
+        "token_sha256": "c59122f371b74b9719ad4dae6b09b2315cce5e41e68592462d4ac1d2f564dd45",
+        "max_tokens": 256,
+        "file": "niah_multikey_1-1048576-3.json.gz",
+        "sha256": "42a0f45d653c29c97566add90c60ac0a42bbddbb04f2caf3ab0103a847f2dc66"
+      },
+      {
+        "id": "niah_multikey_2-1048576-0",
+        "task": "niah_multikey_2",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 5765,
+        "construction_size": 53725,
+        "prompt_tokens": 1044478,
+        "near_window": true,
+        "prompt_sha256": "d8dc824048c374e61b8197aa2fbd9cced95bd98e329c6333ffcf0b3b76cffeb5",
+        "token_sha256": "eda597769b98cb9d0e47c752e278d2439ad0911b13dd415f4337aca92de92fc5",
+        "max_tokens": 256,
+        "file": "niah_multikey_2-1048576-0.json.gz",
+        "sha256": "0261fba64603baebfa66cf7ef4ddc9053da0bba289974c20271f63a708fb683c"
+      },
+      {
+        "id": "niah_multikey_2-1048576-1",
+        "task": "niah_multikey_2",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 5782,
+        "construction_size": 53749,
+        "prompt_tokens": 1044472,
+        "near_window": true,
+        "prompt_sha256": "cf4682c35e8e6131dda542ffb0c0279503c9dc7d0aa600402d3f4e96e5f7f5a9",
+        "token_sha256": "6e50edffa4fc35c2f93abde7e4d5783c0f3af4f79b19e3dfa3570576135a582c",
+        "max_tokens": 256,
+        "file": "niah_multikey_2-1048576-1.json.gz",
+        "sha256": "9c48e399cbe68fcfb66c586aa7fd6158ea197688d64e8f7d3b94679287d552a3"
+      },
+      {
+        "id": "niah_multikey_2-1048576-2",
+        "task": "niah_multikey_2",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 5799,
+        "construction_size": 53736,
+        "prompt_tokens": 1044476,
+        "near_window": true,
+        "prompt_sha256": "0537af2b0bb26f4b889fa9eb1ec32bbf6d7f08a6eed35fdc6ce5f4905cb47b3f",
+        "token_sha256": "9f96fefc34ba813bebe0376d1e7f880d47000822234cdc6333e244f3a261ba24",
+        "max_tokens": 256,
+        "file": "niah_multikey_2-1048576-2.json.gz",
+        "sha256": "098f9029e6e5be7bbaec79d6201a8a876ea0decfbced5bc206bc963908f741ab"
+      },
+      {
+        "id": "niah_multikey_2-1048576-3",
+        "task": "niah_multikey_2",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 5816,
+        "construction_size": 53742,
+        "prompt_tokens": 1044464,
+        "near_window": true,
+        "prompt_sha256": "32e523639113be62b399d02362047cea49037645dc29898726bf215a0ec7b79e",
+        "token_sha256": "4550a844e97241d324bd5285f6b4dbbb0fb8d4281ff5326b191167d7d21e00e9",
+        "max_tokens": 256,
+        "file": "niah_multikey_2-1048576-3.json.gz",
+        "sha256": "c122e409b6d96406763d130250442880f7fe5f832948d58b584ec89b546047cf"
+      },
+      {
+        "id": "niah_multikey_3-1048576-0",
+        "task": "niah_multikey_3",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 6774,
+        "construction_size": 16511,
+        "prompt_tokens": 1044446,
+        "near_window": true,
+        "prompt_sha256": "3cf0d007c0b24a5052fd6580a43556158f5b4a7da0da5dd9982c9c8d3f970b0a",
+        "token_sha256": "9acdb8866cdf54a6ef9ae18bbd9c612605b950580ecbb7f519d77015d5123fff",
+        "max_tokens": 256,
+        "file": "niah_multikey_3-1048576-0.json.gz",
+        "sha256": "53b266d4b8a7f87d54acd78b516779420e899531c889d56657c6c53cb86de205"
+      },
+      {
+        "id": "niah_multikey_3-1048576-1",
+        "task": "niah_multikey_3",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 6791,
+        "construction_size": 16520,
+        "prompt_tokens": 1044441,
+        "near_window": true,
+        "prompt_sha256": "28ccd235d7bfe8074decd8e16f9496fd189ac003a1b570ec979b20c347de52fa",
+        "token_sha256": "6a3e69dc5e502ddaca8f5e281202685a13307b9d8a596b2a02e5c56a262effef",
+        "max_tokens": 256,
+        "file": "niah_multikey_3-1048576-1.json.gz",
+        "sha256": "3443ceda3d06438ded77149f4c9f537d40d201eadcf2141e6715fc3515380537"
+      },
+      {
+        "id": "niah_multikey_3-1048576-2",
+        "task": "niah_multikey_3",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 6808,
+        "construction_size": 16526,
+        "prompt_tokens": 1044419,
+        "near_window": true,
+        "prompt_sha256": "930b332148b9de35135dcf538fe206aaf5a1afcd860628371201ac122743b8eb",
+        "token_sha256": "0b71c086029fc30f4a9e1c1a1b10c30e00b230c0f06365d0a0956f92c204ce2e",
+        "max_tokens": 256,
+        "file": "niah_multikey_3-1048576-2.json.gz",
+        "sha256": "ae8242a5f8239107f1be3dfa2089cea2916ac24de888845652d70bf0723cf664"
+      },
+      {
+        "id": "niah_multikey_3-1048576-3",
+        "task": "niah_multikey_3",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 6825,
+        "construction_size": 16522,
+        "prompt_tokens": 1044430,
+        "near_window": true,
+        "prompt_sha256": "1cebda2b7431f86ed9e8c6c04a4c53cf7ddb9deb1140cccd7b3ac63de88fcf0e",
+        "token_sha256": "e57643cad4e598800150bce4dbd67ed90fcbbde31306447a921ab5727b5818f9",
+        "max_tokens": 256,
+        "file": "niah_multikey_3-1048576-3.json.gz",
+        "sha256": "cf7baadcc02b05ed04bfa53188046cd2daec2942aea03308cd84ed5fa5920a93"
+      },
+      {
+        "id": "niah_multivalue-1048576-0",
+        "task": "niah_multivalue",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 7783,
+        "construction_size": 853060,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "bc2d555fff5186e85fec2e055873fdad20407a89e273c23b6f2e7f5ba5aac5dd",
+        "token_sha256": "3a5f4d730ce096f62ceec7982d1237edc731d135cfb9bd2b2ac21adcf9ca0150",
+        "max_tokens": 256,
+        "file": "niah_multivalue-1048576-0.json.gz",
+        "sha256": "350cc761bc18368e1cbe6ec2452ae54a25ce3d1dda2494cf778065669a8875c7"
+      },
+      {
+        "id": "niah_multivalue-1048576-1",
+        "task": "niah_multivalue",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 7800,
+        "construction_size": 853059,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "ad34c92dcb24955abed24df51d2b31ebe69d3020503921df0d7071addcf91a2d",
+        "token_sha256": "cd497f40401c78909fab979f165999a1e8a7eb94474c4bf88a98366407f2b1b1",
+        "max_tokens": 256,
+        "file": "niah_multivalue-1048576-1.json.gz",
+        "sha256": "a176e034e6ef0f9701fbf450d7b2c50cd19650962b4b87960a0ebb4e467c9d41"
+      },
+      {
+        "id": "niah_multivalue-1048576-2",
+        "task": "niah_multivalue",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 7817,
+        "construction_size": 853054,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "03c52c7ae84940da52f63307c6e030047fc06f2c384f20292723d38f2719d495",
+        "token_sha256": "437d4fef5b817f1bf01800403d1faf54aea1edac0c0ba27285d16b62fad7dba6",
+        "max_tokens": 256,
+        "file": "niah_multivalue-1048576-2.json.gz",
+        "sha256": "2cb382e37e196decaa31971a753cb28b508b0f9ad6dce37abaeb3b19ff939499"
+      },
+      {
+        "id": "niah_multivalue-1048576-3",
+        "task": "niah_multivalue",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 7834,
+        "construction_size": 853065,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "7a145632c7b0a0b5ef80a58da19133787f57d9dba6f1b392cbca3296866d645a",
+        "token_sha256": "c257ae4bbf01dcd0b316070fdef8ad684811a801aac9c09a4832adf4ff6d18b2",
+        "max_tokens": 256,
+        "file": "niah_multivalue-1048576-3.json.gz",
+        "sha256": "d619506c46ef7f8e599a423477b0c95d9c5e3a1404bda66b05b13d39b024056f"
+      },
+      {
+        "id": "niah_multiquery-1048576-0",
+        "task": "niah_multiquery",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 8792,
+        "construction_size": 853032,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "33c98af8c0068c0d84db46454402feca84030d74c8533ae73928cac87e8360a6",
+        "token_sha256": "f94a0a73f487baf61ad79d1089731379ad5b8cd3d7bdee150ab7807a76cb241c",
+        "max_tokens": 256,
+        "file": "niah_multiquery-1048576-0.json.gz",
+        "sha256": "db20e8aef97dfc49f4393e91f8c2094040e46b93038b49cf2b3ac13c04fce61a"
+      },
+      {
+        "id": "niah_multiquery-1048576-1",
+        "task": "niah_multiquery",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 8809,
+        "construction_size": 853029,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "16f92803db74632d5ff5255f9444fc388e2bf0eebd06f69dc4be20186c6c2a40",
+        "token_sha256": "9d19077b4c91bcf215ba56fb944d58fa086f6e9bad113d2897ecc8713cf83d66",
+        "max_tokens": 256,
+        "file": "niah_multiquery-1048576-1.json.gz",
+        "sha256": "68253b6b92aafdcbc565ebb52c2419691716d1b83b89958b6d61fd978bfa89ad"
+      },
+      {
+        "id": "niah_multiquery-1048576-2",
+        "task": "niah_multiquery",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 8826,
+        "construction_size": 853027,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "22c6bcaeb8472ea4e089ce016cd565e442c50e14b88606b72958907b6a8e0c2c",
+        "token_sha256": "47fc18894f2055db3bd48566b8fba72b6639177cfb656cba22fecc603c6629ce",
+        "max_tokens": 256,
+        "file": "niah_multiquery-1048576-2.json.gz",
+        "sha256": "c191422a6af00fbc4ab7853da638d047a1778d33c25c3d83a680c2668a10e5c4"
+      },
+      {
+        "id": "niah_multiquery-1048576-3",
+        "task": "niah_multiquery",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 8843,
+        "construction_size": 853027,
+        "prompt_tokens": 1044479,
+        "near_window": true,
+        "prompt_sha256": "be293691c41ed71afa133d1f8ace77a40e1bbdd41b70e3b459aa197ac991fc7c",
+        "token_sha256": "801e8818a1bd0c679a432b6b98971c309712e54ec36ab8e8d43ee089f9a42f5e",
+        "max_tokens": 256,
+        "file": "niah_multiquery-1048576-3.json.gz",
+        "sha256": "280e967c3222308ad4bbe091a8b1bd5d14f7578474a9345eb8bb48b48844308b"
+      },
+      {
+        "id": "vt-1048576-0",
+        "task": "vt",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 9801,
+        "construction_size": 43499,
+        "prompt_tokens": 1044472,
+        "near_window": true,
+        "prompt_sha256": "462b4116c4f81790506f888e2303459cd5d4dc3d8061f42977abc4e5cb9cf03d",
+        "token_sha256": "0f857f23e01c048962d6e63c2b6fc8498db371b7712dab85d34d74012c6119d7",
+        "max_tokens": 256,
+        "file": "vt-1048576-0.json.gz",
+        "sha256": "f329ac96468999b2b08b7c2d2ed487d1862772297ac95c49cad4d6bf8002130e"
+      },
+      {
+        "id": "vt-1048576-1",
+        "task": "vt",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 9818,
+        "construction_size": 43499,
+        "prompt_tokens": 1044471,
+        "near_window": true,
+        "prompt_sha256": "5f438318c3a902f9a35d1df6782e7f32038c4c31188a7b32da6034c01ef82679",
+        "token_sha256": "da3b9e2becd9d1139aa733a68c8e3ff453f857a58864edb5fd8f9f416ffc3e7d",
+        "max_tokens": 256,
+        "file": "vt-1048576-1.json.gz",
+        "sha256": "4354cc2f06dcfa9c9fd7995fa22dc7bc33cef83d0ea5c43e4a2c09d589ae5742"
+      },
+      {
+        "id": "vt-1048576-2",
+        "task": "vt",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 9835,
+        "construction_size": 43499,
+        "prompt_tokens": 1044472,
+        "near_window": true,
+        "prompt_sha256": "dfc12f30b60a568735fd9df90fb50e980f1a848eee8d2bfce1b0eb42ff85051e",
+        "token_sha256": "f9f15383840c9743bf425b26591c3767318d5470ce616bd3174b926a4be05918",
+        "max_tokens": 256,
+        "file": "vt-1048576-2.json.gz",
+        "sha256": "c5701de84e743176fd0e30ae1b3ee85fe2bc7fdbedf81edef3cc757967b5e622"
+      },
+      {
+        "id": "vt-1048576-3",
+        "task": "vt",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 9852,
+        "construction_size": 43499,
+        "prompt_tokens": 1044474,
+        "near_window": true,
+        "prompt_sha256": "97b71d96124bc45625c85ccffede140464734133707c3284fdeea52ff8b84f2a",
+        "token_sha256": "7fd4378764ec0165325f16fb478fd081fa3a2ba3fe4c00f2ac6e7d203df71bc7",
+        "max_tokens": 256,
+        "file": "vt-1048576-3.json.gz",
+        "sha256": "5bded020cff1b9ca07232606fef8b37be341cca4eabb912b5ba1b62a2f53af86"
+      },
+      {
+        "id": "cwe-1048576-0",
+        "task": "cwe",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 10810,
+        "construction_size": 8169,
+        "prompt_tokens": 143600,
+        "near_window": false,
+        "prompt_sha256": "1ecb3c52e9f40b5640c805003c25752cbb4c7db4b6cc640870d06768bcfebb52",
+        "token_sha256": "a308a17393e0259b3ebb56c5a8b8d404c91d94034b4f067b3eca349ab65a3190",
+        "max_tokens": 256,
+        "file": "cwe-1048576-0.json.gz",
+        "sha256": "f87b0202c4458793931ad8c0f6c23dc0a08a014a9fac1f9d606477a77098ac13"
+      },
+      {
+        "id": "cwe-1048576-1",
+        "task": "cwe",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 10827,
+        "construction_size": 8169,
+        "prompt_tokens": 143681,
+        "near_window": false,
+        "prompt_sha256": "3a1d7257f8aea0639d390113861209d67e2798719081643466088516226515df",
+        "token_sha256": "7411f61f213307ba6a68396abd50d33e324ef410328be6425f86697ca003a070",
+        "max_tokens": 256,
+        "file": "cwe-1048576-1.json.gz",
+        "sha256": "4dd4d3905a3df703877cb95fbf0d8dbe0f3b2093ccd1e9e6a8fb5f4d7ca26cbd"
+      },
+      {
+        "id": "cwe-1048576-2",
+        "task": "cwe",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 10844,
+        "construction_size": 8169,
+        "prompt_tokens": 143492,
+        "near_window": false,
+        "prompt_sha256": "fcd90f7c14dd0105169d04665cb56786b82ee56805090b30bf7f95fe54173459",
+        "token_sha256": "dbcae11245648a243e8c0668380a0e228f09b8be5586742a2216ebc5ff620b9c",
+        "max_tokens": 256,
+        "file": "cwe-1048576-2.json.gz",
+        "sha256": "3bb542f8dfc7062504063a09ad9792c3dcb5d589cc280ba70f5b3029a06640e2"
+      },
+      {
+        "id": "cwe-1048576-3",
+        "task": "cwe",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 10861,
+        "construction_size": 8169,
+        "prompt_tokens": 143681,
+        "near_window": false,
+        "prompt_sha256": "a97249e06d61c00d36e6073f7de7750218c16a42c6a459eeb3f28cd45a6bc101",
+        "token_sha256": "9b65df01d0529f45b36577ca0abb88267666ca06e2470cf73bdbfcfb002504c0",
+        "max_tokens": 256,
+        "file": "cwe-1048576-3.json.gz",
+        "sha256": "728a66388eb2006c4ba13e91b58a32b25d8cf2b4ec969a9d17f9fabe64413bbc"
+      },
+      {
+        "id": "fwe-1048576-0",
+        "task": "fwe",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 11819,
+        "construction_size": 558080,
+        "prompt_tokens": 1044479,
+        "near_window": true,
+        "prompt_sha256": "ea3adbe18356a9f7a10b1da6cfbda077bc41afd36952c89ebdb736981dcd2c90",
+        "token_sha256": "3b7d33de32a8cfef8bde1fa8178300991a53629da24db3caff2faf5af42e612d",
+        "max_tokens": 256,
+        "file": "fwe-1048576-0.json.gz",
+        "sha256": "7bc101749b333194c197eb39dfff61c012c2173b8991e1492b6075f86309847a"
+      },
+      {
+        "id": "fwe-1048576-1",
+        "task": "fwe",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 11836,
+        "construction_size": 507865,
+        "prompt_tokens": 1044480,
+        "near_window": true,
+        "prompt_sha256": "6fac2487d8d5b634ea5187ece74ed92391cc187c985901ec8885d34346064220",
+        "token_sha256": "a06d6cfe67db6df6892632bfbaf55b6688b1a4fa91baa11dddb8067d522fa9a8",
+        "max_tokens": 256,
+        "file": "fwe-1048576-1.json.gz",
+        "sha256": "1cc0ec9827a43cc01f2b107c8015c6c65dd8896b44d2fc68217393daece623bb"
+      },
+      {
+        "id": "fwe-1048576-2",
+        "task": "fwe",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 11853,
+        "construction_size": 532695,
+        "prompt_tokens": 1044478,
+        "near_window": true,
+        "prompt_sha256": "ac8637d3792f0279d2d2c6f8bf49df08e68088852fafaf184dccbb2ed5f08cd2",
+        "token_sha256": "b908f8d7ae41e344ff23ce7baf70a6acbb3248af05f511c219bbecefb740b42b",
+        "max_tokens": 256,
+        "file": "fwe-1048576-2.json.gz",
+        "sha256": "6e19b294ae919f3bbc5f013480b0a8bc28e89ee6ad3fbda56efd190d52d53286"
+      },
+      {
+        "id": "fwe-1048576-3",
+        "task": "fwe",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 11870,
+        "construction_size": 528117,
+        "prompt_tokens": 1044476,
+        "near_window": true,
+        "prompt_sha256": "6b1662652b5d34586ef9c376f018a1eb9bf4b6eb1849b0f16e9a481e0081a20f",
+        "token_sha256": "2ae84904dbebc15175214082207fff322898860a41042f67247a42d0e7d8c0af",
+        "max_tokens": 256,
+        "file": "fwe-1048576-3.json.gz",
+        "sha256": "1a50e8fd908a4cc1528f4d665300f78fa60a2501358f589c9fa283993dd81fc5"
+      },
+      {
+        "id": "qa_squad-1048576-0",
+        "task": "qa_squad",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 12828,
+        "construction_size": 1204,
+        "prompt_tokens": 204873,
+        "near_window": false,
+        "prompt_sha256": "b9d2856b852205fd7c0e07a5ca0c9220eea7f28d1655afd0925560e557d4b975",
+        "token_sha256": "a3b2900106cdcb66edf2063d6903d7553b58aa6a55b27b080bd920ed3551f67a",
+        "max_tokens": 256,
+        "file": "qa_squad-1048576-0.json.gz",
+        "sha256": "aea3b433c3296ade329129cd2c67bb47a1249448d9aa9d0838a9888f18b6fa0a"
+      },
+      {
+        "id": "qa_squad-1048576-1",
+        "task": "qa_squad",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 12845,
+        "construction_size": 1204,
+        "prompt_tokens": 204875,
+        "near_window": false,
+        "prompt_sha256": "cc9034902fdc7cf9b5b79e905cbf0fe625e1bda0288f63c3d1f031fd87b0ef8c",
+        "token_sha256": "aaa464bdc2f4c5ff5ae4d702f16b7b44f06c47ee1a966b1dab33f329ea70ae3c",
+        "max_tokens": 256,
+        "file": "qa_squad-1048576-1.json.gz",
+        "sha256": "a3d6f2954dcbbb841ba0531a092b76c92fbe52451f67cea6c020d98fb0cd36ca"
+      },
+      {
+        "id": "qa_squad-1048576-2",
+        "task": "qa_squad",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 12862,
+        "construction_size": 1204,
+        "prompt_tokens": 204876,
+        "near_window": false,
+        "prompt_sha256": "5012a0b886f8bf4ec25e54491f5d612e8893f85ff6eb26407ad87650263c0389",
+        "token_sha256": "792be9d9a516da8bda1e74e8dde686a1ff423f3b398d2bdfc4ff4ae52440a6e3",
+        "max_tokens": 256,
+        "file": "qa_squad-1048576-2.json.gz",
+        "sha256": "ccdf492f2084658df4255cf41eeb4e051fec34a1656378e65d95d6d6544002ff"
+      },
+      {
+        "id": "qa_squad-1048576-3",
+        "task": "qa_squad",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 12879,
+        "construction_size": 1204,
+        "prompt_tokens": 204877,
+        "near_window": false,
+        "prompt_sha256": "ee072070c9452c209345a5f0870231ef3d3ccc0c14822bbe9bbf90525e100909",
+        "token_sha256": "be5eb6cd9355f3ba3e6defca64f6edfbd911f1cb240bab2b26f3bf135ae8a331",
+        "max_tokens": 256,
+        "file": "qa_squad-1048576-3.json.gz",
+        "sha256": "30cbcb8d753aa35147c43b89a983ee466bbf68309261967a01bff953aa06671c"
+      },
+      {
+        "id": "qa_hotpot-1048576-0",
+        "task": "qa_hotpot",
+        "length": 1048576,
+        "sample": 0,
+        "seed": 13837,
+        "construction_size": 7731,
+        "prompt_tokens": 1044431,
+        "near_window": true,
+        "prompt_sha256": "da40900960e27e91687d80d2b297d7a01dbddb8c21bc58e4ceb5e1abcefca885",
+        "token_sha256": "fd13c9740e37c55a4d314a28fdc4d096c1c40edb92713f9de384a99e6eb60e32",
+        "max_tokens": 256,
+        "file": "qa_hotpot-1048576-0.json.gz",
+        "sha256": "4c4d48c7eb8b05f2d60d0207139fb6e1cf5a578f51e89664c2fe372424512d86"
+      },
+      {
+        "id": "qa_hotpot-1048576-1",
+        "task": "qa_hotpot",
+        "length": 1048576,
+        "sample": 1,
+        "seed": 13854,
+        "construction_size": 7814,
+        "prompt_tokens": 1044454,
+        "near_window": true,
+        "prompt_sha256": "b76857be8b5d88720307d25e00e5e13e7b8aab03179a50c1bae50c3f34b85dd3",
+        "token_sha256": "e49228dfe260372778a8d1329edc4f3d58b06188f77fe554b336031109aee4b8",
+        "max_tokens": 256,
+        "file": "qa_hotpot-1048576-1.json.gz",
+        "sha256": "8c354fd12c6129b706e418a7e1d9d9684f66bdf0e5c68e882b85737b9b8516ae"
+      },
+      {
+        "id": "qa_hotpot-1048576-2",
+        "task": "qa_hotpot",
+        "length": 1048576,
+        "sample": 2,
+        "seed": 13871,
+        "construction_size": 7696,
+        "prompt_tokens": 1044231,
+        "near_window": true,
+        "prompt_sha256": "fb001b19590fbe2022746a2b26cf3d45adeb5d8cd8597dcad5c2d66734d33799",
+        "token_sha256": "cc3cbb4c9c288c56a97897d162529c5d7dd1246253e762ae4ef1638935e72625",
+        "max_tokens": 256,
+        "file": "qa_hotpot-1048576-2.json.gz",
+        "sha256": "a4fd618aaa176bc725525561005fb608731209a468c36d693d783bae07afdc9d"
+      },
+      {
+        "id": "qa_hotpot-1048576-3",
+        "task": "qa_hotpot",
+        "length": 1048576,
+        "sample": 3,
+        "seed": 13888,
+        "construction_size": 7721,
+        "prompt_tokens": 1044395,
+        "near_window": true,
+        "prompt_sha256": "d925d521b13ed426defe02a0e4cb617cdd2f7ffbf985980dd0633ec460ba1fe2",
+        "token_sha256": "055837c2d942ba65f42393775f33198b37096cb8bcc45978c3506982ac51e968",
+        "max_tokens": 256,
+        "file": "qa_hotpot-1048576-3.json.gz",
+        "sha256": "3826dd9f15d43191b96da54d3c83787a5f59246e2f18cd0a05ec16a226d977cf"
+      }
+    ]
+  },
+  "environment": {
+    "python": "3.12.14",
+    "packages": {
+      "lm_eval": "0.4.14.dev0",
+      "transformers": "5.20.2",
+      "tokenizers": "0.23.3",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "datasets": "5.1.0",
+      "nltk": "3.10.4",
+      "wonderwords": "2.2.0",
+      "huggingface_hub": "2.3.0"
+    },
+    "files_sha256": {
+      "quality/uv.lock": "976f8ae9068918a7603debeede6a665a467b68ea4f392c279a64ca00e8ace150",
+      "quality/long-context-requirements.txt": "378711c91da9fb335a39364879de7c12435b12011187bb7b0a436a1645d45791",
+      "quality/ruler_bank.py": "f59cb3c94b219d478f10835af0e3373ead9b1e2678d25cf10656ebc20386087b",
+      "quality/long_context.py": "d4e40fb1086eff4cc66b6f185c8d87b0860901f3ca948edd04ee7051bc0517b0"
+    },
+    "torch": "not installed or required by this HTTP evaluation client"
+  },
+  "groups": [
+    {
+      "configured_length": 32768,
+      "task": "niah_single_1",
+      "n": 4,
+      "input_tokens_min": 28649,
+      "input_tokens_max": 28651,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "niah_single_2",
+      "n": 4,
+      "input_tokens_min": 28672,
+      "input_tokens_max": 28672,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "niah_single_3",
+      "n": 4,
+      "input_tokens_min": 28671,
+      "input_tokens_max": 28672,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "niah_multikey_1",
+      "n": 4,
+      "input_tokens_min": 28671,
+      "input_tokens_max": 28672,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "niah_multikey_2",
+      "n": 4,
+      "input_tokens_min": 28658,
+      "input_tokens_max": 28669,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "niah_multikey_3",
+      "n": 4,
+      "input_tokens_min": 28608,
+      "input_tokens_max": 28672,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "niah_multivalue",
+      "n": 4,
+      "input_tokens_min": 28672,
+      "input_tokens_max": 28672,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "niah_multiquery",
+      "n": 4,
+      "input_tokens_min": 28672,
+      "input_tokens_max": 28672,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "vt",
+      "n": 4,
+      "input_tokens_min": 28650,
+      "input_tokens_max": 28672,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "cwe",
+      "n": 4,
+      "input_tokens_min": 28655,
+      "input_tokens_max": 28667,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "fwe",
+      "n": 4,
+      "input_tokens_min": 28658,
+      "input_tokens_max": 28672,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "qa_squad",
+      "n": 4,
+      "input_tokens_min": 28503,
+      "input_tokens_max": 28672,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 32768,
+      "task": "qa_hotpot",
+      "n": 4,
+      "input_tokens_min": 28469,
+      "input_tokens_max": 28664,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 1048576,
+      "task": "niah_single_1",
+      "n": 4,
+      "input_tokens_min": 1044473,
+      "input_tokens_max": 1044475,
+      "near_window_cases": 4
+    },
+    {
+      "configured_length": 1048576,
+      "task": "niah_single_2",
+      "n": 4,
+      "input_tokens_min": 1044480,
+      "input_tokens_max": 1044480,
+      "near_window_cases": 4
+    },
+    {
+      "configured_length": 1048576,
+      "task": "niah_single_3",
+      "n": 4,
+      "input_tokens_min": 1044479,
+      "input_tokens_max": 1044480,
+      "near_window_cases": 4
+    },
+    {
+      "configured_length": 1048576,
+      "task": "niah_multikey_1",
+      "n": 4,
+      "input_tokens_min": 1044480,
+      "input_tokens_max": 1044480,
+      "near_window_cases": 4
+    },
+    {
+      "configured_length": 1048576,
+      "task": "niah_multikey_2",
+      "n": 4,
+      "input_tokens_min": 1044464,
+      "input_tokens_max": 1044478,
+      "near_window_cases": 4
+    },
+    {
+      "configured_length": 1048576,
+      "task": "niah_multikey_3",
+      "n": 4,
+      "input_tokens_min": 1044419,
+      "input_tokens_max": 1044446,
+      "near_window_cases": 4
+    },
+    {
+      "configured_length": 1048576,
+      "task": "niah_multivalue",
+      "n": 4,
+      "input_tokens_min": 1044480,
+      "input_tokens_max": 1044480,
+      "near_window_cases": 4
+    },
+    {
+      "configured_length": 1048576,
+      "task": "niah_multiquery",
+      "n": 4,
+      "input_tokens_min": 1044479,
+      "input_tokens_max": 1044480,
+      "near_window_cases": 4
+    },
+    {
+      "configured_length": 1048576,
+      "task": "vt",
+      "n": 4,
+      "input_tokens_min": 1044471,
+      "input_tokens_max": 1044474,
+      "near_window_cases": 4
+    },
+    {
+      "configured_length": 1048576,
+      "task": "cwe",
+      "n": 4,
+      "input_tokens_min": 143492,
+      "input_tokens_max": 143681,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 1048576,
+      "task": "fwe",
+      "n": 4,
+      "input_tokens_min": 1044476,
+      "input_tokens_max": 1044480,
+      "near_window_cases": 4
+    },
+    {
+      "configured_length": 1048576,
+      "task": "qa_squad",
+      "n": 4,
+      "input_tokens_min": 204873,
+      "input_tokens_max": 204877,
+      "near_window_cases": 0
+    },
+    {
+      "configured_length": 1048576,
+      "task": "qa_hotpot",
+      "n": 4,
+      "input_tokens_min": 1044231,
+      "input_tokens_max": 1044454,
+      "near_window_cases": 4
+    }
+  ],
+  "niah_input_integrity": [
+    {
+      "id": "niah_single_1-32768-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.7061296232574145
+      ]
+    },
+    {
+      "id": "niah_single_1-32768-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.658456959494024
+      ]
+    },
+    {
+      "id": "niah_single_1-32768-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.440794918769122
+      ]
+    },
+    {
+      "id": "niah_single_1-32768-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.5454317175700308
+      ]
+    },
+    {
+      "id": "niah_single_2-32768-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.6472899017917385
+      ]
+    },
+    {
+      "id": "niah_single_2-32768-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.8628478469473432
+      ]
+    },
+    {
+      "id": "niah_single_2-32768-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.59112550704426
+      ]
+    },
+    {
+      "id": "niah_single_2-32768-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.33229857908746674
+      ]
+    },
+    {
+      "id": "niah_single_3-32768-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.2332375730391017
+      ]
+    },
+    {
+      "id": "niah_single_3-32768-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.998402148472664
+      ]
+    },
+    {
+      "id": "niah_single_3-32768-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.5134853293121169
+      ]
+    },
+    {
+      "id": "niah_single_3-32768-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.02730900199510973
+      ]
+    },
+    {
+      "id": "niah_multikey_1-32768-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.21344184825413495
+      ]
+    },
+    {
+      "id": "niah_multikey_1-32768-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.15645880985413776
+      ]
+    },
+    {
+      "id": "niah_multikey_1-32768-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.7613286933565332
+      ]
+    },
+    {
+      "id": "niah_multikey_1-32768-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.7975359373711166
+      ]
+    },
+    {
+      "id": "niah_multikey_2-32768-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.6706067608744555
+      ]
+    },
+    {
+      "id": "niah_multikey_2-32768-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.9415371701164957
+      ]
+    },
+    {
+      "id": "niah_multikey_2-32768-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.711328097071711
+      ]
+    },
+    {
+      "id": "niah_multikey_2-32768-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.4979292149423759
+      ]
+    },
+    {
+      "id": "niah_multikey_3-32768-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.5936786722890635
+      ]
+    },
+    {
+      "id": "niah_multikey_3-32768-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.5835713734270054
+      ]
+    },
+    {
+      "id": "niah_multikey_3-32768-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.08612255902630667
+      ]
+    },
+    {
+      "id": "niah_multikey_3-32768-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.8167991970971976
+      ]
+    },
+    {
+      "id": "niah_multivalue-32768-0",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.18620312113326684,
+        0.9234489947431177,
+        0.15649161223556232,
+        0.5703004896924612
+      ]
+    },
+    {
+      "id": "niah_multivalue-32768-1",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.5897989636994878,
+        0.9984552973552591,
+        0.9515818204995539,
+        0.9037935197474486
+      ]
+    },
+    {
+      "id": "niah_multivalue-32768-2",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.4698787951518061,
+        0.6646840873634945,
+        0.04747689907596304,
+        0.10336163446537862
+      ]
+    },
+    {
+      "id": "niah_multivalue-32768-3",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.695293226655469,
+        0.10281116668291329,
+        0.1361642459189718,
+        0.4842420197808955
+      ]
+    },
+    {
+      "id": "niah_multiquery-32768-0",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.8618200915297471,
+        0.6638007352389527,
+        0.9521119363793232,
+        0.48350213819491333
+      ]
+    },
+    {
+      "id": "niah_multiquery-32768-1",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.02740188430148824,
+        0.7615068410945751,
+        0.5362608017282765,
+        0.9520598295727316
+      ]
+    },
+    {
+      "id": "niah_multiquery-32768-2",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.41719425108017283,
+        0.10338904224675949,
+        0.001852796447431589,
+        0.15760771723475756
+      ]
+    },
+    {
+      "id": "niah_multiquery-32768-3",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.04748293195288469,
+        0.3944331907870058,
+        0.484507464926101,
+        0.787305874409183
+      ]
+    },
+    {
+      "id": "niah_single_1-1048576-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.618662313527623
+      ]
+    },
+    {
+      "id": "niah_single_1-1048576-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.5765911681693604
+      ]
+    },
+    {
+      "id": "niah_single_1-1048576-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.38560096280885287
+      ]
+    },
+    {
+      "id": "niah_single_1-1048576-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.47728157015408246
+      ]
+    },
+    {
+      "id": "niah_single_2-1048576-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.6301663568496588
+      ]
+    },
+    {
+      "id": "niah_single_2-1048576-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.8576876973480406
+      ]
+    },
+    {
+      "id": "niah_single_2-1048576-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.562291680865967
+      ]
+    },
+    {
+      "id": "niah_single_2-1048576-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.303700336924291
+      ]
+    },
+    {
+      "id": "niah_single_3-1048576-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.2286473286642654
+      ]
+    },
+    {
+      "id": "niah_single_3-1048576-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.9999562723244667
+      ]
+    },
+    {
+      "id": "niah_single_3-1048576-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.47979931213966936
+      ]
+    },
+    {
+      "id": "niah_single_3-1048576-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.02807673618103915
+      ]
+    },
+    {
+      "id": "niah_multikey_1-1048576-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.20680288839554611
+      ]
+    },
+    {
+      "id": "niah_multikey_1-1048576-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.14686861412468882
+      ]
+    },
+    {
+      "id": "niah_multikey_1-1048576-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.7268859370987169
+      ]
+    },
+    {
+      "id": "niah_multikey_1-1048576-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.7775358526891082
+      ]
+    },
+    {
+      "id": "niah_multikey_2-1048576-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.9393953875523678
+      ]
+    },
+    {
+      "id": "niah_multikey_2-1048576-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.8404133222196805
+      ]
+    },
+    {
+      "id": "niah_multikey_2-1048576-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.7691216175381341
+      ]
+    },
+    {
+      "id": "niah_multikey_2-1048576-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.4334587132985313
+      ]
+    },
+    {
+      "id": "niah_multikey_3-1048576-0",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.04149002053361915
+      ]
+    },
+    {
+      "id": "niah_multikey_3-1048576-1",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.29067328027722805
+      ]
+    },
+    {
+      "id": "niah_multikey_3-1048576-2",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.7710737626799173
+      ]
+    },
+    {
+      "id": "niah_multikey_3-1048576-3",
+      "gold_count": 1,
+      "first_occurrence_character_fractions": [
+        0.4650247874226388
+      ]
+    },
+    {
+      "id": "niah_multivalue-1048576-0",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.1763837617165383,
+        0.9238423470973532,
+        0.14686951998170436,
+        0.5381311759588069
+      ]
+    },
+    {
+      "id": "niah_multivalue-1048576-1",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.5622390356212079,
+        0.9999577098877772,
+        0.9529635412015525,
+        0.9054327397320736
+      ]
+    },
+    {
+      "id": "niah_multivalue-1048576-2",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.4290814939754683,
+        0.6481117960601788,
+        0.04684398790905679,
+        0.09690635595690815
+      ]
+    },
+    {
+      "id": "niah_multivalue-1048576-3",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.6774352417658533,
+        0.09689130914094055,
+        0.12660235288900823,
+        0.4495487483571533
+      ]
+    },
+    {
+      "id": "niah_multiquery-1048576-0",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.8576749531362239,
+        0.6480892246059511,
+        0.9529752723908871,
+        0.44952928875661485
+      ]
+    },
+    {
+      "id": "niah_multiquery-1048576-1",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.02807930346181253,
+        0.7268644346683403,
+        0.5016282900173084,
+        0.9529726685828817
+      ]
+    },
+    {
+      "id": "niah_multiquery-1048576-2",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.37134887639653635,
+        0.0969070649584311,
+        5.0707555158836796e-05,
+        0.14689999258889577
+      ]
+    },
+    {
+      "id": "niah_multiquery-1048576-3",
+      "gold_count": 4,
+      "first_occurrence_character_fractions": [
+        0.046844167287341275,
+        0.35196951618585254,
+        0.4495412071826902,
+        0.7474841122354879
+      ]
+    }
+  ],
+  "scope": "All files and prompt hashes verified before scoring. NIAH literal gold values are present. Character positions are approximate locations, not token positions. CWE and SQuAD are corpus-limited below 1M and excluded from near-1M aggregates."
+}

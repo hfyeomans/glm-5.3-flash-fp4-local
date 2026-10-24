@@ -23,7 +23,8 @@ Every response score is checked against the original NVIDIA scorer.
   or answers. The 4,096-token preparation margin makes the smaller controls about
   28.7K input tokens. Report measured lengths, not the nominal 32K label.
 - The essay distractor corpus is repeated to extend the task to 1M. CWE retains
-  its upstream vocabulary cap. Undersized tasks are reported and excluded from
+  its upstream vocabulary cap, and QA retains its source-document corpus.
+  Undersized tasks are reported and excluded from
   any near-1M aggregate. A case is marked near-window only at >=90% of its label.
 - QA question IDs are shared between lengths. Synthetic golds can differ between
   lengths because their construction changes; these are task controls, not paired
@@ -62,3 +63,26 @@ existing pinned lm-eval installation, NLTK assets, and the datasets recorded in
 its manifest. Dataset files remain under `/models_engrams/huggingface`, outside
 Git. The bank is complete only when `complete.json` matches its manifest hash.
 The runner owns only `glm53-fp4-tensorfold` and stops it after the sweep.
+
+
+The frozen bank has 44 near-1M cases across 11 task families. CWE reaches about
+143K input tokens and SQuAD about 205K; their eight configured-1M cases are reported
+at those actual lengths and excluded from the near-1M aggregate. The 52 shorter
+controls use roughly 28K inputs because of the explicit preparation margin.
+[Bank, dependency versions and input-integrity receipt](../tensorfold/results/long-context-bank-v1.json).
+
+For a fresh checkout, prepare the pinned scorer and HotpotQA source before the
+commands above (skip cloning if the already-pinned checkout exists):
+
+```bash
+export HF_CACHE_ROOT=/models_engrams/huggingface
+export HF_HOME="$HF_CACHE_ROOT"
+git clone https://github.com/NVIDIA/RULER.git .state/ruler-upstream
+git -C .state/ruler-upstream checkout --detach c3f5e3b4f87f97e048793bb510a3a6b19a46bf3a
+hf download namlh2004/hotpotqa hotpot_dev_distractor_v1.json   --repo-type dataset --revision 7e54db4656209750ff487f6fdf8e39a66dba136b   --cache-dir "$HF_CACHE_ROOT/hub"
+```
+
+The generator fetches the pinned essay dataset and SQuAD source if absent. Their
+content hashes are retained in the bank receipt. Existing short-quality setup
+provides the frozen lm-eval environment and NLTK assets. No existing shared-cache
+files are deleted or replaced during qualification.
