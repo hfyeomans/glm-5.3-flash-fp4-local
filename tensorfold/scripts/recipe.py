@@ -15,12 +15,14 @@ from datetime import datetime, timezone
 HERE = Path(__file__).resolve().parents[1]
 ROOT = HERE.parent
 COMMIT = '36415df4f76e4458e82d0fa729ecb28e287ebf38'
+PR_COMMIT = '9b23b6a2e7ff226ca61934189c4cd57bf2933980'
+MERGED_TREE = '1d52effd182d9319d775d5787904c36783e532f1'
 LABEL = 'lab.glm53.tensorfold.root'
 BINARY = '/opt/tensorfold/bin/tensorfold-native'
 DEFAULTS = {
     'HF_CACHE_ROOT': '/models_engrams/huggingface', 'MODEL_DIR': '',
-    'TF_IMAGE': 'glm53-fp4-tensorfold:1.1.3-sm120',
-    'TF_CONTAINER': 'glm53-fp4-tensorfold', 'TF_VOLUME': 'glm53-fp4-tensorfold-1.1.3',
+    'TF_IMAGE': 'glm53-fp4-tensorfold:1.1.3-pr1050-sm120',
+    'TF_CONTAINER': 'glm53-fp4-tensorfold', 'TF_VOLUME': 'glm53-fp4-tensorfold-pr1050',
     'TF_GPUS': '0,1', 'TF_HOST': '0.0.0.0', 'TF_PORT': '8001', 'TF_COMM_PORT': '29600',
     'TF_CONTEXT': '8192', 'TF_PARALLEL': '1',
     'TF_MODEL_NAME': 'glm-5.3-flash-fp4-local', 'BUILD_JOBS': '4',
@@ -77,7 +79,9 @@ def image(c):
     data = json.loads(run(['docker', 'image', 'inspect', c['TF_IMAGE']], capture=True).stdout)[0]
     labels = data.get('Config', {}).get('Labels', {}) or {}
     if (labels.get('org.opencontainers.image.revision') != COMMIT or
-            labels.get('lab.glm53.tensorfold.recipe') != 'native-fp4-tp2'):
+            labels.get('lab.glm53.tensorfold.recipe') != 'native-fp4-tp2' or
+            labels.get('lab.glm53.tensorfold.pr1050') != PR_COMMIT or
+            labels.get('lab.glm53.tensorfold.tree') != MERGED_TREE):
         raise ValueError('Image is not this pinned native recipe; run ./tensorfold/build.sh')
     return data['Id']
 
@@ -134,22 +138,21 @@ def gpu_preflight(c):
 
 
 def compatibility(m):
-    """Necessary GLM CUDA loader contracts at COMMIT; header reads only, no GPU."""
+    """Necessary checkpoint header contracts for the pinned PR; full GPU gate is separate."""
     directory = Path(m['path'])
     weights = json.loads((directory / 'model.safetensors.index.json').read_text())['weight_map']
     headers = {}
     issues = []
     module = 'model.language_model.layers.3.mlp.experts.0.gate_proj'
-    # core/nvfp4.zig Linear.read requests this exact name; it does not call the CSF decoder.
-    scale = module + '.weight_scale'
-    if scale not in weights:
-        issues.append({'code': 'missing_plain_nvfp4_scale', 'tensor': scale,
-                       'found': sorted(k for k in weights if k.startswith(scale + '.')),
-                       'reason': 'GLM CUDA calls core.nvfp4.Linear.read, which requires a plain weight_scale tensor. The shared CSF decoder is not connected to this path.'})
-    # cuda_weights.zig Loader.add can widen/narrow BF16/F32 only at these call sites.
-    for name in ('model.language_model.layers.0.self_attn.q_proj.weight', 'lm_head.weight'):
+    expected = {module + '.weight': 'U8'}
+    for part, dtype in [('bases', 'U8'), ('codes', 'U8'), ('page_bases', 'U32'),
+                        ('offsets', 'U16'), ('exceptions', 'U16')]:
+        expected[module + '.weight_scale.csf32_' + part] = dtype
+    expected['model.language_model.layers.0.self_attn.q_proj.weight'] = 'F8_E4M3'
+    expected['lm_head.weight'] = 'F8_E4M3'
+    for name, dtype in expected.items():
         if name not in weights:
-            issues.append({'code': 'missing_projection', 'tensor': name})
+            issues.append({'code': 'missing_tensor', 'tensor': name})
             continue
         shard = weights[name]
         if shard not in headers:
@@ -158,22 +161,25 @@ def compatibility(m):
                 if length > 128 * 1024 * 1024:
                     raise ValueError('Unexpectedly large safetensors header')
                 headers[shard] = json.loads(stream.read(length))
-        dtype = headers[shard][name]['dtype']
-        if dtype not in ('BF16', 'F32'):
-            issues.append({'code': 'unsupported_projection_dtype', 'tensor': name, 'dtype': dtype,
-                           'reason': 'GLM CUDA Loader.add accepts BF16/F32 here; the checkpoint uses a quantized projection.'})
-    return {'engine_commit': COMMIT, 'model_revision': m.get('revision'),
-            'loader_contract_checks_passed': not issues, 'issues': issues,
-            'note': 'Passing these necessary header checks alone would not qualify GPU inference.'}
+        actual = headers[shard][name]['dtype']
+        if actual != dtype:
+            issues.append({'code': 'unexpected_tensor_dtype', 'tensor': name,
+                           'dtype': actual, 'expected': dtype})
+    return {'base_commit': COMMIT, 'pr1050_commit': PR_COMMIT, 'merged_tree': MERGED_TREE,
+            'model_revision': m.get('revision'), 'loader_contract_checks_passed': not issues,
+            'issues': issues, 'note': 'Header checks and the CPU codec probe do not qualify GPU inference.'}
 
 
 def require_compatible(m):
     report = compatibility(m)
     if report['issues']:
-        raise ValueError('TensorFold 1.1.3 GLM CUDA loader is incompatible with this pinned NVIDIA checkpoint: '
-                         + '; '.join(x['code'] for x in report['issues'])
-                         + '. Run ./tensorfold/compatibility.sh and ./tensorfold/probe-loader.sh for evidence. '
-                         + 'The native loader needs implementation work; changing GPU memory cannot fix this.')
+        raise ValueError('Checkpoint headers do not match the pinned PR #1050 recipe: '
+                         + '; '.join(x['code'] for x in report['issues']))
+
+
+def probe(m, ident):
+    run(['docker', 'run', '--rm', '--network', 'none', *mount(m),
+         '--entrypoint', '/opt/tensorfold/bin/glm-loader-probe', ident, m['container_path']])
 
 
 def mount(m):
@@ -194,6 +200,42 @@ def launch(c, m, image_id):
     return args + ['-e', f'MODEL_PATH={m["container_path"]}', image_id]
 
 
+def gpu_checks(c, m, ident):
+    """Bounded upstream arithmetic and real-loader checks, one selected device at a time."""
+    folder = ROOT / 'logs/tensorfold' / datetime.now(timezone.utc).strftime('gpu-check-%Y%m%dT%H%M%SZ')
+    folder.mkdir(parents=True, exist_ok=False)
+    results = []
+    for rank, device in enumerate(c['TF_GPUS'].split(',')):
+        for case in ('info', 'glm-ref', 'mxfp8', 'projection-f32', 'glm-loader-gate'):
+            name = c['TF_CONTAINER'] + '-check'
+            args = ['docker', 'run', '--rm', '--name', name, '--init', '--network', 'none',
+                    '--gpus', 'device=' + device, '--ipc', 'host', '--shm-size', '32g',
+                    '--ulimit', 'memlock=-1', '--ulimit', 'stack=67108864:67108864',
+                    '--label', f'{LABEL}={HERE}', *mount(m),
+                    '-e', 'TF_GATE_WORLDS=2', '-e', f'TF_GATE_RANKS={rank}',
+                    '-e', 'TF_GATE_LAYERS=0,3,4,43,44',
+                    '--entrypoint', '/opt/tensorfold/bin/tf-cuda-test', ident, case]
+            if case == 'glm-loader-gate':
+                args.append(m['container_path'])
+            logfile = folder / f'gpu{device}-{case}.log'
+            print(f'GPU {device}, {case}: {logfile}', flush=True)
+            with logfile.open('w') as out:
+                try:
+                    result = subprocess.run(args, text=True, stdout=out, stderr=subprocess.STDOUT,
+                                            timeout=1200, check=False)
+                except (subprocess.TimeoutExpired, KeyboardInterrupt):
+                    target = dict(c, TF_CONTAINER=name)
+                    if container(target):
+                        run(['docker', 'stop', '--time', '10', name])
+                    raise
+            results.append({'device': device, 'rank_geometry': rank, 'case': case,
+                            'exit_code': result.returncode, 'log': str(logfile)})
+            (folder / 'checks.json').write_text(json.dumps(results, indent=2) + '\n')
+            if result.returncode:
+                raise RuntimeError(f'GPU check failed: {case}; inspect {logfile}')
+    print('PASS both GPUs: arithmetic and five decoder layers plus MTP loader checks', flush=True)
+
+
 @contextlib.contextmanager
 def lock():
     folder = ROOT / '.state/tensorfold'
@@ -206,7 +248,7 @@ def lock():
 def main(argv):
     c = config()
     if not argv:
-        raise ValueError('Choose build, inspect, compatibility, probe-loader, doctor, start, status, logs, stop, smoke or bench')
+        raise ValueError('Choose build, inspect, compatibility, probe-loader, doctor, gpu-check, start, status, logs, stop, smoke or bench')
     command, *extra = argv
     if command == 'build':
         if extra:
@@ -233,11 +275,11 @@ def main(argv):
         m = model(c)
         print(json.dumps(compatibility(m), indent=2), flush=True)
         require_compatible(m)
+        probe(m, image(c))
         return
     if command == 'probe-loader':
         m, ident = model(c), image(c)
-        run(['docker', 'run', '--rm', '--network', 'none', *mount(m),
-             '--entrypoint', '/opt/tensorfold/bin/glm-loader-probe', ident, m['container_path']])
+        probe(m, ident)
         return
     if command == 'inspect':
         m, ident = model(c), image(c)
@@ -247,7 +289,7 @@ def main(argv):
             run(['docker', 'run', '--rm', '--network', 'none', *mount(m),
                  '--entrypoint', BINARY, ident, *flags])
         return
-    if command in ('doctor', 'start'):
+    if command in ('doctor', 'start', 'gpu-check'):
         with lock():
             m, ident = model(c), image(c)
             require_compatible(m)
@@ -255,8 +297,11 @@ def main(argv):
                 raise ValueError('TensorFold container already exists; inspect its status before stopping/replacing it')
             ports(c)
             gpus = gpu_preflight(c)
+            probe(m, ident)
             print(json.dumps({'image_id': ident, 'model': m, 'gpus': gpus, 'context': c['TF_CONTEXT'],
                               'parallel': c['TF_PARALLEL']}, indent=2), flush=True)
+            if command == 'gpu-check':
+                gpu_checks(c, m, ident)
             if command == 'start':
                 folder = ROOT / 'logs/tensorfold' / datetime.now(timezone.utc).strftime('run-%Y%m%dT%H%M%SZ')
                 folder.mkdir(parents=True, exist_ok=False)

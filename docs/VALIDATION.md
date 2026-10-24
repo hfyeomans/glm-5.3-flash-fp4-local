@@ -26,7 +26,7 @@ Validated on 2026-10-23 EDT, finishing 2026-10-24 UTC. The server is running at 
 | Observed free VRAM during concurrency test | Minimum sampled **1,635 MiB / 1,788 MiB** on GPU 0 / 1 |
 | Restart and compiled-cache reuse | Passed; final run used cached kernels and completed engine initialization in 34.48 s after model loading |
 | Long-context retrieval and vision | Not tested |
-| TensorFold | Native 1.1.3 image built; exact CUDA loader reader fails on NVIDIA compressed scales. No GPU inference attempted; see the separate record below. |
+| TensorFold | Plain 1.1.3 failed format checks; **1.1.3 + pinned PR #1050 passed bounded SM120 loading and serving checks**. See the separate records below. |
 
 The tested workload did not require reducing the KV cache or changing GPU utilization. The memory observations cover short requests at the configured eight-slot limit; they do not qualify every long-context or multimodal workload. GPU memory was sampled periodically, not continuously.
 
@@ -119,3 +119,69 @@ Final artifact SHA256s:
 - `libtfgrammar.so`: `9e6d7b7a649e79ad8150704c2f143e49f0c75a4c87d794bf1968b28780974419`
 
 Evidence retained under `logs/tensorfold/` (ignored by Git): `build.log` for the first complete native compilation, `build-20261024T002559Z.log` for all decoder/ModelOpt host tests, `build-20261024T002913Z.log` for the final image and diagnostic binary, `artifacts.log`, `inspect.log`, `compatibility.log`, `loader-probe.log`, `start-refusal.log` and `recipe-check.log`. `doctor-with-vllm.log` records the earlier successful busy-GPU refusal (1,635 MiB free on GPU 0), before adding the stricter format gate.
+
+
+## PR #1050: successful RTX PRO 6000 Blackwell Max-Q experiment
+
+Validated 2026-10-24 UTC. The user authorized trying the existing open PR on the two local cards. The vLLM container was stopped only for GPU testing, with its configuration, weights and cache preserved, then restarted afterward. No power/clock settings were changed. The exact NVIDIA revision and all checkpoint bytes remained unchanged.
+
+| Check | Actual result |
+| --- | --- |
+| Source | v1.1.3 base `36415df4f76e4458e82d0fa729ecb28e287ebf38` + PR #1050 head `9b23b6a2e7ff226ca61934189c4cd57bf2933980` |
+| Source integration | Clean `git merge-tree`; exact merged tree `1d52effd182d9319d775d5787904c36783e532f1`, verified in the final container; no manual kernel/source edits |
+| Image | `glm53-fp4-tensorfold:1.1.3-pr1050-sm120`, Docker ID `sha256:6f5b4b2d833edd0a984bd745184ead48b7a93c89a0b9e50fab8af534b79d0f80`; 13,435,592,523 bytes |
+| Toolchain | Zig 0.17.0, CUDA devel 13.3.0 / NVCC package 13.3.33-1, SM120 kernels, NCCL 2.31.2, xgrammar v0.2.8 |
+| Native version string | `1.1.3`; upstream only accepts numeric MAJOR.MINOR.PATCH, so PR identity is in the image tag/labels and tree hash |
+| Local recipe checks | **26/26 passed**, plus shell lint and Python syntax |
+| Upstream host validation | `zig build test test-golden test-kernel-contract fuzz-cortheon -j4 --summary all`: **322/322 steps succeeded; 3,652/3,668 tests passed, 16 skipped**, no GPU or network |
+| Actual checkpoint CPU probe | Admitted **494 mixed-format modules**; decoded/re-encoded **524,288 scales** from a real expert matrix, all five components byte-identical |
+| Advertised GLM formats | `modelopt-nvfp4` and `modelopt-mixed` |
+| Actual GPU identity | Both RTX PRO 6000 Blackwell Max-Q cards identified as **SM120**, with embedded kernels |
+| GPU arithmetic | `glm-ref`, `mxfp8`, `projection-f32` passed on **both GPUs**; includes GLM FP32 norm weights and FP64-reference checks |
+| GPU real-loader gate | TP2 rank 0 on GPU 0, rank 1 on GPU 1; decoder layers 0, 3, 4, 43, 44 plus MTP. Each: **115 checkpoint-cut + 72 independently packed uploads, 11,922 MiB compared, 0 differences; 3 uploads outside this checker** |
+| Native configuration | TP2, **8,192 context**, **one active slot**, FP8 KV, built-in MTP, 1 GiB prompt-state cache, native default CUDA reserve |
+| Full-model startup | **175.9 s** reported by server; initial checkpoint digest read 165.3 GiB in **22.6 s**, reused by the other rank |
+| Memory admission | Rank-zero startup reports **89.80 GiB model**, **0.23 GiB per stream**, **3.0 GiB reserve**, 1.0 GiB available past reserve; prompt passes up to 2,048 rows |
+| Sampled GPU memory | Peak used **94,296 / 94,146 MiB**; minimum free **3,043 / 3,196 MiB**, GPUs 0 / 1; 850 samples per card at approximately 500 ms intervals |
+| API acceptance | **4/4 passed:** text, structured JSON, required tool call, SSE streaming |
+| Draft/queue consistency | Upstream client, code and chat, 128 tokens greedy, one/two submitted requests with **one active slot**: all recorded drafted/plain and queued/alone comparisons equal, no failed or unmeasured requests |
+| Repeated-prefix retrieval | 3,640-token prompt: correct password on both runs, identical token hash; second run reused **2,048 tokens**; 0.889 s cold, 0.460 s repeated |
+| Near-window retrieval | **7,481 prompt + 8 completion tokens**, correct password, no cached tokens, **1.757 s** |
+| Not qualified | More than one simultaneously active stream, context above 8K, a full-model GPU loader comparison on every layer, full GPU kernel-contract suite, vision/video, broad accuracy or sustained performance |
+
+The model was served from `logs/tensorfold/run-20261024T010539Z/launch.json`. The three omitted uploads in each representative loader check are reported by the upstream checker; the gate is not a claim of complete tensor coverage. Full-model serving subsequently loaded all layers successfully, but that does not extend the upload-equality gate's coverage.
+
+The memory values are sampled observations, not an allocation trace or a promise for larger contexts. The native default reserve remained in force; no smaller reserve or re-quantization was needed. Runtime FP32 norm handling and mixed projection kernels came from the pinned PR.
+
+### Matched short client workload
+
+Both runs used this repository's benchmark prompt, concurrency one, eight requests and 256 completion tokens per request (2,048 total), with an excluded warm-up. vLLM was measured before stopping it, after compilation/host tests finished. TensorFold used the same benchmark with its native spelling of low reasoning effort. The runtimes retain their own speculative behavior and context/cache allocation; this is a bounded comparison of the tested configurations, not a general engine ranking.
+
+| Metric | vLLM baseline | TensorFold PR #1050 |
+| --- | ---: | ---: |
+| End-to-end completion tokens/s | **184.05** | **152.11** |
+| Total wall time | 11.127 s | 13.464 s |
+| Median first visible content | 0.188 s | 0.238 s |
+| Median request duration | 1.375 s | 1.680 s |
+
+Rates include reasoning, prompt processing and network time. Native load-time scale expansion also means its resident weight representation differs from vLLM's B12X path; the 1M vLLM KV reservation and 8K native window are not comparable memory budgets.
+
+### Why this build works
+
+[Tracker #1015](https://github.com/ashhart/TensorFold/issues/1015) distinguishes shared codecs from family integration. [PR #1050](https://github.com/ashhart/TensorFold/pull/1050), still open when checked, connects mixed recipe admission, CSF32 expert scales, MXFP8/FP8 block projections, FP32 norms and MTP's W4A16 layout to the GLM CUDA engine. Its pinned contributor branch is `Bizuayeu/TensorFold:pr/glm-fp4local`. The upstream branch list also contained `main`, `ds41-four-ranks` and `codex/beta9-google-recovery`; no alternate upstream GLM FP4-Local branch was listed. Related KV-paging and TP3 transport branches were not included.
+
+The release build's failure is therefore an integration gap, not a need for different GPUs or different weights. The old reader requests plain scale tensors; the new loader reconstructs their exact bytes from CSF32 components and retains the other stored precisions. Header accounting found 36,288 compressed matrices, 10,321,055,136 compressed bytes and 19,025,362,944 decoded scale bytes: an 8.11 GiB representation difference across the model. This accounting alone is not a runtime allocation estimate.
+
+### Reproduction and artifacts
+
+`./tensorfold/gpu-check.sh` reproduces the bounded device checks after the intended GPUs are free. `./tensorfold/start.sh`, `smoke.sh` and `bench.sh` reproduce service validation; the recipe documents explicit switching and rollback.
+
+All detailed evidence is retained under `logs/tensorfold/`: `build-20261024T004923Z.log`, `pr1050-host-tests.log`, `pr1050-recipe-check.log`, `pr1050-compatibility.log`, `pr1050-inspect.log`, `gpu-check-20261024T010231Z/`, `pr1050-gpu-check.log`, `acceptance-pr1050/`, `pr1050-server.log`, `pr1050-container-state.json`, `pr1050-gpu-memory.csv`, `pr1050-memory-summary.json`, `vllm-reference-c1.json`, `bench-pr1050-c1.json`, `pr1050-draft-queue-consistency.json`, `pr1050-repeated-prefix.json`, `pr1050-near-window.json` and `pr1050-artifacts.log`.
+
+Final artifact SHA256s:
+
+- Native server: `535e8a051e157b27fcd43fa47cda695dbaf7b1bb7ea0af8979260cc8d5c5fe75`
+- CUDA test runner: `12ab35fd9f727339e0d8309df68ee7d6e76ed641cca2efe391bad8446e452aea`
+- Grammar library: `9e6d7b7a649e79ad8150704c2f143e49f0c75a4c87d794bf1968b28780974419`
+
+Rollback verification: vLLM was restored in `logs/run-20261024T011259Z-266204/`. Its readiness and all four API checks passed again (`logs/tensorfold/vllm-restored-acceptance/`). Final running model service: `glm53-fp4-tp2` on port 8000. The TensorFold service was stopped and removed after its logs were saved; its PR image and runtime volume remain available.

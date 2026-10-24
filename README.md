@@ -1,6 +1,6 @@
 # GLM-5.3-Flash FP4 Local · the two-GPU recipe
 
-A repeatable service recipe for **`nvidia/GLM-5.3-Flash-FP4-Local`** on **two 96 GB NVIDIA RTX PRO 6000 Blackwell GPUs**. The first course uses the model card's supported Local Inference Lab vLLM image, B12X kernels and MTP3. [A separate native TensorFold recipe](tensorfold/README.md) builds successfully, but its pinned GLM CUDA loader fails compatibility checks for this checkpoint; vLLM remains the working service.
+A repeatable service recipe for **`nvidia/GLM-5.3-Flash-FP4-Local`** on **two 96 GB NVIDIA RTX PRO 6000 Blackwell GPUs**. The first course uses the model card's supported Local Inference Lab vLLM image, B12X kernels and MTP3. [A separate native TensorFold recipe](tensorfold/README.md) integrates pinned PR #1050 for this checkpoint; its local qualification is recorded independently from the measured vLLM baseline.
 
 The kitchen rule: weigh the ingredients, check the station, then fire the service. Every launch records its checkpoint identity, image ID, settings and results. The measured acceptance checks, loading results and bounded concurrency sample are recorded in [the validation record](docs/VALIDATION.md).
 

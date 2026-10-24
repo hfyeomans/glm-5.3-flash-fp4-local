@@ -87,22 +87,34 @@ class TensorFoldTests(unittest.TestCase):
         self.assertNotIn('HF_TOKEN', ' '.join(args))
         self.assertNotIn('B12X', ' '.join(args))
 
-    def test_compressed_scales_and_fp8_projections_are_blocked(self):
+    def test_pr1050_headers_accept_csf_and_fp8_but_reject_missing_components(self):
         with tempfile.TemporaryDirectory() as d:
             directory = Path(d)
-            names = ('model.language_model.layers.0.self_attn.q_proj.weight', 'lm_head.weight')
-            scale = 'model.language_model.layers.3.mlp.experts.0.gate_proj.weight_scale.csf32_codes'
-            header = json.dumps({name: {'dtype': 'F8_E4M3'} for name in names}).encode()
+            module = 'model.language_model.layers.3.mlp.experts.0.gate_proj'
+            names = {module + '.weight': {'dtype': 'U8'},
+                     'model.language_model.layers.0.self_attn.q_proj.weight': {'dtype': 'F8_E4M3'},
+                     'lm_head.weight': {'dtype': 'F8_E4M3'}}
+            for part, dtype in [('bases', 'U8'), ('codes', 'U8'), ('page_bases', 'U32'),
+                                ('offsets', 'U16'), ('exceptions', 'U16')]:
+                names[module + '.weight_scale.csf32_' + part] = {'dtype': dtype}
+            header = json.dumps(names).encode()
             (directory / 'model.safetensors').write_bytes(struct.pack('<Q', len(header)) + header)
-            (directory / 'model.safetensors.index.json').write_text(json.dumps(
-                {'weight_map': {name: 'model.safetensors' for name in (*names, scale)}}))
+            index = directory / 'model.safetensors.index.json'
+            index.write_text(json.dumps({'weight_map': {name: 'model.safetensors' for name in names}}))
             m = {'path': d, 'revision': 'fixture'}
-            report = tf.compatibility(m)
-            self.assertFalse(report['loader_contract_checks_passed'])
-            self.assertEqual([i['code'] for i in report['issues']],
-                             ['missing_plain_nvfp4_scale', 'unsupported_projection_dtype', 'unsupported_projection_dtype'])
-            with self.assertRaisesRegex(ValueError, 'incompatible'):
+            self.assertTrue(tf.compatibility(m)['loader_contract_checks_passed'])
+            del names[module + '.weight_scale.csf32_exceptions']
+            index.write_text(json.dumps({'weight_map': {name: 'model.safetensors' for name in names}}))
+            with self.assertRaisesRegex(ValueError, 'missing_tensor'):
                 tf.require_compatible(m)
+
+    def test_release_image_cannot_be_mistaken_for_pr_image(self):
+        c = tf.config(Path('/nonexistent'), {})
+        labels = {'org.opencontainers.image.revision': tf.COMMIT,
+                  'lab.glm53.tensorfold.recipe': 'native-fp4-tp2'}
+        response = subprocess.CompletedProcess([], 0, json.dumps([{'Config': {'Labels': labels}}]))
+        with patch.object(tf, 'run', return_value=response), self.assertRaisesRegex(ValueError, 'pinned native recipe'):
+            tf.image(c)
 
     def test_incompatible_checkpoint_blocks_launch_before_gpu_or_container_work(self):
         c = tf.config(Path('/nonexistent'), {})

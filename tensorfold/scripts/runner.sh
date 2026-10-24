@@ -2,7 +2,7 @@
 # One native process per device; rank zero owns HTTP.
 set -euo pipefail
 : "${MODEL_PATH:?}" "${TF_PORT:?}" "${TF_COMM_PORT:?}" "${TF_CONTEXT:?}" "${TF_PARALLEL:?}"
-# Fail on the known loader mismatch before creating CUDA contexts, even on a direct Docker run.
+# Check mixed recipes and a real compressed scale before creating CUDA contexts.
 /opt/tensorfold/bin/glm-loader-probe "$MODEL_PATH"
 export TF_GLM_WORLD=2 NCCL_COMM_ID="127.0.0.1:${TF_COMM_PORT}"
 export TF_ROCE=0 NCCL_IB_DISABLE=1 NCCL_SOCKET_IFNAME=lo CUDA_DEVICE_ORDER=PCI_BUS_ID
