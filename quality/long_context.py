@@ -31,6 +31,13 @@ def score(prediction, answers, aliases=False):
     return round(100*(max(hits) if aliases else sum(hits)/len(hits)),2)
 
 
+def validate_prompt(prompt):
+    if not prompt.startswith('[gMASK]<sop><|system|>Reasoning Effort: Low<|user|>'):
+        raise ValueError('Unexpected reasoning header')
+    if not prompt.rsplit('<|assistant|>', 1)[-1].startswith('<think></think>\n\n'):
+        raise ValueError('Raw prompt must explicitly close the reasoning prefix')
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--bank',type=Path,required=True)
@@ -53,7 +60,7 @@ def main():
     manifest={'bank_sha256':sha(args.bank/'manifest.json'),'client_sha256':sha(Path(__file__)),'official_scorer_sha256':sha(scorer_path),
               'image_id':state['Image'],'settings':{k:v for k,v in env.items() if k.startswith(('TF_','NCCL_')) or k=='MODEL_PATH'},
               'cases':[c['id'] for c in selected],'interface':'raw completion, shared locally rendered chat template, thinking off, greedy, MTP on, cold cache',
-              'minimum_free_MiB':args.minimum_free_mib}
+              'minimum_free_MiB':args.minimum_free_mib,'response_diagnostics':'Report truncations and generated think markers separately; clean full credit also requires neither. Official RULER score remains unchanged.'}
     dest=args.output/'manifest.json'
     if dest.exists():assert json.loads(dest.read_text())==manifest,'Resume protocol differs'
     else:dest.write_text(json.dumps(manifest,indent=2)+'\n')
@@ -69,6 +76,7 @@ def main():
         if case['id'] in done:continue
         file=args.bank/case['file'];assert sha(file)==case['sha256']
         doc=json.loads(gzip.decompress(file.read_bytes()));prompt=doc['prompt']
+        validate_prompt(prompt)
         assert hashlib.sha256(prompt.encode()).hexdigest()==doc['prompt_sha256']
         remote=call('/tokenize',{'model':'glm-5.3-flash-fp4-local','prompt':prompt,'add_special_tokens':False})
         assert remote['count']==doc['prompt_tokens']
@@ -91,7 +99,7 @@ def main():
         normalized=re.sub(r'[\x00-\x1f]','\n',text.strip()).strip()
         assert metric==official_fn([normalized],[doc['answers']])
         row={k:v for k,v in doc.items() if k!='prompt'};row.update(started_unix=start,seconds=seconds,score=metric,full_credit=metric==100,
-                    truncated=choice['finish_reason']=='length',response=response)
+                    truncated=choice['finish_reason']=='length',reasoning_marker=('<think>' in text or '</think>' in text),response=response)
         with rows_path.open('a') as out:out.write(json.dumps(row)+'\n')
         done[doc['id']]=row
         print(f'{i+1}/{len(selected)} {doc["id"]} tokens={doc["prompt_tokens"]} score={metric} seconds={seconds:.2f} truncated={row["truncated"]}',flush=True)
@@ -112,7 +120,8 @@ def main():
             groups.append({'configured_context':length,'task':task,'n':len(rows),'mean_score':sum(r['score'] for r in rows)/len(rows),
                            'full_credit':sum(r['full_credit'] for r in rows),'near_window_cases':sum(r['near_window'] for r in rows),
                            'input_tokens_min':min(r['prompt_tokens'] for r in rows),'input_tokens_max':max(r['prompt_tokens'] for r in rows),
-                           'truncated':sum(r['truncated'] for r in rows)})
+                           'truncated':sum(r['truncated'] for r in rows),'reasoning_markers':sum(r['reasoning_marker'] for r in rows),
+                           'full_credit_clean_completion':sum(r['full_credit'] and not r['truncated'] and not r['reasoning_marker'] for r in rows)})
     result={'complete':True,'cases':len(done),'groups':groups,'manifest':manifest,'requests_sha256':sha(rows_path),
             'scope':'Local RULER-derived four-example/task screen using NVIDIA metrics, not a full published leaderboard run. Report actual lengths; undersized tasks are not evidence at 1M. Short controls need not have identical synthetic golds; QA question IDs are shared. No inference about vLLM long-context accuracy.'}
     (args.output/'results.json').write_text(json.dumps(result,indent=2)+'\n')

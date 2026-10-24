@@ -1,0 +1,63 @@
+{
+  "status": "invalid-protocol-cancelled",
+  "cause": "Checkpoint Jinja ignores enable_thinking=False and always opens <think>; v1 mistakenly appended the answer prefix inside an open reasoning block with a Max header. Runtime metadata on raw completions did not validate actual prompt content.",
+  "completed_requests": 52,
+  "truncated": 5,
+  "scores_not_valid_for_intended_thinking_off_protocol": true,
+  "retained_run": "logs/qualification-v2/long-accuracy/00-host-1m",
+  "completion": {
+    "profile": "host-1m",
+    "protocol": {
+      "profiles_sha256": "29253bc0dcc45907aac77d73b89770d18da032a1fd0aad76fee3502b9e47b4e3",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 2,
+      "mtp": "on",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-8192",
+        "prefill-32768"
+      ],
+      "teacher_histories_sha256": null,
+      "quality": false,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": true,
+      "context_targets": [
+        2048,
+        8192
+      ],
+      "minimum_free_MiB": 1536,
+      "long_context_bank_sha256": "1938fcbb437bdcb87e9cc54eb57fc8e59d0068c0109ab45f4638533217154ef5",
+      "long_context_lengths": [
+        32768,
+        1048576
+      ],
+      "long_context_client_sha256": "d4e40fb1086eff4cc66b6f185c8d87b0860901f3ca948edd04ee7051bc0517b0"
+    },
+    "started_unix": 1792872447.6939874,
+    "status": "failed",
+    "error": "Command '['/home/hank/dev/src/glm-5.3-flash-fp4-local/.state/quality-venv/bin/python', '/home/hank/dev/src/glm-5.3-flash-fp4-local/quality/long_context.py', '--bank', 'logs/qualification-v2/ruler-bank', '--lengths', '32768', '1048576', '--output', 'logs/qualification-v2/long-accuracy/00-host-1m/long-context', '--telemetry-file', 'logs/qualification-v2/long-accuracy/00-host-1m/gpu.csv', '--minimum-free-mib', '1536']' died with <Signals.SIGTERM: 15>.",
+    "elapsed_seconds": 637.5663211345673
+  },
+  "evidence": [
+    {
+      "path": "logs/qualification-v2/long-accuracy/00-host-1m/long-context/manifest.json",
+      "sha256": "92b5bbd24c86977ac7984f7f3f5a41e67f383d7d6ff319283c69e596b12e51e2"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy/00-host-1m/long-context/requests.jsonl",
+      "sha256": "31d439e9f1fe85b512c3edfe6dafad056638c02681d7f34d620265a6c5ed9d39"
+    },
+    {
+      "path": "logs/qualification-v2/long-accuracy/00-host-1m/server.log",
+      "sha256": "d91ec33a3f07808cd72e1a93fc5ad7245a1034fb4740631370365bb5d49f87f5"
+    },
+    {
+      "path": "logs/qualification-v2/ruler-bank/manifest.json",
+      "sha256": "1938fcbb437bdcb87e9cc54eb57fc8e59d0068c0109ab45f4638533217154ef5"
+    }
+  ],
+  "correction": "Explicit Low header and <think></think> before unchanged answer prefix, matching established benchmark. Preserve all task bodies/golds and retokenize. Re-run all 104 cases in a new output directory; no completed valid baseline is repeated."
+}

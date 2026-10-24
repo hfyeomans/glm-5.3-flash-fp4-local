@@ -44,6 +44,17 @@ def fit(factory, count, budget, low, high):
     return best
 
 
+
+def render_prompt(tokenizer, text, prefix):
+    # This checkpoint template always opens <think>; enable_thinking is ignored.
+    prompt = tokenizer.apply_chat_template(
+        [{'role': 'user', 'content': text}], tokenize=False,
+        add_generation_prompt=True, reasoning_effort='low', clear_thinking=False)
+    if not prompt.endswith('<|assistant|><think>'):
+        raise ValueError('Expected the pinned checkpoint template to open reasoning')
+    return prompt + '</think>\n\n' + prefix
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output', type=Path, required=True)
@@ -70,7 +81,7 @@ def main():
     tok = AutoTokenizer.from_pretrained(model['path'],local_files_only=True,trust_remote_code=False)
     template = (Path(model['path'])/'chat_template.jinja').read_text()
     def render(text,prefix):
-        return tok.apply_chat_template([{'role':'user','content':text}],tokenize=False,add_generation_prompt=True,enable_thinking=False) + prefix
+        return render_prompt(tok, text, prefix)
     def count(text,prefix):
         return len(tok.encode(render(text,prefix),add_special_tokens=False))
     data_dir = cache/'benchmarks/ruler-local-v1';data_dir.mkdir(parents=True,exist_ok=True)
@@ -91,11 +102,11 @@ def main():
     corpora={'qa_squad':qa.read_squad(),'qa_hotpot':qa.read_hotpotqa()}
     indices={name:random.Random(1729).sample(range(len(data[0])),args.samples) for name,data in corpora.items()}
     sources={str(Path(m.__file__).name):sha(Path(m.__file__)) for m in (niah,niah_utils,vt,cwe,fwe,qa)}
-    protocol={'name':'local-ruler-13-v1','harness_commit':HARNESS,'official_scorer_commit':RULER,'model_revision':model['revision'] if 'revision' in model else '76348ddb2be2e35e39ecfc00e75dc07703f4f3d5',
+    protocol={'name':'local-ruler-13-v2','harness_commit':HARNESS,'official_scorer_commit':RULER,'model_revision':model['revision'] if 'revision' in model else '76348ddb2be2e35e39ecfc00e75dc07703f4f3d5',
               'model_path':model['path'],'tokenizer_sha256':sha(Path(model['path'])/'tokenizer.json'),'template_sha256':hashlib.sha256(template.encode()).hexdigest(),
               'client_sha256':sha(Path(__file__)),'lengths':args.lengths,'samples_per_task':args.samples,'tasks':args.tasks,'seed':1729,'max_output_tokens':256,
               'essay_revision':ESSAYS,'essay_repeats':essay_repeats,'qa_indices':indices,'sources':sources,'data_sha256':{p.name:sha(p) for p in sorted(data_dir.glob('*.json'))},
-              'adaptations':['Pinned upstream task-construction functions with deterministic per-case seeds and binary sizing of complete examples.','Shared NVIDIA chat template, thinking off, assistant answer prefix; 256-token output cap for all tasks.','Four cases/task/length, not a full published RULER run. QA indices shared across lengths; other length controls need not share identical golds.','Essay distractors repeated if needed at 1M. CWE vocabulary cap retained; undersized examples explicitly excluded from near-window macro summaries.','No silent truncation, retry-based answer selection or kernel/precision changes.']}
+              'adaptations':['Pinned upstream task-construction functions with deterministic per-case seeds and binary sizing of complete examples.','Shared NVIDIA low-reasoning chat template with explicitly closed think prefix, assistant answer prefix; 256-token output cap for all tasks.','Four cases/task/length, not a full published RULER run. QA indices shared across lengths; other length controls need not share identical golds.','Essay distractors repeated if needed at 1M. CWE vocabulary cap retained; undersized examples explicitly excluded from near-window macro summaries.','No silent truncation, retry-based answer selection or kernel/precision changes.']}
     manifest=args.output/'manifest.json'
     if manifest.exists():assert json.loads(manifest.read_text())['protocol']==protocol,'Generation protocol changed'
     else:manifest.write_text(json.dumps({'protocol':protocol,'cases':[]},indent=2)+'\n')

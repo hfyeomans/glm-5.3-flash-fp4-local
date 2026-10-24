@@ -763,3 +763,23 @@ complete chunk/stage records. All eight diagnostic requests passed and all 24
 control/diagnostic output hashes matched within their workload. Instrumented TTFT
 overhead was 2.35%/1.59%; no instrumented timing is presented as production speed.
 [Findings and next experiments](PREFILL-INVESTIGATION-V2.md).
+
+
+## Long-context prompt-protocol correction (2026-10-24)
+
+The initial RULER-derived attempt was cancelled after discovering that this
+checkpoint's Jinja ignores `enable_thinking=False`: the raw prompt retained an
+open `<think>` under its default Max header. Runtime metadata alone had not caught
+this. All 52 shorter substring scores were 100, but five responses truncated;
+these are **not valid results for the intended thinking-off protocol**. The first
+near-1M request was cancelled before a scored completion. Its failed sweep,
+responses and logs remain preserved.
+
+The corrected bank retains every task body/gold/seed/question selection, selects
+the Low header and explicitly closes the think prefix, adding two tokens per
+case. The client now validates actual prompt content and reports truncated or
+reasoning-marker responses separately from official substring scores. All 104
+cases are rerun separately. Recipe checks pass 54 tests. The earlier valid
+256-case bakeoff, 512K qualification and prefill measurements are unaffected.
+[Failure record](../tensorfold/results/long-context-protocol-failure-v1.json) ·
+[Corrected bank](../tensorfold/results/long-context-bank-v2.json).

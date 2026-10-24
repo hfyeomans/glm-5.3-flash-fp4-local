@@ -25,3 +25,23 @@ class RulerTests(unittest.TestCase):
         self.assertLessEqual(result[3],30)
         self.assertGreater(count(*[factory(result[4]+1)[i] for i in (0,2)]),30)
         with self.assertRaises(ValueError):fit(factory,count,1,1,5)
+
+class ReasoningWrapperTests(unittest.TestCase):
+    def test_explicit_closure_is_required_when_template_ignores_switch(self):
+        class Tokenizer:
+            def apply_chat_template(self,messages,**kwargs):
+                self.kwargs=kwargs
+                return '[gMASK]<sop><|system|>Reasoning Effort: Low<|user|>'+messages[0]['content']+'<|assistant|><think>'
+        tok=Tokenizer();render=module('ruler_bank').render_prompt
+        result=render(tok,'question','Answer:')
+        self.assertTrue(result.endswith('<think></think>\n\nAnswer:'))
+        self.assertEqual(tok.kwargs['reasoning_effort'],'low')
+        validate=module('long_context').validate_prompt
+        validate(result)
+        with self.assertRaises(ValueError):validate(result.replace('</think>\n\n',''))
+        with self.assertRaises(ValueError):validate(result.replace('Effort: Low','Effort: Max'))
+
+    def test_unrecognized_template_fails_closed(self):
+        class Tokenizer:
+            def apply_chat_template(self,*args,**kwargs):return '<|assistant|>'
+        with self.assertRaises(ValueError):module('ruler_bank').render_prompt(Tokenizer(),'question','Answer:')

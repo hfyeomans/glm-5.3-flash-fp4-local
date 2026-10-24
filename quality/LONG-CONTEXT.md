@@ -1,6 +1,6 @@
 # Local long-context accuracy screen
 
-The first screen uses all 13 RULER task families, four frozen examples per task,
+The corrected v2 screen uses all 13 RULER task families, four frozen examples per task,
 at configured 32K and 1M lengths: 104 requests. This is a local RULER-derived
 screen, not the full published benchmark or a leaderboard score. Four examples
 per task can expose failures but cannot establish a reliable task-level accuracy
@@ -17,7 +17,7 @@ Every response score is checked against the original NVIDIA scorer.
 
 - Exact local NVIDIA checkpoint and tokenizer; both engines' earlier short-quality
   baselines are reused without changing the environment or re-running them.
-- Deterministic per-case seeds, shared NVIDIA chat template, thinking off, greedy
+- Deterministic per-case seeds, shared NVIDIA low-effort chat template with explicitly closed thinking prefix, greedy
   sampling, MTP on, 256 output-token cap, cold cache, one request at a time.
 - Complete generated examples are sized by binary search; no truncation of evidence
   or answers. The 4,096-token preparation margin makes the smaller controls about
@@ -49,13 +49,13 @@ the additional word generator into a separate overlay:
 
 ```bash
 uv pip install --target .state/long-quality-deps -r quality/long-context-requirements.txt --require-hashes
-.state/quality-venv/bin/python quality/ruler_bank.py --output logs/qualification-v2/ruler-bank --samples 4
+.state/quality-venv/bin/python quality/rewrap_ruler_bank.py --source logs/qualification-v2/ruler-bank --output logs/qualification-v2/ruler-bank-v2
 .state/quality-venv/bin/python tensorfold/tuning/sweep.py \
   --profile-file tensorfold/serving/profiles.json --profiles host-1m \
   --skip-benchmark --minimum-free-mib 1536 \
-  --long-context-bank logs/qualification-v2/ruler-bank \
+  --long-context-bank logs/qualification-v2/ruler-bank-v2 \
   --long-context-lengths 32768 1048576 \
-  --output logs/qualification-v2/long-accuracy
+  --output logs/qualification-v2/long-accuracy-v2
 ```
 
 The generator requires the pinned RULER checkout at `.state/ruler-upstream`, the
@@ -69,7 +69,9 @@ The frozen bank has 44 near-1M cases across 11 task families. CWE reaches about
 143K input tokens and SQuAD about 205K; their eight configured-1M cases are reported
 at those actual lengths and excluded from the near-1M aggregate. The 52 shorter
 controls use roughly 28K inputs because of the explicit preparation margin.
-[Bank, dependency versions and input-integrity receipt](../tensorfold/results/long-context-bank-v1.json).
+[Corrected bank and preservation receipt](../tensorfold/results/long-context-bank-v2.json).
+The parent v1 receipt retains dependency versions and input provenance; its original
+reasoning wrapper is invalid for the intended scoring protocol.
 
 For a fresh checkout, prepare the pinned scorer and HotpotQA source before the
 commands above (skip cloning if the already-pinned checkout exists):
@@ -86,3 +88,35 @@ The generator fetches the pinned essay dataset and SQuAD source if absent. Their
 content hashes are retained in the bank receipt. Existing short-quality setup
 provides the frozen lm-eval environment and NLTK assets. No existing shared-cache
 files are deleted or replaced during qualification.
+
+
+## Preserved protocol failure and correction
+
+The first attempt used `enable_thinking=False` with the checkpoint Jinja template.
+That template ignores the keyword and always emits an opening `<think>`; it also
+selected its default Max header. The runtime's `enable_thinking:false` field on a
+raw completion did not validate the supplied prompt. The 52 shorter responses
+contained the gold substrings, but five hit the output cap and some contained
+unfinished reasoning. Those scores are **invalid for the intended thinking-off
+protocol**. The first near-1M request was cancelled and the owned service stopped.
+[Failure receipt](../tensorfold/results/long-context-protocol-failure-v1.json).
+
+The corrected renderer explicitly selects the Low header and closes `<think>`
+before the unchanged answer prefix, exactly as the established performance
+benchmark does. The rewrapper preserves all 104 task bodies, gold answers, seeds
+and question selections, adding two tokens per case. It does not read inference
+outputs. The client validates the actual prefix before every request; regression
+tests reject an open prefix or unexpected header. All 104 cases are rerun in a
+separate directory. Existing valid short-quality and performance baselines are
+not rerun.
+
+The reproduction command above uses the preserved v1 input bank. To generate a
+**new cohort** from scratch, use the corrected `quality/ruler_bank.py` with a fresh
+output directory; fresh binary sizing can choose slightly different task bodies,
+so do not expect its prompt hashes to equal this rewrapped cohort. The original
+v1 generator is preserved in commit `f7aab64` if its inputs need reconstruction.
+
+The official substring metric remains unchanged. The corrected report also lists
+truncations, generated reasoning markers and full-credit responses that have
+neither. A full substring score with an unfinished answer is not called clean
+completion or broad accuracy qualification.
