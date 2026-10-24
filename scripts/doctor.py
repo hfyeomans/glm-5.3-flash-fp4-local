@@ -57,6 +57,8 @@ def main():
     try:
         family = socket.AF_INET6 if ':' in host else socket.AF_INET
         with socket.socket(family, socket.SOCK_STREAM) as sock:
+            # Match the server bind: recently closed connections must not block restart.
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind((host, port))
         check(True, f'API bind {host}:{port} available')
     except OSError as exc:

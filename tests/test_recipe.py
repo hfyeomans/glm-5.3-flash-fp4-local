@@ -4,6 +4,7 @@ import io
 import json
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -92,7 +93,7 @@ class LifecycleTests(unittest.TestCase):
         shutil.copytree(ROOT/'config',self.root/'config')
         self.bin = Path(self.tmp.name)/'bin';self.bin.mkdir()
         self.calls = Path(self.tmp.name)/'docker-calls.jsonl'
-        names = ['HF_CACHE_ROOT','HF_HOME','HF_HUB_CACHE','MODEL_DIR','MODEL_REVISION','IMAGE','CONTAINER_NAME',
+        names = ['HF_CACHE_ROOT','HF_HOME','HF_HUB_CACHE','MODEL_DIR','MODEL_REVISION','LOAD_FORMAT','IMAGE','CONTAINER_NAME',
                  'GPUS','HOST','PORT','SERVED_MODEL_NAME','RUNTIME_VOLUME','MAX_MODEL_LEN','MAX_NUM_SEQS',
                  'MAX_NUM_BATCHED_TOKENS','GPU_MEMORY_UTILIZATION','KV_CACHE_MEMORY_BYTES',
                  'MIN_GPU_FREE_MIB','WAIT_TIMEOUT','SMOKE_TIMEOUT','RESTART_POLICY','DRY_RUN','BASE_URL']
@@ -166,6 +167,27 @@ sys.exit(70)
         self.assertFalse(sentinel.exists())
         self.assertIn('touch',r.stdout)
 
+    def test_preflight_rejects_a_live_port_listener(self):
+        with socket.socket() as listener:
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            listener.bind(('127.0.0.1',0));listener.listen()
+            self.env.update(HOST='127.0.0.1',PORT=str(listener.getsockname()[1]))
+            r=self.run_script('doctor.sh')
+            self.assertIn('FAIL API bind 127.0.0.1:',r.stdout)
+
+    def test_preflight_accepts_a_recently_closed_server_port(self):
+        with socket.socket() as listener:
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            listener.bind(('127.0.0.1',0));listener.listen()
+            address=listener.getsockname()
+            with socket.create_connection(address) as client:
+                accepted,_=listener.accept()
+                accepted.close()
+                self.assertEqual(client.recv(1),b'')
+        self.env.update(HOST=address[0],PORT=str(address[1]))
+        r=self.run_script('doctor.sh')
+        self.assertIn('PASS API bind 127.0.0.1:',r.stdout)
+
     def test_invalid_gpu_selection_fails_before_docker(self):
         self.env['GPUS']='0,0'
         r=self.run_script('start.sh','--dry-run')
@@ -193,6 +215,9 @@ class Handler(BaseHTTPRequestHandler):
             message={'content':None,'tool_calls':[{'id':'call-fixture','type':'function',
                 'function':{'name':'get_temperature','arguments':'{"city":"Paris","unit":"celsius"}'}}]}
         else: message={'content':'{"answer":42}' if b.get('response_format') else 'ready'}
+        # This pinned GLM template always starts <think>; disabling its parser leaks reasoning.
+        if b.get('chat_template_kwargs',{}).get('enable_thinking') is False:
+            message={'content':'Reasoning text. '+str(message.get('content')), 'reasoning':None}
         self.send_json({'choices':[{'message':message}],'usage':{'completion_tokens':5}})
 
 

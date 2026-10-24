@@ -11,10 +11,11 @@
 | Broken symlinks in container | Model validator's mount error | Mount the Hub root; detached snapshots can point outside their mount |
 | Unsupported compressed scales or B12X | Selected image and exact image ID | Use the model card's specialized release; do not silently switch engines |
 | CUDA/NCCL startup failure | `logs/latest/server.log`, driver, GPU selection/topology | Confirm GPU access and PCIe peer support; retain the supplied NCCL settings for the baseline |
+| InstantTensor fails during MTP load | Loader GPU staging limits | Use the tested default `LOAD_FORMAT=safetensors`; both original and bounded InstantTensor staging failed on this host |
 | OOM during capture | Free VRAM, graph and KV settings | Clear other GPU workloads first; then make one documented memory-budget change |
 | Port in use | Doctor's bind check | Set another `PORT` or stop the known owner |
 | Long compilation | `./logs.sh`, heartbeat | Wait while compilation progresses; increase `WAIT_TIMEOUT` only with evidence of ongoing work |
-| Empty/truncated smoke reply | `completion-response.json`, reasoning mode and token budget | Short checks disable thinking; inspect the actual output and template behavior before increasing budgets |
+| Empty/truncated smoke reply | `completion-response.json`, reasoning mode and token budget | Use low reasoning effort and retain reasoning-parser separation; this template always opens a thinking block |
 | Tool/JSON failure | Saved raw response and arguments | Treat as an acceptance failure; do not hide misses with selective retries |
 | Image drift | `.state/image.json` vs local image ID | Review the changed image, then explicitly refresh with `./prepare.sh` |
 

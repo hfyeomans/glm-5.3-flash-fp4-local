@@ -33,10 +33,10 @@ def call(path, body=None, timeout=TIMEOUT):
         return json.load(response)
 
 
-def payload(prompt, max_tokens=64):
+def payload(prompt, max_tokens=512):
     return {'model': MODEL, 'messages': [{'role': 'user', 'content': prompt}],
             'temperature': 0, 'top_p': 1, 'max_tokens': max_tokens,
-            'chat_template_kwargs': {'enable_thinking': False, 'clear_thinking': False}}
+            'chat_template_kwargs': {'reasoning_effort': 'low', 'clear_thinking': False}}
 
 
 def ready(wait=0):
@@ -121,7 +121,7 @@ def run_checks(suite=False, output=None):
     check('completion', completion)
     if suite:
         def json_check():
-            b = payload('Return a JSON object with exactly one key, answer, whose integer value is 17 + 25.', 128)
+            b = payload('Return a JSON object with exactly one key, answer, whose integer value is 17 + 25.', 512)
             b['response_format'] = {'type': 'json_object'}
             r = call('/v1/chat/completions', b)
             save('json-response', r)
@@ -129,7 +129,7 @@ def run_checks(suite=False, output=None):
                 raise ValueError('Expected exactly {"answer": 42}')
             return r
         def tool_check():
-            b = payload('Call get_temperature for Paris with unit celsius.', 256)
+            b = payload('Call get_temperature for Paris with unit celsius.', 512)
             b['tools'] = [{'type': 'function', 'function': {'name': 'get_temperature',
                 'description': 'Read the temperature in a city.', 'parameters': {'type': 'object',
                 'properties': {'city': {'type': 'string'}, 'unit': {'type': 'string', 'enum': ['celsius']}},

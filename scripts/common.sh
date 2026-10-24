@@ -15,7 +15,7 @@ if [[ -f "$REPO_ROOT/.env" ]]; then
     [[ "$line" == *=* ]] || fail '.env requires literal KEY=value lines.'
     key=${line%%=*}; value=${line#*=}
     case "$key" in
-      HF_CACHE_ROOT|MODEL_DIR|MODEL_REVISION|IMAGE|CONTAINER_NAME|GPUS|HOST|PORT|SERVED_MODEL_NAME|RUNTIME_VOLUME|MAX_MODEL_LEN|MAX_NUM_SEQS|MAX_NUM_BATCHED_TOKENS|GPU_MEMORY_UTILIZATION|KV_CACHE_MEMORY_BYTES|MIN_GPU_FREE_MIB|WAIT_TIMEOUT|SMOKE_TIMEOUT|RESTART_POLICY) ;;
+      HF_CACHE_ROOT|MODEL_DIR|MODEL_REVISION|LOAD_FORMAT|IMAGE|CONTAINER_NAME|GPUS|HOST|PORT|SERVED_MODEL_NAME|RUNTIME_VOLUME|MAX_MODEL_LEN|MAX_NUM_SEQS|MAX_NUM_BATCHED_TOKENS|GPU_MEMORY_UTILIZATION|KV_CACHE_MEMORY_BYTES|MIN_GPU_FREE_MIB|WAIT_TIMEOUT|SMOKE_TIMEOUT|RESTART_POLICY) ;;
       *) fail "Unsupported .env key: $key (credentials belong in exported environment variables)." ;;
     esac
     if [[ ! -v "$key" ]]; then export "$key=$value"; fi
@@ -26,6 +26,7 @@ export HF_CACHE_ROOT=${HF_CACHE_ROOT:-/models_engrams/huggingface}
 export HF_HOME=$HF_CACHE_ROOT
 export HF_HUB_CACHE=$HF_CACHE_ROOT/hub
 export MODEL_DIR=${MODEL_DIR:-}
+export LOAD_FORMAT=${LOAD_FORMAT:-safetensors}
 export MODEL_REVISION=${MODEL_REVISION:-76348ddb2be2e35e39ecfc00e75dc07703f4f3d5}
 export IMAGE=${IMAGE:-ghcr.io/local-inference-lab/vllm:release-10152026@sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29}
 export CONTAINER_NAME=${CONTAINER_NAME:-glm53-fp4-tp2}
@@ -67,6 +68,7 @@ require(re.fullmatch(r'\d+,\d+',e['GPUS']) and len(set(e['GPUS'].split(',')))==2
 for key in ['CONTAINER_NAME','RUNTIME_VOLUME']:
     require(re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_.-]*',e[key]), key+' must be a Docker name')
 require(re.fullmatch(r'[0-9a-f]{40}',e['MODEL_REVISION']), 'MODEL_REVISION must be a full commit SHA')
+require(e['LOAD_FORMAT'] in ['instanttensor','safetensors'], 'LOAD_FORMAT must be instanttensor or safetensors')
 require(e['RESTART_POLICY'] in ['no','unless-stopped','on-failure','on-failure:3'], 'Unsupported RESTART_POLICY')
 for key in ['HF_HOME','HF_HUB_CACHE','MODEL_DIR']:
     require(not e[key] or (Path(e[key]).is_absolute() and not any(x in e[key] for x in [',','\n','\r'])),key+' must be an absolute path without commas or newlines')
@@ -105,7 +107,7 @@ build_serve_args() {
     --no-enable-flashinfer-autotune --enable-prefix-caching --enable-prompt-tokens-details
     --gpu-memory-utilization "$GPU_MEMORY_UTILIZATION"
     --kv-cache-dtype fp8 --kv-cache-memory-bytes "$KV_CACHE_MEMORY_BYTES"
-    --linear-backend b12x --load-format instanttensor --mamba-cache-mode align
+    --linear-backend b12x --load-format "$LOAD_FORMAT" --mamba-cache-mode align
     --max-cudagraph-capture-size 32 --max-model-len "$MAX_MODEL_LEN"
     --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS" --max-num-seqs "$MAX_NUM_SEQS"
     --max-parallel-prefills 1 --moe-backend b12x

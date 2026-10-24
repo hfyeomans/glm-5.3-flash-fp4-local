@@ -2,7 +2,7 @@
 
 A repeatable service recipe for **`nvidia/GLM-5.3-Flash-FP4-Local`** on **two 96 GB NVIDIA RTX PRO 6000 Blackwell GPUs**. The first course uses the model card's supported Local Inference Lab vLLM image, B12X kernels and MTP3. [TensorFold comes next](docs/TENSORFOLD.md), after the vLLM baseline passes.
 
-The kitchen rule: weigh the ingredients, check the station, then fire the service. Every launch records its checkpoint identity, image ID, settings and results. No performance numbers are claimed for this host yet.
+The kitchen rule: weigh the ingredients, check the station, then fire the service. Every launch records its checkpoint identity, image ID, settings and results. The measured acceptance checks, loading results and bounded concurrency sample are recorded in [the validation record](docs/VALIDATION.md).
 
 ## The ingredients
 
@@ -14,6 +14,7 @@ The kitchen rule: weigh the ingredients, check the station, then fire the servic
 | Container | `ghcr.io/local-inference-lab/vllm:release-10152026` |
 | Parallelism | TP2 / DCP2, selected host GPUs `0,1` |
 | Weights / attention | ModelOpt mixed precision with compressed FP4 scales; B12X attention, MoE and linear kernels |
+| Loader | CPU-staged `safetensors`; the original and bounded InstantTensor runs failed during MTP loading on this host |
 | Speculation | Checkpoint's MTP head, three draft tokens; no separate drafter download |
 | Context ceiling | 1,048,576 tokens per request, subject to shared cache capacity |
 | Scheduler | 8 active sequences; 4,096 batched tokens; one parallel prefill |
@@ -85,7 +86,7 @@ cp .env.example .env
 ./smoke.sh --suite --output logs/acceptance
 ```
 
-If another model service occupies the selected GPUs, arrange its shutdown before the GLM launch. `./doctor.sh` reports the memory blocker. The latest recorded check found both GPUs available; the supported vLLM image still needs to be pulled.
+If another model service occupies the selected GPUs, arrange its shutdown before the GLM launch. `./doctor.sh` reports the memory blocker. The pinned image is prepared locally; repeat the preflight before startup because GPU and port availability can change.
 
 First startup can spend minutes loading and compiling; the default readiness deadline is one hour. The script prints a heartbeat while waiting. Follow progress from a second terminal with `./logs.sh`. A readiness failure retains the container and saves its logs for inspection. The first-run restart policy is `no`, which keeps a failed run inspectable. After acceptance, set `RESTART_POLICY=on-failure:3` in `.env` and run `./start.sh restart` if bounded automatic retries are desired.
 
@@ -114,11 +115,11 @@ curl -fsS http://127.0.0.1:8000/v1/chat/completions \
     "messages":[{"role":"user","content":"Write a short Python fibonacci function."}],
     "temperature":0,
     "max_tokens":512,
-    "chat_template_kwargs":{"enable_thinking":false,"clear_thinking":false}
+    "chat_template_kwargs":{"reasoning_effort":"low","clear_thinking":false}
   }'
 ```
 
-The short checks turn thinking off to make their small output budgets useful. Normal requests retain the server's supplied reasoning defaults. The default bind is `0.0.0.0`, matching the model card, and the API has no key by default. Set `HOST=127.0.0.1` for local-only clients. Export `VLLM_API_KEY` before startup to enable API authentication; the supplied Python clients read it without printing it.
+The short checks select `reasoning_effort=low` with a 512-token budget. This image's template always opens a reasoning block; do not send `enable_thinking=false`, which disables parser separation without removing the template's reasoning prefix. Normal requests retain the server's `max` reasoning default. The default bind is `0.0.0.0`, matching the model card, and the API has no key by default. Set `HOST=127.0.0.1` for local-only clients. Export `VLLM_API_KEY` before startup to enable API authentication; the supplied Python clients read it without printing it.
 
 ## During service
 
@@ -153,7 +154,7 @@ server.log             captured on startup failure; stop/restart also save logs
 
 For another shared cache, set `HF_CACHE_ROOT=/absolute/path`. For a complete standalone checkpoint directory, set `MODEL_DIR=/absolute/path/to/checkpoint`. Do not detach just a snapshot directory from its Hub blobs; the validator rejects links that would escape the container mount. Automatic local-folder discovery also recognizes `nvidia/glm-5.3-flash-fp4-local` and `glm-5.3-flash-fp4-local` under the cache root, but the standard Hub layout is preferred.
 
-`config/model-lock.json` pins the NVIDIA config and index hashes. Startup checks metadata identity, required tokenizer files, shard presence, sizes and container-visible links; it does not rehash 165 GiB on every launch. An intentional checkpoint upgrade needs reviewed metadata and its own full revision. `config/b12x.env` holds the supplied kernel/NCCL settings. Keep those fixed for the initial baseline.
+`config/model-lock.json` pins the NVIDIA config and index hashes. Startup checks metadata identity, required tokenizer files, shard presence, sizes and container-visible links; it does not rehash 165 GiB on every launch. An intentional checkpoint upgrade needs reviewed metadata and its own full revision. `config/b12x.env` holds the supplied kernel/NCCL settings. The default `LOAD_FORMAT=safetensors` passed on this host. Both the original InstantTensor settings and a 256 MiB/eight-slot staging experiment failed while loading MTP; `LOAD_FORMAT=instanttensor` remains available for further investigation. Inference uses the same B12X kernels with either loader. Keep those fixed for the initial baseline.
 
 If graph capture runs out of memory, preserve the failure logs first. Check other GPU users before experimenting with fewer sequences or a smaller graph configuration. Reducing `GPU_MEMORY_UTILIZATION` alone does **not** reduce the explicitly allocated `KV_CACHE_MEMORY_BYTES`.
 

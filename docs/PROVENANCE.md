@@ -18,7 +18,9 @@ Differences from the supplied commands are intentional:
 - Mount the existing host Hub cache read-only and serve offline. Store JIT caches separately.
 - Retain `release-10152026`, matching the actual commands despite the model card's older heading; pin its verified Linux/amd64 registry digest to prevent tag drift.
 - Retain the normal image entrypoint. Supplying `vllm serve` after the image preserves its runtime bootstrap.
+- Use CPU-staged `safetensors` loading after both original and bounded InstantTensor loading failed at the MTP head on this host. The model weights, quantization and inference kernels are unchanged.
 - Add a stable API alias, metadata/image recording, launch checks and bounded readiness.
+- Use low reasoning effort for short client checks. The pinned template always opens a thinking block; setting `enable_thinking=false` caused reasoning to leak into the answer field.
 - Default to no automatic restart during testing. The user can choose bounded retries after acceptance.
 - Pin per-request context to the supplied 1,048,576-token limit. A newer upstream plain script uses automatic sizing; that is a separate configuration.
 

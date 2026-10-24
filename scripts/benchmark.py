@@ -20,7 +20,7 @@ def main():
         p.error('requests must cover concurrency; max-tokens must be positive')
     ready()
     prompt = 'Write a detailed explanation of how a hash table resolves collisions, with a Python example.'
-    stream(payload(prompt, 32))  # one warmup, excluded from measurements
+    stream(payload('Reply with exactly the single word: ready', 128))  # excluded warmup
     start = time.monotonic()
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.concurrency) as pool:
         futures = [pool.submit(stream, payload(prompt+f' Use variable suffix {i}.', args.max_tokens))
@@ -35,7 +35,7 @@ def main():
               'aggregate_end_to_end_tokens_per_second': tokens/wall,
               'median_ttft_seconds': statistics.median(r['ttft_seconds'] for r in rows),
               'median_request_seconds': statistics.median(r['elapsed_seconds'] for r in rows),
-              'note': 'Includes prompt processing and network time. This is not isolated decode throughput.',
+              'note': 'Includes reasoning tokens, prompt processing and network time. TTFT is first visible content; this is not isolated decode throughput.',
               'samples': rows}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2)+'\n')
