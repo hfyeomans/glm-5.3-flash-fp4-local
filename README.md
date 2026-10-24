@@ -36,7 +36,7 @@ The default image reference includes both the release tag and this digest. The c
 
 ## Mise en place
 
-Use Linux x86_64 with working NVIDIA drivers, Docker, NVIDIA Container Toolkit, Bash, Python 3.10+, `flock` and ordinary GNU utilities. Python clients use only the standard library. ShellCheck is needed for the repository checks.
+Use Linux x86_64 with working NVIDIA drivers, Docker, NVIDIA Container Toolkit, Bash, Python 3.10+, `flock` and ordinary GNU utilities. The service smoke/performance clients use only the standard library; the optional quality benchmark installs its own isolated client environment. ShellCheck is needed for the repository checks.
 
 Keep both GPUs almost empty. The preflight requires the greater of `MIN_GPU_FREE_MIB=96000` and the configured vLLM memory fraction on each GPU. On this host's 97,887 MiB cards, the default fraction requires **96,419 MiB free per card**. It reports other containers and never stops them.
 
@@ -167,3 +167,9 @@ If graph capture runs out of memory, preserve the failure logs first. Check othe
 The repository checks use fixtures and a local mock HTTP server. They perform no model inference or Docker operations on the host. See [validation status](docs/VALIDATION.md), [troubleshooting](docs/TROUBLESHOOTING.md), and the [TensorFold build/qualification plan](docs/TENSORFOLD.md).
 
 The operational structure is inspired by the neighboring [Aevonix/Mia's AI Lab two-GPU TensorFold recipe](https://github.com/Aevonix/GLM-5.3-Flash-EXL3-2x-RTX-PRO-6000-TensorFold). Its EXL3 patches and performance results belong to that checkpoint/runtime. The NVIDIA weights, container and TensorFold retain their respective licenses; see [provenance](docs/PROVENANCE.md).
+
+## Quality and accuracy
+
+The [initial quality benchmark](quality/README.md) compares 128 fixed GSM8K questions and 128 fixed IFEval prompts between the two engines using official pinned task graders and identical rendered prompts. It saves per-item evidence and reports paired differences and uncertainty. The [measured initial baseline](docs/QUALITY-BASELINE.md) records the completed two-engine comparison. Use it separately from the throughput benchmark and long-context retrieval tests.
+
+[Precision and quality notes](docs/PRECISION-AND-QUALITY.md) explain W4A16, BF16, NVFP4, lossless scale compression, KV-cache precision, speculative decoding, memory headroom and what each test does—and does not—measure.

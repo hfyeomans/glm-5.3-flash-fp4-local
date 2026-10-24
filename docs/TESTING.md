@@ -25,3 +25,7 @@ The client reports aggregate end-to-end completion tokens/second, median TTFT an
 For an engine comparison, preserve the same checkpoint files, prompts, sampler settings, thinking mode, token budgets and tool schemas. Record differences in precision, context, cache budgets and speculation. Greedy output differences across engines need investigation; byte identity is not assumed. Single-host PCIe RTX results cannot be inferred from two-host GB10 measurements.
 
 `./scripts/check.sh` is the independent CPU-only repository check. It checks local cache selection, missing shards, escaped symlinks, literal configuration handling, safe container ownership, refusal to launch on busy GPUs and the HTTP client against a local server. It never loads the model.
+
+## Initial quality comparison
+
+See [quality/README.md](../quality/README.md) for the pinned official GSM8K/IFEval benchmark and paired-report commands. This is separate from throughput, API acceptance and long-context retrieval tests. The 128-item subsets, reasoning effort, output limit, dataset revisions and tokenization checks are fixed and recorded. [Precision and quality notes](PRECISION-AND-QUALITY.md) explain the terms and interpretation.

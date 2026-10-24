@@ -1,0 +1,121 @@
+# Precision, memory and quality: notes from this project
+
+This guide records the terminology behind the recipe. Our checkpoint is **nvidia/GLM-5.3-Flash-FP4-Local**, revision `76348ddb2be2e35e39ecfc00e75dc07703f4f3d5`. It contains a mixture of formats; “FP4 model” does not mean every tensor or operation uses four bits.
+
+## Checkpoint, engine and cache
+
+| Term | What it is in this project |
+|---|---|
+| Checkpoint | The NVIDIA model files and their exact revision |
+| Inference engine | vLLM or TensorFold, which load those files and perform generation |
+| Container image | The packaged engine, CUDA libraries, kernels and startup environment |
+| Model cache | Files on disk under `/models_engrams/huggingface`, selected through `HF_CACHE_ROOT` |
+| `HF_TOKEN` | An authentication credential, not a directory or a way to select model files; offline serving needs no token |
+
+TensorFold is the inference-engine project used here. TensorFlow is a different machine-learning framework.
+
+## W4A16: weights and activations are different
+
+**W4A16 means 4-bit weights and 16-bit activations for the operations being described.** Weights are learned parameters stored in the checkpoint. Activations are intermediate values calculated as a prompt or generated token moves through the model.
+
+A W4A16 implementation can keep weights compact in GPU memory, reconstruct small tiles for computation, multiply them by BF16 activations, and accumulate products in FP32. This does not require expanding the whole checkpoint to BF16. The implementation and temporary buffers determine actual memory use.
+
+The A16 label alone does not distinguish BF16 from FP16; our described paths use BF16. Scales, higher-precision tensors, caches and scratch buffers also mean a “4-bit model” does not use exactly one quarter of an all-16-bit model's runtime memory.
+
+```mermaid
+flowchart LR
+    W["Packed FP4 weights and scales"] --> D["Reconstruct a small weight tile"]
+    D --> M["Matrix multiply with FP32 accumulation"]
+    A["BF16 activations"] --> M
+    M --> O["Next activations"]
+```
+
+This diagram illustrates a W4A16 path, not every operation in the model.
+
+For our mixed checkpoint, W4A16 describes particular paths, not every layer. Some other projections are FP8, and some tensors retain higher precision. Our TensorFold build preserves the target checkpoint's stored values through its loaders; the PR's existing quantized speculative draft head is a separate component.
+
+Using BF16 activations with FP4 weights is not a further downgrade of those weights. Reconstructing a quantized value in a wider format cannot recover information lost during the original quantization, but widening is not inherently another lossy quantization. Overall engine accuracy still depends on the implementation, rounding and other approximations.
+
+## A small precision glossary
+
+| Term | Meaning | Why it matters here |
+|---|---|---|
+| FP32 | 32-bit floating point | Often used to accumulate many products and for sensitive intermediate values |
+| BF16 | 16-bit floating point with 8 exponent bits and 7 fraction bits | Broad numerical range; used for many activations in our native paths |
+| FP16 | Another 16-bit format, with 5 exponent bits and 10 fraction bits | More fraction precision than BF16 near a given value, but a smaller range; the names are not interchangeable |
+| FP8 | An 8-bit floating-point family; format and scaling matter | Used by some checkpoint tensors and by our KV-cache configuration |
+| FP4 | A 4-bit floating-point family | Very few representable levels; scaling and quantization choices matter |
+| Accumulation precision | The format used while summing products | FP4 weights do not imply a four-bit running sum |
+| Mixed precision | Different tensors/operations use different formats | The accurate description of this NVIDIA checkpoint |
+
+BF16 and FP16 are both 16-bit storage types with different range/precision tradeoffs. Reference: [NVIDIA's discussion of floating-point formats](https://developer.nvidia.com/blog/floating-point-8-an-introduction-to-efficient-lower-precision-ai-training/).
+
+## NVFP4 and compressed scales
+
+NVFP4 uses FP4 values with scaling information. NVIDIA describes a fine-grained E4M3 FP8 scale for each 16-value block, together with an FP32 scale at the tensor level. Those scales are part of the representation, not optional metadata. [NVIDIA NVFP4 description](https://developer.nvidia.com/blog/introducing-nvfp4-for-efficient-and-accurate-low-precision-inference/)
+
+Our checkpoint additionally stores many scale tensors using **CSF32 (`csf_32x2_v1`)**, a lossless encoding. Distinguish two operations:
+
+- **Quantization:** approximating higher-precision values with a lower-precision representation. This can lose information and affect model quality.
+- **Lossless scale compression:** encoding the already-chosen scale values more compactly. Correct decoding reconstructs exactly those values.
+
+TensorFold already had NVFP4 support, but its original GLM path did not connect all of this checkpoint's mixed formats and compressed scales to the loader. [PR #1050](https://github.com/ashhart/TensorFold/pull/1050) supplies that integration. This was a specific checkpoint-format gap, not proof that TensorFold cannot run NVFP4.
+
+The current PR decodes the compressed scales for its GPU layout. Our header accounting found about 8.11 GiB more data in fully expanded scale planes across the model. That is representation accounting, not proof that a future GPU codec would recover exactly that much live VRAM. A lossless GPU representation could preserve values while trading decoding work against memory savings.
+
+## KV-cache precision is separate from weight precision
+
+The KV cache stores attention state from tokens already processed. Its size grows with context and active conversations. This hybrid model also has recurrent state and sparse-attention/index structures, so not all runtime state is conventional KV.
+
+Our recipes use **FP8 KV cache**. That is independent of the FP4 weights: a model can have FP4 weights, BF16 activations, FP32 accumulations and FP8 cached attention state simultaneously. Quantizing the cache is another possible source of numerical differences, especially worth testing at long contexts. Passing one retrieval prompt does not prove all long-context tasks are unaffected.
+
+The retained **prompt/prefix cache** is another distinction: it preserves work for reuse by future requests. Setting its budget to zero does not remove the live state needed for the request currently running, and does not move that live state to the CPU.
+
+## Context capacity, actual use and headroom
+
+A token is a tokenizer unit, not necessarily a word. A context window must accommodate the input plus generated tokens, including reasoning tokens when enabled.
+
+“Configured for 1M” means the server accepts or plans for that limit. It does not prove a million-token prompt ran, or that the model used all of it accurately. We separately record startup, actual input/output token counts, retrieval/task scores and memory margins.
+
+Our TensorFold ladder exercised 524,027 prompt tokens successfully, but left only 339 / 492 MiB free on the two cards. The 1M configuration failed before readiness. The tested 256K profile had materially more headroom. See [the validation record](VALIDATION.md) for exact settings and evidence.
+
+A memory-utilization fraction or reserve setting is a budgeting policy, not additional physical memory. Docker `--shm-size` controls host shared memory; increasing it does not increase GPU VRAM. In the current native GLM implementation, the already-allocated first sequence can consume the requested reserve; measured free VRAM is therefore essential.
+
+**GiB** means 2^30 bytes; **GB** usually means 10^9 bytes. Driver-reserved memory and reporting conventions also affect the capacity an application can actually allocate.
+
+## Parallelism and speculative decoding
+
+- **Tensor parallelism (TP):** distributes portions of model computation/weights across GPUs. TP2 does not automatically halve every cache or buffer; some structures remain replicated.
+- **Decode context parallelism (DCP):** distributes attention-context work/storage across ranks when the engine implements it. vLLM's DCP setting is not a flag we can transplant into TensorFold.
+- **MTP/speculative decoding:** proposes tokens ahead, then checks them with the target model. It aims to accelerate decoding while preserving the target's behavior under the algorithm's conditions. We test drafted/plain agreement; that bounded evidence is not a proof for every sampling mode.
+
+Changing FP4 weights to a different quantization is a numerical change. Moving an unchanged embedding table to host memory is principally a placement/performance change, though the implementation still needs correctness tests. Replacing BF16 activations with FP4 activations is an additional quantization and requires accuracy qualification.
+
+## Startup speed is not inference speed
+
+Safetensors and InstantTensor are loading approaches. A faster loader can shorten startup without improving tokens per second after the model is resident. In our vLLM experiments, the InstantTensor path failed its available-memory check while safetensors loaded successfully. This did not establish that InstantTensor is universally slower or inferior.
+
+Similarly, higher advertised FP4 throughput does not guarantee faster W4A16 inference. Memory bandwidth, matrix shapes, occupancy, communication and the actual arithmetic path all matter. Our SM120 adaptation/tuning record is [SM120-NOTES.md](../tensorfold/SM120-NOTES.md).
+
+## What each kind of test tells us
+
+| Test | Evidence it provides | What it does not establish |
+|---|---|---|
+| API smoke checks | Requests, JSON, tools and streaming work | General answer quality |
+| Loader checks | Selected uploaded tensors match checkpoint-derived values | Every full-model computation is correct |
+| Numerical kernel tests | Operations satisfy specified reference/error bounds | A model's task accuracy score |
+| Draft/plain or cache/cold comparisons | These execution modes agree on tested cases | Universal agreement for all inputs and sampling modes |
+| Needle/retrieval tests | The tested information can be recovered at a measured length | Broad reasoning or instruction following across that window |
+| GSM8K | Math word-problem answer accuracy under a stated protocol | Coding, general knowledge or long-context accuracy |
+| IFEval | Compliance with verifiable instructions | All aspects of helpfulness or semantic correctness |
+| RULER | Multiple synthetic long-context capabilities | A complete measure of real-world document understanding |
+
+Our [initial quality benchmark](../quality/README.md) uses pinned official lm-evaluation-harness task definitions and graders. It compares the same quantized checkpoint in two engines. It does **not** measure the quality lost when NVIDIA produced the quantized checkpoint from a higher-precision model; that would require an appropriate higher-precision reference and another controlled experiment.
+
+## Reading scores without overclaiming
+
+A score on 128 questions is an estimate, not the exact accuracy on all possible questions. We report a 95% Wilson interval for binary task accuracy. Sampling intervals do not account for benchmark contamination, grading limitations or mismatch with your real workload.
+
+Because both engines receive the same selected questions, paired comparisons are more informative than comparing two unrelated percentages. The report shows which items differ and a paired bootstrap interval for the score difference. Small differences with an interval spanning zero are inconclusive in this sample; that does not prove the engines are equivalent.
+
+Reasoning and final-answer text must be handled consistently. Our initial profile renders a shared prompt requesting low reasoning, allows 4,096 total output tokens, and grades only text after `</think>`, stripping surrounding whitespace. A missing closing marker is flagged and scored as an empty answer; truncations are reported rather than silently discarded. HTTP or tokenization errors abort a valid benchmark run instead of being presented as a quality score.

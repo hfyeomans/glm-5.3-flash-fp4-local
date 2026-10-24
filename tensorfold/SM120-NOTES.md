@@ -52,6 +52,53 @@ The comparison here is with the PR author's **DGX Spark / GB10 (SM121)** machine
 
 Our cards have published memory bandwidth of 1,792 GB/s versus DGX Spark's 273 GB/s, but only 96 GB of dedicated VRAM per card versus the referenced Spark's 128 GB unified memory. Bandwidth advantage does not establish an inference-speed multiplier or solve the capacity constraint. Sources: [RTX PRO Max-Q](https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000-max-q/), [DGX Spark](https://docs.nvidia.com/dgx/dgx-spark/hardware.html).
 
+## RTX PRO tuning scope and order
+
+Here, adapting GB10 tuning means reviewing inherited scheduling, tile geometry,
+communication and memory-layout decisions against our discrete SM120 cards. It
+includes choices without a GB10 label. The goal is measured improvement on our
+hardware with preserved correctness and task quality.
+
+1. **Expert decode grouping:** compare the existing 4-warp default with
+   `TF_NVFP4_DECODE_WARPS=1`. This is the first bounded experiment because local
+   profiling identifies routed experts as a substantial decode cost, and both
+   variants already exist upstream. Neither is established as faster here.
+2. **Expert prefill tiles:** sweep suitable compiled tile shapes around
+   `prompt_wn={8,4,8}`, whose source explicitly identifies GB10 tuning. Change
+   host launch geometry and matching device kernel instantiations together.
+   Measure short and long prefills separately from decode.
+3. **Projection split-K:** review the fixed target of 192 in GLM BF16,
+   quantized projection and draft-head paths. Derive candidates from actual
+   matrix shapes, residency and our 188 SMs; multiplying the target by an SM
+   ratio is not sufficient. Additional splits add reduction work and can
+   alter floating-point rounding.
+4. **PCIe communication overlap:** benchmark the current overlap setting and
+   NCCL choices using the verified local P2P/IPC path. Check end-to-end time,
+   memory and stability rather than isolated transfer bandwidth alone.
+5. **1M capacity:** separately investigate resident compressed scales,
+   embedding placement and latent-cache sharding. The measured capacity gap
+   requires actual allocation savings; kernel scheduling changes do not
+   inherently provide those savings.
+
+Keep the detected-SM occupancy logic and valid architecture dispatch unless an
+experiment provides evidence to change them. Evaluate NCCL allocation defaults
+and SM121-only launch paths individually; a GB10 origin alone does not establish
+that a setting is unsuitable for SM120.
+
+For each candidate, preserve a baseline image and change one variable. Record
+source/binary identity, settings, exact workload, cold versus warm cache state,
+GPU memory, prompt and decode timing, and repeated measurements under comparable
+thermal conditions. Leave clocks and power limits unchanged. Run relevant
+arithmetic/loader gates and draft/plain consistency checks before the fixed
+[quality benchmark](../quality/README.md); compare against the unchanged
+TensorFold baseline as well as the existing vLLM reference. Repeat long-context
+qualification for changes affecting allocation or attention. Keep only gains
+that exceed run-to-run variation without an unexplained correctness regression.
+
+**Status:** this is the recorded optimization plan. The completed SM120 build,
+local transport configuration, context ladder and quality baseline do not yet
+constitute a measured kernel retuning result.
+
 ## Measured profiling evidence
 
 At configured 128K, one slot, FP8 KV, no retained cache, profiling enabled:
@@ -122,7 +169,7 @@ Two external harnesses are appropriate next qualification tools:
 
 A defensible engine comparison pins the same NVIDIA revision, evaluation harness revision, dataset revision/split, sampled item IDs, tokenizer, rendered prompts, thinking setting, greedy/sampling parameters, output allowance and scoring/extraction rules. Start at a comfortable common context and one active request, then qualify longer contexts separately. Record per-item answers, errors, truncation and confidence intervals; do not convert HTTP success into an accuracy pass. Different valid engine arithmetic can change generated text, so compare task scores as well as targeted numerical evidence.
 
-These harnesses were researched, not installed or run during this capacity ladder. No GSM8K, IFEval, MMLU or RULER score is claimed. A comparison to an unquantized ZAI checkpoint would assess a different question (quantization quality) and must not replace the same-checkpoint TensorFold/vLLM comparison.
+These harnesses were researched but not run during the capacity ladder. Subsequently, the [initial quality baseline](../docs/QUALITY-BASELINE.md) ran 128 GSM8K and 128 IFEval items on both engines with matching prompts and tokenizer IDs. MMLU and RULER remain unrun. A comparison to an unquantized ZAI checkpoint would assess a different question (quantization quality) and must not replace the same-checkpoint TensorFold/vLLM comparison.
 
 ## Capacity engineering estimate for the 1M target
 
@@ -133,3 +180,5 @@ The representation accounting suggests lossless device-side CSF32 storage could 
 Before a performance claim: measure the new resident layout, run the real-loader and arithmetic gates, repeat draft/plain and cache/cold checks, exercise a near-1M prompt, then score a fixed long-context suite such as RULER. Keep any reserve-admission fix separate from a speed or capacity optimization so its behavior is reviewable.
 
 Final local state after this ladder: vLLM restored on port 8000, readiness and all four API checks passed. TensorFold stopped after preserving logs. No unrelated services, GPU power/clocks, model files or caches were changed. The recipe's 27 CPU checks passed; no upstream kernel edits or accuracy-harness scores are part of this change.
+
+Subsequent quality qualification: the initial paired sample measured TensorFold at 120/128 GSM8K and 113/128 strict IFEval, versus vLLM at 119/128 and 112/128. These one-item differences do not establish an accuracy advantage. Exact protocol and uncertainty are in the linked quality baseline; no target precision or kernel changes were made for the run.

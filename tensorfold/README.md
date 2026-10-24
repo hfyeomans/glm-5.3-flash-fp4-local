@@ -111,3 +111,5 @@ python3 tensorfold/scripts/context_check.py --targets 261888 --compare-plain --o
 ```
 
 The reserve is an admission setting, not a guaranteed physical free-memory floor for GLM's already-allocated first sequence. See the measured margins in the tuning notes.
+
+The [initial quality baseline](../docs/QUALITY-BASELINE.md) adds official GSM8K/IFEval scoring against vLLM with identical prompts. It complements the loader, arithmetic and retrieval checks; it does not qualify long-context accuracy or quantify loss against an unquantized reference.
