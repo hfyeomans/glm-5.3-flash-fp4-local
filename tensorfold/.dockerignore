@@ -1,0 +1,6 @@
+*
+!Dockerfile
+!scripts
+scripts/*
+!scripts/runner.sh
+!scripts/loader_probe.zig

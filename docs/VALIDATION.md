@@ -26,7 +26,7 @@ Validated on 2026-10-23 EDT, finishing 2026-10-24 UTC. The server is running at 
 | Observed free VRAM during concurrency test | Minimum sampled **1,635 MiB / 1,788 MiB** on GPU 0 / 1 |
 | Restart and compiled-cache reuse | Passed; final run used cached kernels and completed engine initialization in 34.48 s after model loading |
 | Long-context retrieval and vision | Not tested |
-| TensorFold | Not built or run; see `TENSORFOLD.md` |
+| TensorFold | Native 1.1.3 image built; exact CUDA loader reader fails on NVIDIA compressed scales. No GPU inference attempted; see the separate record below. |
 
 The tested workload did not require reducing the KV cache or changing GPU utilization. The memory observations cover short requests at the configured eight-slot limit; they do not qualify every long-context or multimodal workload. GPU memory was sampled periodically, not continuously.
 
@@ -72,3 +72,50 @@ Generated artifacts are ignored by Git and retained in `logs/`:
 - `bench-c8.json`, `bench-c8-memory.json`: every concurrency sample and GPU memory observation.
 
 The final container is `glm53-fp4-tp2`, running with zero automatic restarts. Use `./status.sh`, `./logs.sh` and `./stop.sh` to manage it.
+
+
+## TensorFold build and compatibility investigation
+
+Recorded 2026-10-24 UTC (2026-10-23 EDT). The separate `tensorfold/` recipe was built without allocating GPUs or stopping the vLLM baseline. **The pinned native GLM CUDA loader is incompatible with this exact NVIDIA checkpoint.** This is a format/loader failure, not a measured GPU-memory failure.
+
+| Check | Actual result |
+| --- | --- |
+| Engine | TensorFold 1.1.3, unmodified commit `36415df4f76e4458e82d0fa729ecb28e287ebf38` |
+| Final local image | `glm53-fp4-tensorfold:1.1.3-sm120`, Docker-reported ID `sha256:4f4ad0784c0b44e6e63e542045e065025d65c4e41e5021152a982d4717dc71cd` |
+| Image size | 12,852,963,747 bytes, including source and build tools |
+| Build inputs | Zig 0.17.0; digest-pinned CUDA 13.3.0 devel base; installed NVCC package `13.3.33-1`; NCCL `2.31.2-1+cuda13.3`; SM120; xgrammar v0.2.8 commit `97787376faee5ed8466cfad57c99855e4ce2f6aa` |
+| Native server / grammar build | Passed; upstream source tree remained clean |
+| Shared compressed-scale decoder tests | **9/9 passed** |
+| Shared ModelOpt config/recipe tests | **6/6 passed**, including the exact NVIDIA FP4 Local fixture |
+| Native grammar install host check | Passed |
+| Repository checks after adding TensorFold | Shell lint/Python syntax passed; **25/25 operational tests passed**, including compatibility refusal, busy-GPU refusal, container ownership and failed-rank peer cleanup |
+| Native version / capabilities | Passed with no GPU and no network; version 1.1.3, CUDA backend, GLM family listed; NCCL, cuBLASLt and grammar library found |
+| Offline model validation | Same pinned NVIDIA revision, 42 shards and metadata hashes as the baseline; read-only Hub mount |
+| Actual native NVFP4 reader probe | **Failed with `MissingTensor`**, reproducibly on the downloaded checkpoint, without GPU allocation |
+| Header contracts | Missing plain expert `weight_scale`; KDA q projection and LM head stored as `F8_E4M3`, while the GLM CUDA loader expects BF16/F32 at those sites |
+| Startup guard | `tensorfold/start.sh` exits 1 with a specific compatibility error before GPU/container lifecycle work |
+| Existing vLLM service | Still running; `/health` passed after the final checks |
+| TensorFold GPU loading, API tests and performance | **Not run**; known loader mismatch blocks this stage |
+
+The key distinction is between shared format utilities and their integration into a model's actual CUDA path. The shared ModelOpt fixture and CSF32 decoder pass, but `families/glm/cuda_weights.zig` calls `core.nvfp4.Linear.read`, which directly requests a plain scale tensor. `core.Checkpoint.get` performs an exact lookup and does not synthesize that tensor from CSF32 components.
+
+`./tensorfold/probe-loader.sh` executes that exact native reader and produces:
+
+```text
+error: checkpoint has no tensor model.language_model.layers.3.mlp.experts.0.gate_proj.weight_scale
+FAIL native GLM NVFP4 reader: model.language_model.layers.3.mlp.experts.0.gate_proj: MissingTensor
+```
+
+The actual index instead contains `.weight_scale.csf32_bases`, `.csf32_codes`, `.csf32_offsets`, `.csf32_page_bases` and `.csf32_exceptions`. Separately, safetensors headers show the first KDA q projection and the LM head use `F8_E4M3`. Source inspection shows the loader's conversion branch only handles BF16/F32 at those sites. The probe reproduces the missing-scale failure; the projection finding is a source/header contract check, not an observed GPU execution error.
+
+Upstream `info` identifies the GLM family but reports `format: full precision`, 165.33 GiB of directory files and a generic 167.33 GiB memory floor. Its quantization summary reads MLX-style metadata, so those lines do not describe the NVIDIA mixed quantization or a per-rank GPU requirement. The recipe continues to identify the model using its pinned ModelOpt/CSF32 metadata and the 165.28 GiB of actual weight shards.
+
+Native loader integration for compressed scales, mixed FP8 projections and MTP layouts is required before inference qualification. No checkpoint bytes were converted, no replacement model was downloaded and no upstream arithmetic was patched. The future starting envelope is 8K context / one slot / native FP8 KV / built-in MTP, with the native default device reserve; none of those settings has been GPU-qualified here. The vLLM memory budget remains unchanged.
+
+Final artifact SHA256s:
+
+- `tensorfold-native`: `7cba7a917f7407007c57c1f9eb0a2ef1f3288111138be148c1c7b7521fab02fe`
+- `glm-loader-probe`: `1524dc28df66698450df6869489af0205cdcec008838d3ac80fed5170441da47`
+- `libtfgrammar.so`: `9e6d7b7a649e79ad8150704c2f143e49f0c75a4c87d794bf1968b28780974419`
+
+Evidence retained under `logs/tensorfold/` (ignored by Git): `build.log` for the first complete native compilation, `build-20261024T002559Z.log` for all decoder/ModelOpt host tests, `build-20261024T002913Z.log` for the final image and diagnostic binary, `artifacts.log`, `inspect.log`, `compatibility.log`, `loader-probe.log`, `start-refusal.log` and `recipe-check.log`. `doctor-with-vllm.log` records the earlier successful busy-GPU refusal (1,635 MiB free on GPU 0), before adding the stricter format gate.
