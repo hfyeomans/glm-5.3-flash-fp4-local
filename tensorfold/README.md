@@ -1,6 +1,14 @@
 # TensorFold · PR #1050 on two RTX PRO 6000 Blackwell cards
 
-This recipe builds **TensorFold 1.1.3 plus [PR #1050](https://github.com/ashhart/TensorFold/pull/1050)** for SM120 and reuses the exact NVIDIA `GLM-5.3-Flash-FP4-Local` checkpoint. It passed the initial 8K two-card test and a later context ladder through **524,027 prompt tokens** with one active slot and identical drafted/plain retrieval outputs. **256K is the preferable tested working profile with device-resident embedding**: the 512K capacity experiment left only 339 / 492 MiB of VRAM free. **That original image’s 1M configuration failed during CUDA allocation before readiness.** It remains an experimental integration of an open PR. Local GPU results are recorded separately in [VALIDATION.md](../docs/VALIDATION.md).
+This recipe builds **TensorFold 1.1.3 plus [PR #1050](https://github.com/ashhart/TensorFold/pull/1050)** for SM120 and reuses the exact NVIDIA `GLM-5.3-Flash-FP4-Local` checkpoint. It passed the initial 8K two-card test and a later context ladder through **524,027 prompt tokens** with one active slot and identical drafted/plain retrieval outputs. **For that original image, 256K is the preferable tested working profile with device-resident embedding**: the 512K capacity experiment left only 339 / 492 MiB of VRAM free. **That original image’s 1M configuration failed during CUDA allocation before readiness.** It remains an experimental integration of an open PR. Local GPU results are recorded separately in [VALIDATION.md](../docs/VALIDATION.md).
+
+The current resident-scale [serving profiles](serving/README.md) separately qualify
+**512K with GPU embeddings**: retrieval passed with MTP on/off, all 1,439 diagnostic
+probabilities matched, and whole-run free memory stayed at least **4,177 / 4,330 MiB**.
+Use `python3 tensorfold/serving/run.py gpu-512k start` for that profile. Only the
+explicit `host-1m` profile maps embeddings into host memory. The broader 1M task
+screen is separate from capacity qualification. [Quality comparison](../docs/QUALITY-BAKEOFF-V2.md) ·
+[Prefill investigation](../docs/PREFILL-INVESTIGATION-V2.md).
 
 A later [mapped-embedding experiment](TUNING-RESULTS.md) passed the same near-512K retrieval with **1,547 / 1,700 MiB free**, plus unchanged outputs on the 256-item short-context quality suite. It uses a separately pinned image, one slot and no retained prompt cache. That [capacity profile](tuning/README.md) alone did not close the 1M gap. The newer [resident-CSF32 experiment](csf-resident/RESULTS.md) now passes **1,048,311 input tokens in a 1M window**, MTP on/off, with **1,693 / 1,846 MiB sampled free** and unchanged short-quality hashes. It uses its own image and keeps one slot, mapped embedding and no retained prompt cache.
 

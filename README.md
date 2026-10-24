@@ -183,3 +183,11 @@ short-quality hashes and 1,693/1,846 MiB sampled free. It trades about 7% decode
 and 3–4% longer-prompt prefill throughput for memory, using one slot, mapped embedding
 and no retained prompt cache. It is an explicit capacity profile; the vLLM recipe
 above remains the supported starting point.
+
+
+The newer [TensorFold serving profiles](tensorfold/serving/README.md) qualify 512K
+with embeddings in VRAM; only the explicit 1M profile maps them to host memory.
+The [three-way short-quality comparison](docs/QUALITY-BAKEOFF-V2.md) shows no
+convincing accuracy advantage over the archived vLLM baseline. The
+[prefill trace](docs/PREFILL-INVESTIGATION-V2.md) records the remaining native
+performance costs. Broader 1M accuracy is measured separately from capacity.

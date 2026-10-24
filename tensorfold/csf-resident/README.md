@@ -1,5 +1,10 @@
 # Resident CSF32 experiment for RTX PRO 6000 Blackwell
 
+For current serving, use the [separate profiles](../serving/README.md): GPU
+embeddings through 512K, mapped host embeddings only for 1M. The profiles in this
+experiment directory retain their historical placement to reproduce archived
+measurements.
+
 This isolated TensorFold patch retains the NVIDIA checkpoint's compressed block
 scales on the GPUs. It is a memory optimization with an expansion cost, not a new
 quantization method. The normal TensorFold recipe and vLLM image remain unchanged.
