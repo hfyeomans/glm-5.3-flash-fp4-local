@@ -1,0 +1,356 @@
+{
+  "launch": {
+    "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+    "profile": "host-embed-overlap4-512k",
+    "protocol": {
+      "profiles_sha256": "0da8b2e1e1db4c586710059d184fa408134e2dc1026792723a41bc62da40e1b6",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 2,
+      "mtp": "on",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-8192",
+        "prefill-32768"
+      ],
+      "teacher_histories_sha256": null,
+      "quality": false,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": true,
+      "context_targets": [
+        261888,
+        524032
+      ]
+    },
+    "settings": {
+      "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "TF_GLM_PDL": "1",
+      "TF_COMM_PORT": "29600",
+      "TF_MEMORY_RESERVE_GIB": "1.5",
+      "TF_PROFILE": "0",
+      "TF_NVFP4_DECODE_WARPS": "1",
+      "NCCL_CUMEM_HOST_ENABLE": "0",
+      "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "TF_CONTEXT": "524288",
+      "TF_PROMPT_CACHE_GIB": "0",
+      "TF_TUNE_PREFILL_UP": "4",
+      "TF_TUNE_SPLIT_TARGET": "192",
+      "TF_TUNE_HOST_EMBED": "1",
+      "TF_GLM_PROMPT_K": "one",
+      "TF_GLM_KDA_DECODE_WIDE": "1",
+      "TF_GLM_PREFILL_REDUCE": "split",
+      "TF_PORT": "8001",
+      "TF_PARALLEL": "1",
+      "TF_NCCL_DEBUG": "WARN",
+      "TF_TUNE_PREFILL_DOWN": "8",
+      "NCCL_CUMEM_ENABLE": "0",
+      "TF_HOST": "0.0.0.0"
+    }
+  },
+  "context": {
+    "base_url": "http://127.0.0.1:8001",
+    "model": "glm-5.3-flash-fp4-local",
+    "checks": [
+      {
+        "target": 261888,
+        "tokenized_count": 261888,
+        "rows": 23064,
+        "needle_rows": [
+          2306,
+          11532,
+          20757
+        ],
+        "expected": [
+          "cedar-261888-41827",
+          "orchid-261888-63951",
+          "willow-261888-82746"
+        ],
+        "request_sha256": "09e3188a197f5c2ffece53440843c509ce60b82a1921d1c8d072970282827ca9",
+        "runs": [
+          {
+            "draft": true,
+            "seconds": 62.188782092009205,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-95985569b143db482011c6dfcacf6db0",
+              "object": "chat.completion",
+              "created": 1792822883,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-261888-41827\n2. orchid-261888-63951\n3. willow-261888-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 261888,
+                "completion_tokens": 38,
+                "total_tokens": 261926,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 141.26899895267746,
+                "seconds": 0.261911674,
+                "prefill_seconds": 61.918166759,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 61.923999771,
+                "sampling": "greedy",
+                "drafts": true,
+                "token_sha": "e86f3a3c3c3e",
+                "token_sha256": "e86f3a3c3c3eebe153e0f384b71d1f8b2bc82854e4b02f063dbd19a80f3ae9d6",
+                "min_rows": 3
+              },
+              "speculative": {
+                "rounds": 12,
+                "drafted": 33,
+                "accepted": 25,
+                "acceptance_rate": 0.7575757575757576,
+                "tokens_per_round": 3.1666666666666665
+              }
+            }
+          },
+          {
+            "draft": false,
+            "seconds": 63.83134781901026,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-cf33bb8f5738e8f90e3464709068db2d",
+              "object": "chat.completion",
+              "created": 1792822945,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-261888-41827\n2. orchid-261888-63951\n3. willow-261888-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 261888,
+                "completion_tokens": 38,
+                "total_tokens": 261926,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 57.99502384199725,
+                "seconds": 0.637985771,
+                "prefill_seconds": 63.183087364,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 63.190022107,
+                "sampling": "greedy",
+                "drafts": false,
+                "token_sha": "e86f3a3c3c3e",
+                "token_sha256": "e86f3a3c3c3eebe153e0f384b71d1f8b2bc82854e4b02f063dbd19a80f3ae9d6",
+                "min_rows": 1
+              },
+              "speculative": {
+                "rounds": 37,
+                "drafted": 0,
+                "accepted": 0,
+                "acceptance_rate": 0.0,
+                "tokens_per_round": 1.027027027027027
+              }
+            }
+          }
+        ],
+        "draft_equals_plain": true
+      },
+      {
+        "target": 524032,
+        "tokenized_count": 524027,
+        "rows": 45195,
+        "needle_rows": [
+          4519,
+          22597,
+          40675
+        ],
+        "expected": [
+          "cedar-524032-41827",
+          "orchid-524032-63951",
+          "willow-524032-82746"
+        ],
+        "request_sha256": "6211a008f38a02c422d0290fbeded10ff8d4422f160f1d5d731f676351ccb286",
+        "runs": [
+          {
+            "draft": true,
+            "seconds": 140.5840807770146,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-fa43e3da59b4828fd8919d4013044182",
+              "object": "chat.completion",
+              "created": 1792823012,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-524032-41827\n2. orchid-524032-63951\n3. willow-524032-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 524027,
+                "completion_tokens": 41,
+                "total_tokens": 524068,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 129.4951648480247,
+                "seconds": 0.308891842,
+                "prefill_seconds": 140.257722582,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 140.27008642,
+                "sampling": "greedy",
+                "drafts": true,
+                "token_sha": "9bc1e54ffd1e",
+                "token_sha256": "9bc1e54ffd1ec613690325e4cfb03814a9b0eb37af913c1e174bbe2e4f0436f0",
+                "min_rows": 3
+              },
+              "speculative": {
+                "rounds": 12,
+                "drafted": 33,
+                "accepted": 28,
+                "acceptance_rate": 0.8484848484848485,
+                "tokens_per_round": 3.4166666666666665
+              }
+            }
+          },
+          {
+            "draft": false,
+            "seconds": 140.5165826070006,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-a1567da9d3e3f985345956e3d6be0ca9",
+              "object": "chat.completion",
+              "created": 1792823152,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-524032-41827\n2. orchid-524032-63951\n3. willow-524032-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 524027,
+                "completion_tokens": 41,
+                "total_tokens": 524068,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 50.013451305279,
+                "seconds": 0.799784837,
+                "prefill_seconds": 139.699570886,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 139.711806882,
+                "sampling": "greedy",
+                "drafts": false,
+                "token_sha": "9bc1e54ffd1e",
+                "token_sha256": "9bc1e54ffd1ec613690325e4cfb03814a9b0eb37af913c1e174bbe2e4f0436f0",
+                "min_rows": 1
+              },
+              "speculative": {
+                "rounds": 40,
+                "drafted": 0,
+                "accepted": 0,
+                "acceptance_rate": 0.0,
+                "tokens_per_round": 1.025
+              }
+            }
+          }
+        ],
+        "draft_equals_plain": true
+      }
+    ],
+    "scope": "Synthetic retrieval, not a general long-context accuracy qualification",
+    "passed": true
+  },
+  "minimum_sampled_free_MiB": [
+    1547.0,
+    1700.0
+  ],
+  "saving_vs_prior_512k_MiB": [
+    1208.0,
+    1208.0
+  ],
+  "estimated_1m_budget": {
+    "additional_capacity_GiB_per_rank": 3.662109375,
+    "worst_rank_extra_GiB_to_just_fit": 2.1513671875,
+    "worst_rank_extra_GiB_to_retain_1_5_GiB": 3.6513671875,
+    "basis": "Prior source/allocation analysis: 7,500 bytes per additional capacity token per rank. This is an estimate, not a new 1M run; added representation/workspace overhead can change it."
+  },
+  "evidence_sha256": {
+    "context/report.json": "2eed3628f191059d641feaf2e973a7fa130c2f6a63c8f220250ba7717f22a3bc",
+    "server.log": "4fa9644ff5421ee8d576a5c1bb896ce9b199af69d59b367d75662bcad8d25497",
+    "gpu.csv": "51f4e1c088e802757243090ffa8651427b988fefaa6e38b425f3b7089a5dd158",
+    "launch-manifest.json": "1edbf634a4a86f655419b18b25709afcfeb5295897b7f6c43ba87cde7d35fdce"
+  },
+  "scope": "One slot, zero retained prompt cache, 1.5 GiB configured reserve, FP8 KV. Synthetic retrieval and draft/plain equality, not broad long-context accuracy or multi-user qualification."
+}

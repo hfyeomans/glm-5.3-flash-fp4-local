@@ -44,12 +44,12 @@ The comparison here is with the PR author's **DGX Spark / GB10 (SM121)** machine
 | Candidate | Source / observation | Required experiment |
 |---|---|---|
 | NVFP4 decode warp grouping | `cuda/experts.zig` supports `TF_NVFP4_DECODE_WARPS=1` or `4`; upstream default 4, now recipe default 1. Each warp owns independent tiles. Routed experts dominate our sampled verify passes. | Completed: small measured decode gain with arithmetic, quality and cache checks; see the experiment below |
-| Expert prefill tile geometry | `prompt_wn={8,4,8}` is explicitly described as GB10's fastest tiles in `cuda/experts.zig` | Benchmark actual SM120 prefill shapes; changing compiled kernels requires new contract/accuracy evidence |
-| Projection split-K | `families/glm/cuda_mm.zig` and `cuda/qmmf.zig` use a fixed target of 192 column tiles times K slices | Profile affected shapes; changing sums may change rounding, so use reference error bounds and deterministic output checks, not only speed |
-| Local communication / overlap | Actual path is PCIe P2P/IPC, topology `NODE` (same NUMA node, across host bridges). Current overlap pieces=3. | Measure overlap and NCCL choices at fixed workload/context; do not assume DGX RoCE tuning transfers or that more channels are better |
-| NCCL cuMem defaults | `cuda_native.zig` defaults cuMem host/device allocation off, with a GB10 driver-pool explanation | Controlled transport/memory A/B if profiling justifies it; these defaults are unchanged locally |
+| Expert prefill tile geometry | `prompt_wn={8,4,8}` is explicitly described as GB10's fastest tiles in `cuda/experts.zig` | Screened matching compiled variants on both GPUs and in the full model: wider tiles showed no meaningful served gain; retain original sizes |
+| Projection split-K | `families/glm/cuda_mm.zig` and `cuda/qmmf.zig` use a fixed target of 192 column tiles times K slices | 192/384/768 numerical and served screen completed: larger targets changed outputs and lost long-prefill speed; retain 192 |
+| Local communication / overlap | Actual path is PCIe P2P/IPC, topology `NODE` (same NUMA node, across host bridges). Upstream overlap pieces=3; the qualified recipe now selects 4. | Screen completed for overlap 1/2/4/6 and split/gather/ring; gather was slower, four pieces confirmed a 0.87–1.05% prefill gain and passed quality/cache qualification |
+| NCCL cuMem defaults | `cuda_native.zig` defaults cuMem host/device allocation off, with a GB10 driver-pool explanation | Device/host flags screened separately: no clear gain; default flags remain off |
 | Lossless resident scale compression | PR decodes CSF32 on the host and packs expanded scales for current GPU kernels | New loader/kernel support would be needed to retain compressed scales on device. Whole-checkpoint expansion is 8.1065 GiB, about 4.0533 GiB/rank under equal TP2; this is representation accounting, not measured recoverable VRAM |
-| Host embedding lookup or sharded latent cache | Full BF16 embedding is resident on each rank; latent KV is replicated | Preserve exact embedding/attention semantics; measure transfer cost and full prompt/draft correctness. These features have not been implemented here |
+| Host embedding lookup or sharded latent cache | Full BF16 embedding is resident on each rank; latent KV is replicated | Mapped BF16 embedding implemented in the isolated image: 1,208 MiB/rank saved with matching screen outputs, further qualification below. Latent-cache sharding remains unimplemented |
 
 Our cards have published memory bandwidth of 1,792 GB/s versus DGX Spark's 273 GB/s, but only 96 GB of dedicated VRAM per card versus the referenced Spark's 128 GB unified memory. Bandwidth advantage does not establish an inference-speed multiplier or solve the capacity constraint. Sources: [RTX PRO Max-Q](https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000-max-q/), [DGX Spark](https://docs.nvidia.com/dgx/dgx-spark/hardware.html).
 
@@ -97,9 +97,13 @@ TensorFold baseline as well as the existing vLLM reference. Repeat long-context
 qualification for changes affecting allocation or attention. Keep only gains
 that exceed run-to-run variation without an unexplained correctness regression.
 
-**Status:** the first decode-grouping experiment is complete and selects one warp
-for the recipe default. The remaining prefill, split-K, communication and
-capacity candidates are still untested; no upstream kernel source was changed.
+**Status:** one decode warp and four overlap pieces are the qualified recipe defaults. The subsequent
+18-run prefill, split-K, communication and placement screen is recorded in
+[TUNING-RESULTS.md](TUNING-RESULTS.md). Its source changes live in a separately
+pinned experimental image; the qualified image remains unchanged. No broad
+scheduling gain was established by the initial screen. Mapped embedding saves
+1,208 MiB per rank; qualification and any confirmed overlap result are recorded
+in that results document.
 
 ## Measured profiling evidence
 
@@ -177,7 +181,7 @@ These harnesses were researched but not run during the capacity ladder. Subseque
 
 From the successful 512K run, another 524,288 capacity tokens require about 3.6621 GiB/rank in the identified allocations. GPU 0 had only 339 MiB free. The projected deficit is therefore about **3.33 GiB/rank just to fit**, or **4.83 GiB/rank to retain 1.5 GiB free**, before new representation/transfer overhead. Lowering the reserve alone cannot supply physical memory. These are source-derived estimates, not a measured 1M resident footprint.
 
-The representation accounting suggests lossless device-side CSF32 storage could be a substantial part of the solution (~4.05 GiB/rank under equal TP2), but it does not by itself promise a comfortable margin. The replicated BF16 embedding has 154,880 x 4,096 x 2 bytes, about 1.18 GiB per rank; an exact host-backed lookup is another possible saving, with PCIe cost to measure. A sharded live latent cache is an alternative structural route. Host-backed **live** KV would be a separate engine feature; changing the retained prompt-cache budget does not offload live KV. None of these changes has been implemented or qualified in this recipe.
+The representation accounting suggests lossless device-side CSF32 storage could be a substantial part of the solution (~4.05 GiB/rank under equal TP2), but it does not by itself promise a comfortable margin. The replicated BF16 embedding has 154,880 x 4,096 x 2 bytes, about 1.18 GiB per rank; an exact host-backed lookup is another possible saving, with PCIe cost to measure. A sharded live latent cache is an alternative structural route. Host-backed **live** KV would be a separate engine feature; changing the retained prompt-cache budget does not offload live KV. At the time of this ladder none of these changes was implemented. A later isolated mapped-embedding experiment is recorded in [TUNING-RESULTS.md](TUNING-RESULTS.md); resident scale compression and latent-cache sharding remain unimplemented.
 
 Before a performance claim: measure the new resident layout, run the real-loader and arithmetic gates, repeat draft/plain and cache/cold checks, exercise a near-1M prompt, then score a fixed long-context suite such as RULER. Keep any reserve-admission fix separate from a speed or capacity optimization so its behavior is reviewable.
 
@@ -269,3 +273,18 @@ The 1M allocation failure remains unresolved.
 Portable settings, scores and measurement summaries are in
 [results/decode-warps-v1.json](results/decode-warps-v1.json). Full responses remain
 in the ignored local evidence directory.
+
+## Qualified four-piece overlap and optional mapped embedding
+
+The [complete tuning record](TUNING-RESULTS.md) covers 18 initial profiles, a
+five-repeat control/candidate/control confirmation, full 256-item quality
+reruns, fixed-history probabilities, normal-cache checks and a 512K retrieval
+ladder. The normal-image overlap default changes from 3 to 4; rollback is
+`TF_GLM_OVERLAP_PIECES=3`. Wider expert prefill tiles, larger split-K targets,
+PDL/KDA changes, alternate collectives and cuMem flags were not adopted.
+
+The separate mapped-embedding profile saves 1,208 MiB per GPU and passed near
+512K with 1,547 / 1,700 MiB measured free, at a small prefill cost. It remains an
+explicit experimental image/profile, not the default weight placement. The
+qualified image, checkpoint, precision, GPU clocks/power and vLLM memory budget
+remain unchanged. The 1M target still needs additional engine allocation savings.

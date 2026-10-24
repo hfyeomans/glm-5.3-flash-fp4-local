@@ -1,0 +1,482 @@
+{
+  "protocol": "overlap4-confirmation-v1",
+  "profiles": {
+    "image": "glm53-fp4-tensorfold:sm120-tuning-v1",
+    "patch_sha256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+    "source_tree": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+    "common": {
+      "TF_CONTEXT": "131072",
+      "TF_PARALLEL": "1",
+      "TF_PROMPT_CACHE_GIB": "0",
+      "TF_MEMORY_RESERVE_GIB": "",
+      "TF_PROFILE": "0",
+      "TF_NVFP4_DECODE_WARPS": "1"
+    },
+    "profiles": {
+      "control": {},
+      "tiles-up": {
+        "TF_TUNE_PREFILL_UP": "8"
+      },
+      "tiles": {
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16"
+      },
+      "split384": {
+        "TF_TUNE_SPLIT_TARGET": "384"
+      },
+      "split768": {
+        "TF_TUNE_SPLIT_TARGET": "768"
+      },
+      "overlap1": {
+        "TF_GLM_OVERLAP_PIECES": "1"
+      },
+      "overlap2": {
+        "TF_GLM_OVERLAP_PIECES": "2"
+      },
+      "overlap4": {
+        "TF_GLM_OVERLAP_PIECES": "4"
+      },
+      "overlap6": {
+        "TF_GLM_OVERLAP_PIECES": "6"
+      },
+      "pdl-off": {
+        "TF_GLM_PDL": "0"
+      },
+      "kda-narrow": {
+        "TF_GLM_KDA_DECODE_WIDE": "0"
+      },
+      "prompt-shape": {
+        "TF_GLM_PROMPT_K": "shape"
+      },
+      "reduce-gather": {
+        "TF_GLM_PREFILL_REDUCE": "gather"
+      },
+      "reduce-ring": {
+        "TF_GLM_PREFILL_REDUCE": "ring"
+      },
+      "cumem-device": {
+        "NCCL_CUMEM_ENABLE": "1"
+      },
+      "cumem-host": {
+        "NCCL_CUMEM_HOST_ENABLE": "1"
+      },
+      "host-embed": {
+        "TF_TUNE_HOST_EMBED": "1"
+      },
+      "control-quality": {
+        "TF_CONTEXT": "16384"
+      },
+      "host-embed-quality": {
+        "TF_CONTEXT": "16384",
+        "TF_TUNE_HOST_EMBED": "1"
+      },
+      "host-embed-512k": {
+        "TF_CONTEXT": "524288",
+        "TF_MEMORY_RESERVE_GIB": "1.5",
+        "TF_TUNE_HOST_EMBED": "1"
+      }
+    }
+  },
+  "runs": [
+    {
+      "profile": "control",
+      "protocol": {
+        "profiles_sha256": "abc2614c5ae3d3b29d803e95754245d99a4bb8e84d336be896c145f126cbd9e8",
+        "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+        "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+        "repeats": 5,
+        "mtp": "on",
+        "cases": [
+          "prefill-8192",
+          "prefill-32768"
+        ],
+        "teacher_histories_sha256": null,
+        "quality": false,
+        "skip_benchmark": false,
+        "context_targets": [
+          2048,
+          8192
+        ]
+      },
+      "started_unix": 1792820210.6281395,
+      "token_hashes": {
+        "prefill-8192": [
+          "6738722776320d3a0dc6c5cca336fc6a666f8da44906fabde22ee61e554ccf04"
+        ],
+        "prefill-32768": [
+          "ac269adf873743af08bdab041c4f76f05758d64ca8852d01766b3a7457408bf1"
+        ]
+      },
+      "repeat_and_mtp_identical": true,
+      "status": "pass",
+      "elapsed_seconds": 269.9412567615509,
+      "folder": "00-control",
+      "manifest": {
+        "protocol": "cold-shared-v1",
+        "backend": "tensorfold",
+        "mtp": "on",
+        "workloads_sha256": "5c9cea16d0486aee749dd9543db76705f35e74f2e044233e70ee5e35b5151545",
+        "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+        "settings": {
+          "TF_GLM_PROMPT_K": "one",
+          "NCCL_CUMEM_ENABLE": "0",
+          "NCCL_CUMEM_HOST_ENABLE": "0",
+          "TF_PARALLEL": "1",
+          "TF_MEMORY_RESERVE_GIB": "",
+          "TF_PROFILE": "0",
+          "TF_NCCL_DEBUG": "WARN",
+          "TF_TUNE_PREFILL_UP": "4",
+          "TF_TUNE_SPLIT_TARGET": "192",
+          "TF_GLM_PDL": "1",
+          "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+          "TF_GLM_KDA_DECODE_WIDE": "1",
+          "TF_HOST": "0.0.0.0",
+          "TF_PORT": "8001",
+          "TF_COMM_PORT": "29600",
+          "TF_CONTEXT": "131072",
+          "TF_PROMPT_CACHE_GIB": "0",
+          "TF_NVFP4_DECODE_WARPS": "1",
+          "TF_TUNE_PREFILL_DOWN": "8",
+          "TF_GLM_PREFILL_REDUCE": "split",
+          "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+          "TF_TUNE_HOST_EMBED": "0",
+          "TF_GLM_OVERLAP_PIECES": "3"
+        },
+        "repeats": 5,
+        "cases": [
+          "prefill-8192",
+          "prefill-32768"
+        ],
+        "started_utc": "2026-10-24T05:40:01Z",
+        "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec"
+      },
+      "measurements": [
+        {
+          "case": "prefill-8192",
+          "prompt_tokens": 8192,
+          "mtp": true,
+          "n": 5,
+          "distinct_output_texts": 1,
+          "prefill_seconds": 1.814161812,
+          "decode_seconds": 2.083112973,
+          "server_ttft_seconds": 1.814373879,
+          "decode_tokens_per_second": 122.41294797985016,
+          "prefill_tokens_per_second": 4515.583971514003,
+          "client_ttft_seconds": 1.8148523769923486,
+          "end_to_end_tokens_per_second": 65.65219765891979
+        },
+        {
+          "case": "prefill-32768",
+          "prompt_tokens": 32768,
+          "mtp": true,
+          "n": 5,
+          "distinct_output_texts": 1,
+          "prefill_seconds": 7.164960711,
+          "decode_seconds": 2.106227502,
+          "server_ttft_seconds": 7.165507702,
+          "decode_tokens_per_second": 121.06954246768734,
+          "prefill_tokens_per_second": 4573.367715707493,
+          "client_ttft_seconds": 7.166264888015576,
+          "end_to_end_tokens_per_second": 27.608446547438533
+        }
+      ],
+      "evidence_sha256": {
+        "bench/requests.jsonl": "bfb2c2e45f463ac5610fc395fc3d5368468eb2095f1bff14b2c5ac6ebeb7e98a",
+        "server.log": "69171a057f640738e33b28ca81700266fea82595d01bc1df06abd50f74a6b1c6",
+        "gpu.csv": "96b5009dc0f8fa0ecd361c100bd53effad90c84bd7510ac1a67ab97be1bd11f0",
+        "context/report.json": "47708f4cb936caf34eb138fe84aadddcbc80e7092592c3bd73ebb43889a67e74"
+      },
+      "gpu_telemetry": {
+        "0": {
+          "mean_temperature_C": 78.67532467532467,
+          "mean_sampled_sm_clock_MHz": 2066.5324675324673,
+          "clock_event_masks": [
+            " 0x0000000000000004",
+            " 0x0000000000000400"
+          ]
+        },
+        "1": {
+          "mean_temperature_C": 80.36363636363636,
+          "mean_sampled_sm_clock_MHz": 2057.064935064935,
+          "clock_event_masks": [
+            " 0x0000000000000004",
+            " 0x0000000000000400"
+          ]
+        }
+      }
+    },
+    {
+      "profile": "overlap4",
+      "protocol": {
+        "profiles_sha256": "abc2614c5ae3d3b29d803e95754245d99a4bb8e84d336be896c145f126cbd9e8",
+        "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+        "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+        "repeats": 5,
+        "mtp": "on",
+        "cases": [
+          "prefill-8192",
+          "prefill-32768"
+        ],
+        "teacher_histories_sha256": null,
+        "quality": false,
+        "skip_benchmark": false,
+        "context_targets": [
+          2048,
+          8192
+        ]
+      },
+      "started_unix": 1792820480.5791698,
+      "token_hashes": {
+        "prefill-8192": [
+          "6738722776320d3a0dc6c5cca336fc6a666f8da44906fabde22ee61e554ccf04"
+        ],
+        "prefill-32768": [
+          "ac269adf873743af08bdab041c4f76f05758d64ca8852d01766b3a7457408bf1"
+        ]
+      },
+      "repeat_and_mtp_identical": true,
+      "status": "pass",
+      "elapsed_seconds": 269.4462456703186,
+      "folder": "01-overlap4",
+      "manifest": {
+        "protocol": "cold-shared-v1",
+        "backend": "tensorfold",
+        "mtp": "on",
+        "workloads_sha256": "5c9cea16d0486aee749dd9543db76705f35e74f2e044233e70ee5e35b5151545",
+        "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+        "settings": {
+          "TF_HOST": "0.0.0.0",
+          "TF_COMM_PORT": "29600",
+          "TF_CONTEXT": "131072",
+          "TF_TUNE_PREFILL_UP": "4",
+          "TF_TUNE_SPLIT_TARGET": "192",
+          "TF_GLM_PROMPT_K": "one",
+          "TF_GLM_KDA_DECODE_WIDE": "1",
+          "TF_GLM_PREFILL_REDUCE": "split",
+          "TF_PARALLEL": "1",
+          "TF_MEMORY_RESERVE_GIB": "",
+          "TF_PROFILE": "0",
+          "TF_NVFP4_DECODE_WARPS": "1",
+          "TF_TUNE_HOST_EMBED": "0",
+          "TF_GLM_OVERLAP_PIECES": "4",
+          "NCCL_CUMEM_ENABLE": "0",
+          "NCCL_CUMEM_HOST_ENABLE": "0",
+          "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+          "TF_PROMPT_CACHE_GIB": "0",
+          "TF_NCCL_DEBUG": "WARN",
+          "TF_TUNE_PREFILL_DOWN": "8",
+          "TF_GLM_PDL": "1",
+          "TF_PORT": "8001",
+          "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5"
+        },
+        "repeats": 5,
+        "cases": [
+          "prefill-8192",
+          "prefill-32768"
+        ],
+        "started_utc": "2026-10-24T05:44:31Z",
+        "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec"
+      },
+      "measurements": [
+        {
+          "case": "prefill-8192",
+          "prompt_tokens": 8192,
+          "mtp": true,
+          "n": 5,
+          "distinct_output_texts": 1,
+          "prefill_seconds": 1.795398892,
+          "decode_seconds": 2.085687727,
+          "server_ttft_seconds": 1.795648667,
+          "decode_tokens_per_second": 122.26183080953615,
+          "prefill_tokens_per_second": 4562.774343073394,
+          "client_ttft_seconds": 1.7961786920204759,
+          "end_to_end_tokens_per_second": 65.86484110903567
+        },
+        {
+          "case": "prefill-32768",
+          "prompt_tokens": 32768,
+          "mtp": true,
+          "n": 5,
+          "distinct_output_texts": 1,
+          "prefill_seconds": 7.098716947,
+          "decode_seconds": 2.108323227,
+          "server_ttft_seconds": 7.099171398,
+          "decode_tokens_per_second": 120.9491963729146,
+          "prefill_tokens_per_second": 4616.04544097904,
+          "client_ttft_seconds": 7.09986801299965,
+          "end_to_end_tokens_per_second": 27.79640142412192
+        }
+      ],
+      "evidence_sha256": {
+        "bench/requests.jsonl": "962b575207d9441fab703aff89d3463d1a3c917ae99463c1b80189f964519a5f",
+        "server.log": "eb1fbc5edb1d8cccf92211c7a5f119c42fd740a8686762c462ca84691cb3d0bb",
+        "gpu.csv": "d3269c11fb3fac098b455db8f9105f626db57e6fabd21aafce3a871f55fce35a",
+        "context/report.json": "6cfbdb53a7e38344dd1e24ed797a35da481f451e0b7a64ccebbce1f4bd77e08f"
+      },
+      "gpu_telemetry": {
+        "0": {
+          "mean_temperature_C": 78.59740259740259,
+          "mean_sampled_sm_clock_MHz": 2060.5324675324673,
+          "clock_event_masks": [
+            " 0x0000000000000004",
+            " 0x0000000000000400"
+          ]
+        },
+        "1": {
+          "mean_temperature_C": 80.01298701298701,
+          "mean_sampled_sm_clock_MHz": 2038.5974025974026,
+          "clock_event_masks": [
+            " 0x0000000000000004",
+            " 0x0000000000000400"
+          ]
+        }
+      }
+    },
+    {
+      "profile": "control",
+      "protocol": {
+        "profiles_sha256": "abc2614c5ae3d3b29d803e95754245d99a4bb8e84d336be896c145f126cbd9e8",
+        "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+        "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+        "repeats": 5,
+        "mtp": "on",
+        "cases": [
+          "prefill-8192",
+          "prefill-32768"
+        ],
+        "teacher_histories_sha256": null,
+        "quality": false,
+        "skip_benchmark": false,
+        "context_targets": [
+          2048,
+          8192
+        ]
+      },
+      "started_unix": 1792820750.035107,
+      "token_hashes": {
+        "prefill-8192": [
+          "6738722776320d3a0dc6c5cca336fc6a666f8da44906fabde22ee61e554ccf04"
+        ],
+        "prefill-32768": [
+          "ac269adf873743af08bdab041c4f76f05758d64ca8852d01766b3a7457408bf1"
+        ]
+      },
+      "repeat_and_mtp_identical": true,
+      "status": "pass",
+      "elapsed_seconds": 269.897540807724,
+      "folder": "02-control",
+      "manifest": {
+        "protocol": "cold-shared-v1",
+        "backend": "tensorfold",
+        "mtp": "on",
+        "workloads_sha256": "5c9cea16d0486aee749dd9543db76705f35e74f2e044233e70ee5e35b5151545",
+        "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+        "settings": {
+          "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+          "TF_TUNE_PREFILL_DOWN": "8",
+          "TF_GLM_PROMPT_K": "one",
+          "TF_GLM_KDA_DECODE_WIDE": "1",
+          "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+          "TF_CONTEXT": "131072",
+          "TF_HOST": "0.0.0.0",
+          "TF_PORT": "8001",
+          "TF_PROMPT_CACHE_GIB": "0",
+          "TF_MEMORY_RESERVE_GIB": "",
+          "TF_NVFP4_DECODE_WARPS": "1",
+          "TF_GLM_PDL": "1",
+          "NCCL_CUMEM_ENABLE": "0",
+          "NCCL_CUMEM_HOST_ENABLE": "0",
+          "TF_COMM_PORT": "29600",
+          "TF_PROFILE": "0",
+          "TF_NCCL_DEBUG": "WARN",
+          "TF_TUNE_PREFILL_UP": "4",
+          "TF_TUNE_SPLIT_TARGET": "192",
+          "TF_TUNE_HOST_EMBED": "0",
+          "TF_GLM_OVERLAP_PIECES": "3",
+          "TF_GLM_PREFILL_REDUCE": "split",
+          "TF_PARALLEL": "1"
+        },
+        "repeats": 5,
+        "cases": [
+          "prefill-8192",
+          "prefill-32768"
+        ],
+        "started_utc": "2026-10-24T05:49:00Z",
+        "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec"
+      },
+      "measurements": [
+        {
+          "case": "prefill-8192",
+          "prompt_tokens": 8192,
+          "mtp": true,
+          "n": 5,
+          "distinct_output_texts": 1,
+          "prefill_seconds": 1.814353836,
+          "decode_seconds": 2.083113523,
+          "server_ttft_seconds": 1.814575048,
+          "decode_tokens_per_second": 122.41291565942178,
+          "prefill_tokens_per_second": 4515.106060050792,
+          "client_ttft_seconds": 1.8150586739648134,
+          "end_to_end_tokens_per_second": 65.71195372580405
+        },
+        {
+          "case": "prefill-32768",
+          "prompt_tokens": 32768,
+          "mtp": true,
+          "n": 5,
+          "distinct_output_texts": 1,
+          "prefill_seconds": 7.155293054,
+          "decode_seconds": 2.106750747,
+          "server_ttft_seconds": 7.155773496,
+          "decode_tokens_per_second": 121.03947292441615,
+          "prefill_tokens_per_second": 4579.546882664968,
+          "client_ttft_seconds": 7.156528067018371,
+          "end_to_end_tokens_per_second": 27.6359129477837
+        }
+      ],
+      "evidence_sha256": {
+        "bench/requests.jsonl": "82ec6834395dac95a124f1260854b2d92de70e27a32618ac0c38a6b769dc2f1c",
+        "server.log": "a8cd52214f96f9cb73414b24643e8a5191cdf233f2892fb2feb4ac0e9f57632f",
+        "gpu.csv": "8409e0b8ac97fd60a76bb180ea66729ca373ab0a129031d86e784c8a63477ac1",
+        "context/report.json": "782729c736f83d076ba01da5948d9e77be7a800571b9ec9f0053f9de5fbb8593"
+      },
+      "gpu_telemetry": {
+        "0": {
+          "mean_temperature_C": 78.48717948717949,
+          "mean_sampled_sm_clock_MHz": 2076.948717948718,
+          "clock_event_masks": [
+            " 0x0000000000000004",
+            " 0x0000000000000400"
+          ]
+        },
+        "1": {
+          "mean_temperature_C": 79.87179487179488,
+          "mean_sampled_sm_clock_MHz": 2054.653846153846,
+          "clock_event_masks": [
+            " 0x0000000000000004",
+            " 0x0000000000000400"
+          ]
+        }
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "case": "prefill-8192",
+      "prefill_gain_percent": 1.0504031724091645,
+      "control_prefill_drift_percent": -0.010583602613212229,
+      "decode_change_percent": -0.12343549644122653
+    },
+    {
+      "case": "prefill-32768",
+      "prefill_gain_percent": 0.8650390292038734,
+      "control_prefill_drift_percent": 0.1351119643463683,
+      "decode_change_percent": -0.0869949621385091
+    }
+  ],
+  "all_output_hashes_match": true,
+  "limits": "Five measured repeats per prompt after warmup in control/candidate/control order. Local bounded confirmation, not a universal gain or accuracy proof."
+}

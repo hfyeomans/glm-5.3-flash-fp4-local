@@ -35,7 +35,7 @@ both experimental identity pins and matching image labels.
 
 ## What changes
 
-| Control | Qualified policy | Experimental choices | Implication |
+| Control | Starting policy | Experimental choices | Implication |
 |---|---|---|---|
 | Expert prefill width | gate/up 4, down 8 warps | gate/up 8, down 16 | Matching CUDA instances and host launch geometry; isolated byte-equivalence screen required |
 | Projection split-K target | 192 column tiles × slices | 384, 768 | Changes FP32 addition order; numerical and model checks required |
@@ -101,8 +101,63 @@ out describing them as bit-preserving or universally numerically improved.
 The quantized reference gate covers its own upstream fixtures; it is not a
 claim that every draft projection and actual model activation has been checked.
 
-`teacher_force.py` freezes the first 128 output tokens from eight GSM8K and eight
+`teacher_force.py` freezes up to the first 128 output tokens from eight GSM8K and eight
 IFEval baseline examples, then requests top-two prompt log probabilities at
 those identical histories. It reports target-log-probability differences and
 top-one changes with the baseline margin. This is a sampled numerical diagnostic,
 not an accuracy score or proof of full-model equivalence.
+
+## Candidate qualification stages
+
+The `overlap4-quality` and `host-embed-overlap4-quality` profiles use the same
+16K context, zero retained cache and default reserve as the original native
+accuracy run, with four-piece overlap. `--baseline-image` selects the normal
+qualified image; source-dependent knobs are refused on that image. The second
+profile selects the experimental image with mapped embedding.
+Use fresh output folders; `--teacher-histories` requires a previously frozen
+history file from `teacher_force.py prepare`.
+
+```bash
+.state/quality-venv/bin/python tensorfold/tuning/sweep.py \
+  --baseline-image --profiles overlap4-quality --mtp both --repeats 3 \
+  --cases short-code short-prose prefill-2048 prefill-8192 \
+  --teacher-histories logs/tuning/teacher-histories-v1.json --quality \
+  --output logs/tuning/my-control-qualification
+.state/quality-venv/bin/python tensorfold/tuning/sweep.py \
+  --profiles host-embed-overlap4-quality --mtp both --repeats 3 \
+  --cases short-code short-prose prefill-2048 prefill-8192 \
+  --teacher-histories logs/tuning/teacher-histories-v1.json --quality \
+  --output logs/tuning/my-host-qualification
+```
+
+The optional quality stage runs the unchanged 256-item client and saves a
+sidecar benchmark manifest with the full tuning settings. The optional teacher
+stage compares fixed histories separately from throughput; its extra head passes
+are outside the timed benchmark. These are requested checks, not a declaration
+that a profile has passed; consult the validation record for actual outcomes.
+
+`host-embed-overlap4-512k` is the capacity experiment: 524,288 configured context, one slot,
+zero retained cache, 1.5 GiB reserve and mapped embedding. To exercise long prompts
+with draft/plain retrieval without rerunning the short throughput screen:
+
+```bash
+.state/quality-venv/bin/python tensorfold/tuning/sweep.py \
+  --profiles host-embed-overlap4-512k --skip-benchmark \
+  --context-targets 261888 524032 --output logs/tuning/my-host-capacity
+```
+
+Keep the full logs and GPU telemetry. Configured capacity alone is not successful
+inference at that length or a broad long-context quality score. This option does
+not create enough memory for 1M by itself.
+
+For the normal 8K profile, retained-cache acceptance is a separate stage:
+
+```bash
+.state/quality-venv/bin/python tensorfold/tuning/sweep.py \
+  --baseline-image --profiles overlap4-default --skip-benchmark --cache-check \
+  --output logs/tuning/my-normal-cache-check
+```
+
+The recorded outcomes are in [TUNING-RESULTS.md](../TUNING-RESULTS.md). The
+common screening settings explicitly pin three-piece overlap, so a later normal
+recipe default does not silently change the historical control.

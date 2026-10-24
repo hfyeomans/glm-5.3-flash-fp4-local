@@ -1,8 +1,12 @@
 # TensorFold · PR #1050 on two RTX PRO 6000 Blackwell cards
 
-This recipe builds **TensorFold 1.1.3 plus [PR #1050](https://github.com/ashhart/TensorFold/pull/1050)** for SM120 and reuses the exact NVIDIA `GLM-5.3-Flash-FP4-Local` checkpoint. It passed the initial 8K two-card test and a later context ladder through **524,027 prompt tokens** with one active slot and identical drafted/plain retrieval outputs. **256K is the preferable tested working profile**: the 512K capacity experiment left only 339 / 492 MiB of VRAM free. **The 1M configuration was attempted and failed during CUDA allocation before readiness.** It remains an experimental integration of an open PR. Local GPU results are recorded separately in [VALIDATION.md](../docs/VALIDATION.md).
+This recipe builds **TensorFold 1.1.3 plus [PR #1050](https://github.com/ashhart/TensorFold/pull/1050)** for SM120 and reuses the exact NVIDIA `GLM-5.3-Flash-FP4-Local` checkpoint. It passed the initial 8K two-card test and a later context ladder through **524,027 prompt tokens** with one active slot and identical drafted/plain retrieval outputs. **256K is the preferable tested working profile with device-resident embedding**: the 512K capacity experiment left only 339 / 492 MiB of VRAM free. **The 1M configuration was attempted and failed during CUDA allocation before readiness.** It remains an experimental integration of an open PR. Local GPU results are recorded separately in [VALIDATION.md](../docs/VALIDATION.md).
+
+A later [mapped-embedding experiment](TUNING-RESULTS.md) passed the same near-512K retrieval with **1,547 / 1,700 MiB free**, plus unchanged outputs on the 256-item short-context quality suite. It uses a separately pinned image, one slot and no retained prompt cache. The [capacity profile](tuning/README.md) is an optional experiment; the 1M target still needs further allocation savings.
 
 The plain 1.1.3 image built previously cannot load this checkpoint. It contains a CSF32 decoder and a mixed-format config reader, but its GLM CUDA path still calls the older NVFP4 reader. PR #1050 connects the formats to the actual model loader, preserves FP32 norms and handles MTP's mixed layout. No weights are converted or replaced.
+
+For matched vLLM/TensorFold MTP on/off timings, see [the performance report](../docs/PERFORMANCE-CURRENT.md). Further prefill, split-K, communication and embedding experiments live in [tuning/](tuning/README.md), with a separate image and explicit source pins. Those controls do not replace the qualified default image.
 
 ## Fixed ingredients
 
@@ -44,7 +48,7 @@ The parent `.env` is not loaded. `tensorfold/.env` accepts only its example keys
 
 ## First GPU service
 
-The initial configuration is **8,192 tokens, one active request, FP8 KV, built-in MTP and a 1 GiB prompt-state cache**, with the native default device-memory reserve. This does not copy vLLM's fixed KV allocation or 98.5% fraction: the two allocators and weight layouts differ. Native defaults use temperature 1, top-p 0.95, thinking and `xhigh` reasoning effort. Vision is not enabled.
+The initial configuration is **8,192 tokens, one active request, FP8 KV, built-in MTP and a 1 GiB prompt-state cache**, with the native default device-memory reserve. This does not copy vLLM's fixed KV allocation or 98.5% fraction: the two allocators and weight layouts differ. Native defaults use temperature 1, top-p 0.95, thinking and `xhigh` reasoning effort. Vision is not enabled. The recipe selects one expert decode warp and four communication-overlap pieces, both locally measured and checked against the fixed quality suite. Set `TF_GLM_OVERLAP_PIECES=3` to restore the original overlap policy.
 
 `doctor.sh` checks the model, image, three ports, card identity, free memory, compute processes and CPU format probe. It never stops another service. The 90,000 MiB minimum-free check is a coarse guard; it does not guarantee fit.
 

@@ -23,17 +23,27 @@ def main():
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--repeats', type=int, default=2)
     p.add_argument('--mtp', choices=['on', 'off', 'both'], default='on')
+    p.add_argument('--teacher-histories', type=Path)
+    p.add_argument('--quality', action='store_true')
+    p.add_argument('--baseline-image', action='store_true')
+    p.add_argument('--cache-check', action='store_true')
+    p.add_argument('--skip-benchmark', action='store_true')
+    p.add_argument('--context-targets', nargs='+', type=int, default=[2048, 8192])
     p.add_argument('--cases', nargs='+', default=['short-code', 'short-prose', 'prefill-8192', 'prefill-32768'])
     args = p.parse_args()
     if args.repeats < 1 or any(x not in PROFILES['profiles'] for x in args.profiles):
         p.error('Invalid profile or repeat count')
+    if args.cache_check and (not args.skip_benchmark or args.teacher_histories or args.quality):
+        p.error('Cache qualification requires --skip-benchmark and no teacher/quality stages')
     args.output.mkdir(parents=True, exist_ok=True)
     lock = (ROOT / '.state/tuning-sweep.lock').open('w')
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     protocol = {'profiles_sha256': sha(Path(__file__).with_name('profiles.json')),
                 'client_sha256': sha(ROOT / 'benchmarks/run.py'),
                 'workloads_sha256': sha(ROOT / 'logs/tuning/workloads.json'),
-                'repeats': args.repeats, 'mtp': args.mtp, 'cases': args.cases}
+                'repeats': args.repeats, 'mtp': args.mtp, 'cases': args.cases,
+                'teacher_histories_sha256': sha(args.teacher_histories) if args.teacher_histories else None,
+                'quality': args.quality, 'cache_check': args.cache_check, 'baseline_image': args.baseline_image, 'skip_benchmark': args.skip_benchmark, 'context_targets': args.context_targets}
     for number, profile in enumerate(args.profiles):
         folder = args.output / f'{number:02}-{profile}'
         done = folder / 'complete.json'
@@ -46,7 +56,7 @@ def main():
         if folder.exists():
             raise ValueError(f'Incomplete attempt preserved at {folder}; inspect before choosing a new output directory')
         folder.mkdir()
-        env = environment(profile)
+        env = environment(profile, baseline=args.baseline_image)
         recipe = [sys.executable, str(ROOT / 'tensorfold/scripts/recipe.py')]
         before = subprocess.check_output(['docker', 'ps', '-a', '--format', '{{.Names}}'], text=True).splitlines()
         if env['TF_CONTAINER'] in before:
@@ -54,9 +64,9 @@ def main():
         stop = threading.Event()
         def telemetry():
             with (folder / 'gpu.csv').open('w') as out:
-                out.write('utc,index,memory_used_MiB,memory_free_MiB,utilization_pct,temperature_C,power_W\n')
+                out.write('utc,index,memory_used_MiB,memory_free_MiB,utilization_pct,temperature_C,power_W,sm_clock_MHz,memory_clock_MHz,clock_event_reasons\n')
                 while not stop.is_set():
-                    r = subprocess.run(['nvidia-smi', '--query-gpu=index,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw', '--format=csv,noheader,nounits'], capture_output=True, text=True)
+                    r = subprocess.run(['nvidia-smi', '--query-gpu=index,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw,clocks.sm,clocks.mem,clocks_event_reasons.active', '--format=csv,noheader,nounits'], capture_output=True, text=True)
                     now = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
                     for line in r.stdout.splitlines():
                         out.write(now + ',' + line + '\n')
@@ -71,21 +81,36 @@ def main():
             commands = [
                 ('start', [*recipe, 'start']),
                 ('smoke', [*recipe, 'smoke', '--wait', '1200', '--suite']),
-                ('context', [sys.executable, str(ROOT / 'tensorfold/scripts/context_check.py'), '--targets', '2048', '8192', '--compare-plain', '--output', str(folder / 'context')]),
+                ('context', [sys.executable, str(ROOT / 'tensorfold/scripts/context_check.py'), '--targets', *map(str, args.context_targets), '--compare-plain', '--output', str(folder / 'context')]),
                 ('benchmark', [sys.executable, str(ROOT / 'benchmarks/run.py'), '--backend', 'tensorfold', '--mtp', args.mtp, '--workloads', str(ROOT / 'logs/tuning/workloads.json'), '--output', str(folder / 'bench'), '--repeats', str(args.repeats), '--cases', *args.cases]),
             ]
+            if args.cache_check:
+                commands = [(stage, command) for stage, command in commands if stage != 'context']
+                commands.append(('cache', [sys.executable, str(ROOT / 'tensorfold/scripts/cache_check.py'), '--output', str(folder / 'cache')]))
+            if args.skip_benchmark:
+                commands = [pair for pair in commands if pair[0] != 'benchmark']
+            if args.teacher_histories:
+                commands.append(('teacher', [sys.executable, str(Path(__file__).with_name('teacher_force.py')), 'run', str(args.teacher_histories), str(folder / 'teacher')]))
+            if args.quality:
+                commands.append(('quality', [str(ROOT / 'quality/run.sh'), '--backend', 'tensorfold', '--output', str(folder / 'quality')]))
             for stage, command in commands:
                 print(f'{profile}: {stage}', flush=True)
                 with (folder / f'{stage}.log').open('w') as out:
-                    subprocess.run(command, cwd=ROOT, env=env, stdout=out, stderr=subprocess.STDOUT, check=True, timeout=1800)
-            rows = [json.loads(x) for x in (folder / 'bench/requests.jsonl').read_text().splitlines()]
+                    subprocess.run(command, cwd=ROOT, env=env, stdout=out, stderr=subprocess.STDOUT, check=True, timeout=7200 if stage == 'quality' else 1800)
+                if stage == 'start':
+                    state = json.loads(subprocess.check_output(['docker', 'inspect', env['TF_CONTAINER']], text=True))[0]
+                    actual = dict(item.split('=', 1) for item in state['Config']['Env'])
+                    launch = {'image_id': state['Image'], 'profile': profile, 'protocol': protocol,
+                              'settings': {k: v for k, v in actual.items() if k.startswith(('TF_', 'NCCL_')) or k == 'MODEL_PATH'}}
+                    (folder / 'launch-manifest.json').write_text(json.dumps(launch, indent=2) + '\n')
+            rows = [] if args.skip_benchmark else [json.loads(x) for x in (folder / 'bench/requests.jsonl').read_text().splitlines()]
             hashes = {}
             for row in rows:
                 hashes.setdefault(row['case'], set()).add(row['response']['runtime']['token_sha256'])
             status['token_hashes'] = {key: sorted(value) for key, value in hashes.items()}
-            status['repeat_and_mtp_identical'] = all(len(value) == 1 for value in hashes.values())
+            status['repeat_and_mtp_identical'] = all(len(value) == 1 for value in hashes.values()) if rows else None
             status['status'] = 'pass'
-            if not status['repeat_and_mtp_identical']:
+            if status['repeat_and_mtp_identical'] is False:
                 status['status'] = 'nonidentical-output-investigate'
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as exc:
             status.update(status='failed', error=str(exc))

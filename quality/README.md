@@ -65,3 +65,25 @@ that historical setting explicitly; the newer SM120 recipe default is one warp.
 A complete one-warp rerun matched all 256 original TensorFold output hashes; see
 [the tuning record](../tensorfold/SM120-NOTES.md). Record any non-default warp
 setting alongside the original quality client manifest, which predates that knob.
+
+## Compare TensorFold tuning candidates
+
+For two native runs, use the native comparison tool rather than relabeling one
+backend as vLLM:
+
+```bash
+python3 quality/compare_native.py logs/quality/initial-v1-tensorfold \
+  logs/tuning/my-qualification/00-my-profile/quality \
+  --output logs/tuning/my-native-quality-comparison.json
+```
+
+It requires identical profiles, tokenizer/template identity, selected examples,
+dependency lock and quality-client hash. It verifies complete paired requests,
+checks official aggregate grades against per-item grades, and counts full native
+output-token hash differences. Report changed answers and grades even when the
+aggregate score is unchanged. Exact agreement on this fixed sample does not
+prove universal equivalence or long-context accuracy.
+
+The tuning runner saves additional launch/benchmark settings alongside the
+unchanged quality manifest. Keep that sidecar because the original quality
+client predates the overlap, tile, split-K and embedding controls.

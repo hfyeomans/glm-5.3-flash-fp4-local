@@ -2,24 +2,107 @@
   "image": "glm53-fp4-tensorfold:sm120-tuning-v1",
   "patch_sha256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
   "source_tree": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
-  "common": {"TF_CONTEXT":"131072","TF_PARALLEL":"1","TF_PROMPT_CACHE_GIB":"0","TF_MEMORY_RESERVE_GIB":"","TF_PROFILE":"0","TF_NVFP4_DECODE_WARPS":"1"},
+  "common": {
+    "TF_CONTEXT": "131072",
+    "TF_PARALLEL": "1",
+    "TF_PROMPT_CACHE_GIB": "0",
+    "TF_MEMORY_RESERVE_GIB": "",
+    "TF_PROFILE": "0",
+    "TF_NVFP4_DECODE_WARPS": "1",
+    "TF_TUNE_PREFILL_UP": "4",
+    "TF_TUNE_PREFILL_DOWN": "8",
+    "TF_TUNE_SPLIT_TARGET": "192",
+    "TF_TUNE_HOST_EMBED": "0",
+    "TF_GLM_OVERLAP_PIECES": "3",
+    "TF_GLM_PDL": "1",
+    "TF_GLM_PROMPT_K": "one",
+    "TF_GLM_KDA_DECODE_WIDE": "1",
+    "TF_GLM_PREFILL_REDUCE": "split",
+    "NCCL_CUMEM_ENABLE": "0",
+    "NCCL_CUMEM_HOST_ENABLE": "0"
+  },
   "profiles": {
     "control": {},
-    "tiles-up": {"TF_TUNE_PREFILL_UP":"8"},
-    "tiles": {"TF_TUNE_PREFILL_UP":"8","TF_TUNE_PREFILL_DOWN":"16"},
-    "split384": {"TF_TUNE_SPLIT_TARGET":"384"},
-    "split768": {"TF_TUNE_SPLIT_TARGET":"768"},
-    "overlap1": {"TF_GLM_OVERLAP_PIECES":"1"},
-    "overlap2": {"TF_GLM_OVERLAP_PIECES":"2"},
-    "overlap4": {"TF_GLM_OVERLAP_PIECES":"4"},
-    "overlap6": {"TF_GLM_OVERLAP_PIECES":"6"},
-    "pdl-off": {"TF_GLM_PDL":"0"},
-    "kda-narrow": {"TF_GLM_KDA_DECODE_WIDE":"0"},
-    "prompt-shape": {"TF_GLM_PROMPT_K":"shape"},
-    "reduce-gather": {"TF_GLM_PREFILL_REDUCE":"gather"},
-    "reduce-ring": {"TF_GLM_PREFILL_REDUCE":"ring"},
-    "cumem-device": {"NCCL_CUMEM_ENABLE":"1"},
-    "cumem-host": {"NCCL_CUMEM_HOST_ENABLE":"1"},
-    "host-embed": {"TF_TUNE_HOST_EMBED":"1"}
+    "tiles-up": {
+      "TF_TUNE_PREFILL_UP": "8"
+    },
+    "tiles": {
+      "TF_TUNE_PREFILL_UP": "8",
+      "TF_TUNE_PREFILL_DOWN": "16"
+    },
+    "split384": {
+      "TF_TUNE_SPLIT_TARGET": "384"
+    },
+    "split768": {
+      "TF_TUNE_SPLIT_TARGET": "768"
+    },
+    "overlap1": {
+      "TF_GLM_OVERLAP_PIECES": "1"
+    },
+    "overlap2": {
+      "TF_GLM_OVERLAP_PIECES": "2"
+    },
+    "overlap4": {
+      "TF_GLM_OVERLAP_PIECES": "4"
+    },
+    "overlap6": {
+      "TF_GLM_OVERLAP_PIECES": "6"
+    },
+    "pdl-off": {
+      "TF_GLM_PDL": "0"
+    },
+    "kda-narrow": {
+      "TF_GLM_KDA_DECODE_WIDE": "0"
+    },
+    "prompt-shape": {
+      "TF_GLM_PROMPT_K": "shape"
+    },
+    "reduce-gather": {
+      "TF_GLM_PREFILL_REDUCE": "gather"
+    },
+    "reduce-ring": {
+      "TF_GLM_PREFILL_REDUCE": "ring"
+    },
+    "cumem-device": {
+      "NCCL_CUMEM_ENABLE": "1"
+    },
+    "cumem-host": {
+      "NCCL_CUMEM_HOST_ENABLE": "1"
+    },
+    "host-embed": {
+      "TF_TUNE_HOST_EMBED": "1"
+    },
+    "control-quality": {
+      "TF_CONTEXT": "16384"
+    },
+    "host-embed-quality": {
+      "TF_CONTEXT": "16384",
+      "TF_TUNE_HOST_EMBED": "1"
+    },
+    "host-embed-512k": {
+      "TF_CONTEXT": "524288",
+      "TF_MEMORY_RESERVE_GIB": "1.5",
+      "TF_TUNE_HOST_EMBED": "1"
+    },
+    "overlap4-quality": {
+      "TF_CONTEXT": "16384",
+      "TF_GLM_OVERLAP_PIECES": "4"
+    },
+    "host-embed-overlap4-quality": {
+      "TF_CONTEXT": "16384",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "TF_TUNE_HOST_EMBED": "1"
+    },
+    "host-embed-overlap4-512k": {
+      "TF_CONTEXT": "524288",
+      "TF_MEMORY_RESERVE_GIB": "1.5",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "TF_TUNE_HOST_EMBED": "1"
+    },
+    "overlap4-default": {
+      "TF_CONTEXT": "8192",
+      "TF_PROMPT_CACHE_GIB": "1",
+      "TF_GLM_OVERLAP_PIECES": "4"
+    }
   }
 }

@@ -1,6 +1,6 @@
 # Shared vLLM / TensorFold performance benchmark
 
-See [the measured baseline](../docs/PERFORMANCE-BASELINE.md). This is a cold
+See [the current measured comparison](../docs/PERFORMANCE-CURRENT.md) and the [original baseline](../docs/PERFORMANCE-BASELINE.md). This is a cold
 single-request performance protocol, separate from the [accuracy suite](../quality/README.md).
 
 ```bash
@@ -40,3 +40,7 @@ settings are part of the report, not hidden behind one headline speed.
 
 After testing, restore the normal vLLM service with `MTP_ENABLED=1 ./start.sh`
 and `./smoke.sh --suite`.
+
+The original TensorFold baseline used three overlap pieces. Set
+`TF_GLM_OVERLAP_PIECES=3` explicitly to reproduce it; the current qualified recipe
+default is four. Exact settings and image IDs accompany every result.

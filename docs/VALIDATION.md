@@ -2,6 +2,8 @@
 
 Validated on 2026-10-23 EDT, finishing 2026-10-24 UTC. The server is running at `http://127.0.0.1:8000/v1` with API model `glm-5.3-flash-fp4-local`.
 
+Latest: [current MTP performance](PERFORMANCE-CURRENT.md), [qualified SM120 tuning](../tensorfold/TUNING-RESULTS.md), and the final restoration record at the end of this document.
+
 ## Final configuration and results
 
 | Check | Result |
@@ -372,3 +374,173 @@ These are local SM120 checks. Full upstream kernel-contract registration, all
 supported architectures and release qualification have not been completed.
 The read-only ATC review and existing PR #1050 scope are recorded in the tuning
 contract; no upstream claim, issue, comment or PR was published.
+
+## 2026-10-24 — completed 18-configuration served screen
+
+All 18 fresh launches completed API, draft/plain retrieval and repeated cold
+throughput checks. The screen includes two controls and 16 single-setting or
+paired-tile candidates; 144 measured requests plus 72 warmups, each with 256
+output tokens. [TUNING-RESULTS.md](../tensorfold/TUNING-RESULTS.md) contains the
+full interpretation and portable receipt. Main comparisons use the closing
+control because the opening run averaged about 4°C cooler and had 0.90–1.42%
+faster long prefill.
+
+Wider expert prefill tiles were essentially tied with the closing control.
+Split-K 384/768 and shape-dependent prompt reduction changed all four screening
+outputs and reduced long-prefill speed; these were not adopted. Gather was
+6.5–6.8% slower on long prefill, and narrow KDA lost decode speed. Other launch,
+collective and NCCL allocation changes had no clear adoption-worthy benefit.
+Four-piece overlap proceeds to a separate five-repeat bracketed confirmation
+because its initial 0.58–0.80% prefill gain is small.
+
+Mapped-host embedding saved **1,208 MiB per GPU**, increasing minimum free VRAM
+at the same 128K configuration from 3,153 / 3,306 to 4,361 / 4,514 MiB. Every
+screening output hash matched control. Decode was approximately unchanged;
+prefill was 1.11–1.29% slower. Accuracy and near-512K qualification are separate
+follow-up steps; neither 1M inference nor broad long-context quality is implied.
+
+## 2026-10-24 — four-piece overlap confirmation
+
+Completed fresh control / four pieces / control launches at the same 128K
+configuration, using five measured repeats per 8K/32K prompt after warmup:
+30 measured requests plus six warmups. All output token hashes match. Prefill
+improved **1.05% at 8K and 0.87% at 32K** versus the mean control medians;
+control-to-control drift was **−0.01% and +0.14%**. Decode differences were
+−0.12% and −0.09%. This is a small prefill gain, not a decode-speed claim.
+Read-only clock telemetry was added to this confirmation. Receipt:
+`tensorfold/results/overlap4-confirmation-v1.json`; raw evidence:
+`logs/tuning/overlap4-confirmation-v1`. Normal-image quality/cache qualification
+is required before changing the default.
+
+## 2026-10-24 — normal-image four-piece quality qualification
+
+The unchanged qualified image (`sha256:c829536f5a214755ff50f4e72e622814a9226b8aec43ed646cdc6cd20c418e11`)
+passed API and paired retrieval checks with `TF_GLM_OVERLAP_PIECES=4`, one decode
+warp, 16K context, one slot, zero retained cache and default reserve. Its shared
+short/2K/8K timing run completed three measured repeats with MTP on/off after
+warmup; every prompt had one identical output hash across modes and repeats.
+The 16-history prompt-log-probability diagnostic completed for later placement
+comparison.
+
+The unchanged 256-item quality client produced **256/256 full output token hashes
+identical to the original TensorFold baseline**, and every per-item grade matched.
+Scores remained 120/128 GSM8K, 113/128 strict IFEval and 114/128 loose IFEval,
+with zero truncations and zero missing reasoning closures. This is exact agreement
+on this fixed sample, not proof of universal equivalence or long-context quality.
+Receipt: `tensorfold/results/overlap4-quality-v1.json`; raw run:
+`logs/tuning/overlap4-quality-v1/00-overlap4-quality`. The receipt includes the
+actual tuning environment because the original quality manifest predates the
+new knobs. Normal 8K cache qualification still precedes a default change.
+
+## 2026-10-24 — fixed-history host-embedding diagnostic
+
+Completed the paired native diagnostic on 16 fixed histories (eight GSM8K and
+eight IFEval examples, up to the first 128 saved completion tokens). Both runs
+used four-piece overlap and matched 16K settings; the reference used the normal
+image and device embedding, while the candidate used the pinned experimental
+image and mapped-host embedding. The client verified checkpoint identity,
+complete case sets, tokenizer arrays, prompt counts and cold-cache state.
+
+Across **1,439 scored positions**, there were **zero top-one changes** and
+**zero change in the actual target token's log probability** (maximum and mean
+absolute change both 0). This is a sampled diagnostic, not comparison of every
+vocabulary logit or a proof of universal equivalence. Full manifests and raw
+row/histories hashes are in
+`tensorfold/results/host-embedding-probabilities-v1.json`. The independent
+256-item candidate quality run follows separately.
+
+## 2026-10-24 — combined host-embedding quality qualification
+
+The pinned experimental image with mapped BF16 embedding and four-piece overlap
+passed the same 16K API, paired retrieval, MTP-on/off throughput and fixed-history
+checks. The unchanged full quality suite produced **256/256 output token hashes
+identical to the original TensorFold baseline**, with every per-item grade
+unchanged: 120/128 GSM8K, 113/128 strict IFEval and 114/128 loose IFEval. There
+were no truncations or missing reasoning closures.
+
+The [native quality receipt](../tensorfold/results/host-embedding-quality-v1.json)
+contains actual launch settings, image identity, native timing cells and raw
+artifact hashes. Raw run:
+`logs/tuning/host-embed-quality-v1/00-host-embed-overlap4-quality`. This qualifies
+the tested short-context sample; the subsequent 256K/512K retrieval ladder is
+separate capacity evidence, not broad long-context task accuracy.
+
+## 2026-10-24 — host-embedding 512K capacity qualification
+
+The combined mapped-embedding/four-piece profile passed both **261,888** and
+**524,027** actual prompt tokens with MTP on and off. All three markers near
+10%, 50% and 90% were recovered; both lengths had identical drafted/plain output
+hashes, matching prompt counts, zero reused prompt tokens and normal stop finishes.
+Wall times were 62.19 / 63.83 seconds at 256K and 140.58 / 140.52 seconds near
+512K (MTP on/off). These long requests are dominated by prefill, so their wall
+times are not a decode-speed comparison.
+
+Settings: context 524,288, one slot, FP8 KV, zero retained prompt cache, reserve
+1.5 GiB, one decode warp, four overlap pieces and mapped BF16 embedding. Minimum
+sampled free VRAM was **1,547 / 1,700 MiB**, versus **339 / 492 MiB** in the earlier
+512K experiment: **1,208 MiB more per GPU**. This is observed headroom for the
+bounded one-slot test, not a guaranteed floor or multi-user capacity claim.
+
+Receipt: `tensorfold/results/host-embedding-capacity-v1.json`; raw evidence:
+`logs/tuning/host-embed-capacity-v1/00-host-embed-overlap4-512k`. The 256-item
+short-context quality suite and fixed-history diagnostic passed separately.
+RULER and broad long-context reasoning accuracy remain unmeasured.
+
+**1M still needs additional allocation savings.** The prior 7,500-byte-per-token,
+per-rank allocation analysis predicts another 3.662 GiB/rank from 512K to 1M.
+With the newly measured headroom, the limiting GPU remains about **2.15 GiB
+short just to fit**, or **3.65 GiB short while retaining 1.5 GiB free**, before
+new representation/workspace overhead. No new 1M inference success is claimed.
+Resident compressed scales or live latent-cache sharding require further engine
+work; increasing the memory fraction cannot create the missing physical VRAM.
+
+## 2026-10-24 — four-piece normal-cache acceptance
+
+The normal qualified image passed the 8K / one-slot / 1 GiB prompt-cache profile
+with one decode warp and four overlap pieces. At 3,648 and 7,993 input tokens,
+first requests were cold, repeated requests reused 2,048 and 6,144 tokens,
+respectively, and all cold/warm and drafted/plain output hashes matched. All
+markers, prompt counts, mode flags and stop finishes passed. Receipt:
+`tensorfold/results/overlap4-cache-v1.json`; raw evidence:
+`logs/tuning/overlap4-cache-v1/00-overlap4-default`.
+
+## 2026-10-24 — adopted overlap default and refreshed performance
+
+After quality, fixed-history and normal-cache acceptance, the normal image
+completed the full shared 2K/8K/32K/64K plus short-code/prose benchmark with MTP
+on/off, three measured repeats and excluded warmups. **All 48 responses matched
+the original native output token hashes**, including 64K and both MTP modes.
+The report is [PERFORMANCE-CURRENT.md](PERFORMANCE-CURRENT.md), with portable data
+in `benchmarks/results/cold-shared-current-v1.json`. The unchanged vLLM cohorts
+are reused transparently; native measurements were refreshed after tuning.
+
+At 8K input / 256 output, native median decode is **122.27 / 69.70 tok/s** and
+client TTFT is **1.822 / 1.806 s** with MTP on/off. vLLM remains **174.12 / 117.72
+tok/s**, TTFT **0.809 / 0.791 s**, on its unchanged qualified settings. The
+controlled causal tuning result remains the 0.87–1.05% prefill improvement;
+other differences from the earlier full run are not attributed to overlap.
+
+The normal recipe now defaults to **`TF_GLM_OVERLAP_PIECES=4`**. Rollback is
+`TF_GLM_OVERLAP_PIECES=3`. One decode warp remains selected. The normal image,
+checkpoint revision, target precision and all vLLM budgets are unchanged.
+The experimental mapped-embedding profile is separate and explicitly pinned.
+Historical screening controls explicitly pin three pieces so this new default
+cannot silently alter their reproduction. Final shell/syntax and CPU checks:
+**36 tests passed**.
+
+## Final service restoration after tuning
+
+Restored `glm53-fp4-tp2` on port 8000 with the original image
+`sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29`.
+Readiness/model identity and completion, JSON, tool-call and streaming checks
+all passed. Inspection confirmed MTP method `mtp` with three speculative tokens,
+`safetensors`, memory fraction 0.985, fixed KV budget 7,650,410,496 bytes and
+configured context 1,048,576. The owned TensorFold container is absent after its
+logs were saved. No unrelated service, GPU power/clocks, checkpoint files or
+shared cache was changed.
+
+Evidence: `logs/tuning/final-vllm-restore.log`, `final-vllm-api/`,
+`final-service-state.json` and `final-check.log`. The normal native default is
+now four overlap pieces; mapped embedding remains an explicit experimental
+capacity profile. All changes and portable receipts are local to this repository;
+no upstream issue, comment or PR was published.

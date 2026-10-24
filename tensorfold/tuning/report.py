@@ -23,11 +23,11 @@ def main():
         raise ValueError('No passing control')
     reference = controls[0]['token_hashes']
     baseline = {}
-    for r in controls:
+    for r in controls[-1:]:
         for x in r['measurements']:
             baseline.setdefault((x['case'], x['mtp']), []).append(x)
     lines = ['# Served TensorFold tuning screen', '',
-             'Screening medians; control reference averages the available control medians. No accuracy or release qualification is implied.', '',
+             'Screening medians versus the latest completed control (the closing control once finished). The opening control ran cooler; retain both controls to assess drift. No accuracy or release qualification is implied.', '',
              '| Profile | Prompt | MTP | Decode tok/s | Decode change | Prefill tok/s | Prefill change | TTFT s | Output matches control |',
              '|---|---|---|---:|---:|---:|---:|---:|---|']
     for r in runs:

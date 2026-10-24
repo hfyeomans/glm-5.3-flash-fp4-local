@@ -38,6 +38,21 @@ def main():
     keys = [(x['backend'], x['case'], x['mtp']) for x in cells]
     if len(keys) != len(set(keys)):
         raise ValueError('Duplicate backend/case/mode; create a separate candidate comparison')
+    if {m['backend'] for m in manifests} != {'vllm', 'tensorfold'} or any(m['repeats'] != 3 for m in manifests):
+        raise ValueError('The published comparison requires both engines and three measured repeats')
+    coverage = {backend: {(x['case'], x['mtp']) for x in cells if x['backend'] == backend}
+                for backend in ('vllm', 'tensorfold')}
+    if coverage['vllm'] != coverage['tensorfold'] or any(
+            {mode for name, mode in coverage['vllm'] if name == case} != {True, False}
+            for case, _ in coverage['vllm']):
+        raise ValueError('Engines need matching cases with both MTP modes')
+    native = next(m for m in manifests if m['backend'] == 'tensorfold')
+    settings = native['settings']
+    overlap = settings.get('TF_GLM_OVERLAP_PIECES', 'upstream default')
+    native_context = int(settings['TF_CONTEXT'])
+    native_slots = int(settings['TF_PARALLEL'])
+    native_warps = settings.get('TF_NVFP4_DECODE_WARPS', 'upstream default')
+    native_reserve = settings.get('TF_MEMORY_RESERVE_GIB') or 'native default'
     cells.sort(key=lambda x: (x['prompt_tokens'], x['case'], x['backend'], not x['mtp']))
     lines = ['# Shared cold-prompt benchmark', '',
              'Same pinned NVIDIA checkpoint, tokenizer IDs and raw prompts; one request at a time, 256 output tokens, '
@@ -56,8 +71,9 @@ def main():
               'Server prefill boundaries are implementation-specific; client TTFT supplies a common external measurement.', '',
               'Every measured request had zero reused prompt tokens. vLLM retains its qualified MTP3/B12X budget, '
               '1M configured window and eight slots, with one client request active. Its plain run removes only the '
-              'speculative configuration. Unique cache salts prevent prefix reuse. TensorFold uses one decode warp, '
-              '128K configured context, one slot, FP8 KV, default reserve and zero retained prompt-cache budget.', '',
+              'speculative configuration. Unique cache salts prevent prefix reuse. '
+              f'TensorFold settings: decode warps={native_warps}, configured context={native_context:,} tokens, '
+              f'slots={native_slots}, FP8 KV, reserve={native_reserve}, zero retained prompt-cache budget and overlap pieces={overlap}.', '',
               'Some repeated vLLM greedy outputs differ despite the fixed seed; distinct text counts are retained '
               'in the JSON. The timing samples are valid fixed-input/fixed-output-length measurements, not a claim of '
               'bit-deterministic generation or an accuracy score. TensorFold token-hash consistency is reported separately. '

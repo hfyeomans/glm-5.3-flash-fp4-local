@@ -4,6 +4,8 @@ A repeatable service recipe for **`nvidia/GLM-5.3-Flash-FP4-Local`** on **two 96
 
 The kitchen rule: weigh the ingredients, check the station, then fire the service. Every launch records its checkpoint identity, image ID, settings and results. The measured acceptance checks, loading results and bounded concurrency sample are recorded in [the validation record](docs/VALIDATION.md).
 
+The matched [MTP on/off performance report](docs/PERFORMANCE-CURRENT.md) separates decode speed, prefill and client TTFT. The [quality benchmark](docs/QUALITY-BASELINE.md) measures answer accuracy separately. Local SM120 experiments have their own [pinned tuning recipe](tensorfold/tuning/README.md).
+
 ## The ingredients
 
 | Ingredient | Fixed starting point |
