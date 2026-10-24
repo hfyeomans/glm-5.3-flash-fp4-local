@@ -1,10 +1,17 @@
 # Local long-context accuracy screen
 
-The corrected v2 screen uses all 13 RULER task families, four frozen examples per task,
-at configured 32K and 1M lengths: 104 requests. This is a local RULER-derived
-screen, not the full published benchmark or a leaderboard score. Four examples
-per task can expose failures but cannot establish a reliable task-level accuracy
-estimate. Capacity tests and simple three-marker retrieval are separate evidence.
+The frozen bank contains 104 cases: four examples for each of 13 task families
+at two nominal input-length targets. At the user's request, the current cohort
+keeps **all 52 shorter controls** and uses **two fixed examples per long task**:
+22 near-1M cases plus four corpus-limited cases, 78 selected requests in total.
+Both groups use the same 1M server allocation. Nine additional long results
+already completed under the larger plan are retained separately.
+
+This is an initial local RULER-derived regression baseline, not a published
+leaderboard score or a statistically precise accuracy estimate. Four examples
+per task was a coverage choice, not a significance threshold; two is a smaller
+screen. These are different examples, not repeated trials of an identical prompt.
+Capacity tests and three-marker retrieval remain separate evidence.
 
 The source is [NVIDIA RULER](https://github.com/NVIDIA/RULER/tree/c3f5e3b4f87f97e048793bb510a3a6b19a46bf3a),
 using task constructors from [the pinned lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness/tree/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/ruler).
@@ -55,7 +62,8 @@ uv pip install --target .state/long-quality-deps -r quality/long-context-require
   --skip-benchmark --minimum-free-mib 1536 \
   --long-context-bank logs/qualification-v2/ruler-bank-v2 \
   --long-context-lengths 32768 1048576 \
-  --output logs/qualification-v2/long-accuracy-v2
+  --long-context-samples 2 \
+  --output logs/qualification-v2/long-accuracy-22-fresh
 ```
 
 The generator requires the pinned RULER checkout at `.state/ruler-upstream`, the
@@ -66,8 +74,9 @@ The runner owns only `glm53-fp4-tensorfold` and stops it after the sweep.
 
 
 The frozen bank has 44 near-1M cases across 11 task families. CWE reaches about
-143K input tokens and SQuAD about 205K; their eight configured-1M cases are reported
-at those actual lengths and excluded from the near-1M aggregate. The 52 shorter
+143K input tokens and SQuAD about 205K; their cases are reported
+at those actual lengths and excluded from the near-1M aggregate. The reduced
+cohort selects two from each of these tasks, four corpus-limited cases total. The 52 shorter
 controls use roughly 28K inputs because of the explicit preparation margin.
 [Corrected bank and preservation receipt](../tensorfold/results/long-context-bank-v2.json).
 The parent v1 receipt retains dependency versions and input provenance; its original
@@ -106,8 +115,8 @@ before the unchanged answer prefix, exactly as the established performance
 benchmark does. The rewrapper preserves all 104 task bodies, gold answers, seeds
 and question selections, adding two tokens per case. It does not read inference
 outputs. The client validates the actual prefix before every request; regression
-tests reject an open prefix or unexpected header. All 104 cases are rerun in a
-separate directory. Existing valid short-quality and performance baselines are
+tests reject an open prefix or unexpected header. The corrected full plan began in a separate directory; the user later reduced
+the remaining cohort as described below. Existing valid short-quality and performance baselines are
 not rerun.
 
 The reproduction command above uses the preserved v1 input bank. To generate a
@@ -120,3 +129,38 @@ The official substring metric remains unchanged. The corrected report also lists
 truncations, generated reasoning markers and full-credit responses that have
 neither. A full substring score with an unfinished answer is not called clean
 completion or broad accuracy qualification.
+
+
+The JSON group field `configured_context` is the bank's nominal length label,
+not a change to the server allocation. The launch manifest records actual
+`TF_CONTEXT=1048576` for both the roughly-28K controls and the longer cases.
+
+
+## User-approved reduction and reuse
+
+After 71 valid corrected responses (52 shorter controls and 19 near-1M cases),
+the user requested fewer cases and approved a 22-case balanced near-1M baseline.
+The remaining full-plan request was cancelled and its sweep status remains
+stopped/failed, rather than falsely marked complete. This was a scope change,
+not a detected model or protocol failure.
+
+The selection rule is fixed sample indices 0 and 1 for every longest-length task,
+independent of scores; all four shorter examples per task remain included. Thus
+62 valid results can be reused (52 shorter plus 10 core near-1M), leaving 16 new
+requests (12 near-1M and four corpus-limited). Nine completed extra long cases
+are preserved as supplemental evidence. The known incorrect shorter SQuAD
+answer stays in the report. [Frozen reduction plan](../tensorfold/results/long-context-reduction-v1.json).
+
+The continuation adds these flags to the sweep command above:
+
+```bash
+--long-context-reuse logs/qualification-v2/long-accuracy-v2/00-host-1m/long-context
+--output logs/qualification-v2/long-accuracy-22
+```
+
+Use only one `--output` argument and fresh output paths. Reuse is limited to the
+pinned corrected client and identical bank, image, model settings, interface and
+memory floor. It validates prompt hashes, golds, raw responses and grades, and
+refuses uncommitted selected responses. **Omit reuse for a new engine/kernel
+comparison**; different images are rejected. The official grader and generation
+settings are unchanged. There is no automatic expansion beyond this initial core.

@@ -82,6 +82,13 @@ PCIe transfer time would be incorrect. Side partials are not added to main wall 
    requests could only help that mode and needs cache/state transition validation;
    it cannot be removed from the normal MTP-on profile by assumption.
 
+For workloads with repeated prefixes, separately qualify retained prompt-cache
+reuse. Earlier resident-scale cold/warm tests passed at 3,648/7,993 input tokens,
+but that does not qualify a 512K or 1M cache budget. Reuse can avoid repeated
+prefill; it does not accelerate the first cold prompt or demonstrate a kernel
+speedup. The current serving qualification keeps retained cache off, and the
+1M profile has little spare memory above its floor.
+
 Do not infer a quality benefit from slower execution or from BF16 activations.
 The [short-quality comparison](QUALITY-BAKEOFF-V2.md) found no convincing advantage;
 the long-context task screen is separate. No native arithmetic/kernel change was

@@ -38,6 +38,53 @@ def validate_prompt(prompt):
         raise ValueError('Raw prompt must explicitly close the reasoning prefix')
 
 
+
+REUSE_CLIENT_SHA256 = 'edb5d4a0f3015840c9d35257af027dc7e66bde12e73a2e73725ee8f144a6c97a'
+
+
+def select_cases(bank, lengths, long_samples=None):
+    if long_samples is not None and not 1 <= long_samples <= bank['protocol']['samples_per_task']:
+        raise ValueError('Long sample count outside frozen bank')
+    return [c for c in bank['cases'] if c['length'] in lengths and
+            (long_samples is None or c['length'] != max(lengths) or c['sample'] < long_samples)]
+
+
+def import_completed(source, bank_dir, selected, manifest, output):
+    previous=json.loads((source/'manifest.json').read_text())
+    if previous['client_sha256'] != REUSE_CLIENT_SHA256:
+        raise ValueError('Unqualified source client for reuse')
+    for key in ('bank_sha256','official_scorer_sha256','image_id','settings','interface','minimum_free_MiB'):
+        if previous[key] != manifest[key]:raise ValueError('Reuse protocol differs: '+key)
+    sys.path.insert(0,str(ROOT/'tensorfold/tuning'))
+    from sweep import headroom
+    gate=headroom(source.parent/'gpu.csv',['0','1'],manifest['minimum_free_MiB'])
+    if not gate['passed']:raise ValueError('Source run failed the memory floor')
+    old=[json.loads(line) for line in (source/'requests.jsonl').read_text().splitlines()]
+    by_id={r['id']:r for r in old};assert len(by_id)==len(old),'Duplicate source rows'
+    imported=[]
+    for case in selected:
+        ident=case['id'];raw=source/(ident+'-response.json')
+        if ident not in by_id:
+            if raw.exists():raise ValueError('Uncommitted selected source response; inspect before retrying')
+            continue
+        row=by_id[ident];assert ident in previous['cases']
+        file=bank_dir/case['file'];assert sha(file)==case['sha256']
+        doc=json.loads(gzip.decompress(file.read_bytes()));validate_prompt(doc['prompt'])
+        for key in ('prompt_sha256','token_sha256','prompt_tokens','answers','max_tokens','seed','task','sample','length'):
+            assert row[key]==doc[key],('Changed frozen case',ident,key)
+        assert json.loads(raw.read_text())==row['response']
+        assert row['score']==score(row['response']['choices'][0]['text'],doc['answers'],doc['task'].startswith('qa_'))
+        assert row['response']['tensorfold']['drafts'] is True and row['response']['tensorfold']['enable_thinking'] is False
+        assert row['response']['tensorfold']['sampling']=='greedy'
+        assert row['response']['usage']['prompt_tokens_details']['cached_tokens']==0
+        saved=dict(row,reused_from=str(source),original_response_sha256=sha(raw))
+        (output/raw.name).write_bytes(raw.read_bytes());imported.append(saved)
+    temp=output/'requests.importing.jsonl'
+    temp.write_text(''.join(json.dumps(r)+'\n' for r in imported));temp.replace(output/'requests.jsonl')
+    (output/'reuse-headroom.json').write_text(json.dumps(gate,indent=2)+'\n')
+    print(f'Reused {len(imported)} completed valid requests; no inference repeated',flush=True)
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--bank',type=Path,required=True)
@@ -45,6 +92,8 @@ def main():
     p.add_argument('--lengths',type=int,nargs='+',required=True)
     p.add_argument('--minimum-free-mib',type=int,default=1536)
     p.add_argument('--telemetry-file',type=Path)
+    p.add_argument('--long-samples',type=int,help='Use the first N fixed sample indices at the longest nominal length; retain all shorter controls')
+    p.add_argument('--reuse-run',type=Path,help='Import completed valid results from the pinned corrected client; never choose by score')
     args=p.parse_args()
     bank=json.loads((args.bank/'manifest.json').read_text()); complete=json.loads((args.bank/'complete.json').read_text())
     assert complete['manifest_sha256']==sha(args.bank/'manifest.json')
@@ -56,15 +105,20 @@ def main():
     assert env['TF_PARALLEL']=='1' and env['TF_PROMPT_CACHE_GIB']=='0'
     assert env['MODEL_PATH'].endswith(bank['protocol']['model_revision'])
     assert int(env['TF_CONTEXT'])>=max(args.lengths)
-    selected=[x for x in bank['cases'] if x['length'] in args.lengths]
+    selected=select_cases(bank,args.lengths,args.long_samples)
     manifest={'bank_sha256':sha(args.bank/'manifest.json'),'client_sha256':sha(Path(__file__)),'official_scorer_sha256':sha(scorer_path),
               'image_id':state['Image'],'settings':{k:v for k,v in env.items() if k.startswith(('TF_','NCCL_')) or k=='MODEL_PATH'},
               'cases':[c['id'] for c in selected],'interface':'raw completion, shared locally rendered chat template, thinking off, greedy, MTP on, cold cache',
               'minimum_free_MiB':args.minimum_free_mib,'response_diagnostics':'Report truncations and generated think markers separately; clean full credit also requires neither. Official RULER score remains unchanged.'}
+    manifest['sampling_plan']={'long_samples_per_task':args.long_samples or bank['protocol']['samples_per_task'],'rule':'Lowest fixed sample indices at longest nominal length; all shorter controls retained, independent of scores'}
+    if args.reuse_run:
+        manifest['reuse']={'source':str(args.reuse_run),'manifest_sha256':sha(args.reuse_run/'manifest.json'),'requests_sha256':sha(args.reuse_run/'requests.jsonl')}
     dest=args.output/'manifest.json'
     if dest.exists():assert json.loads(dest.read_text())==manifest,'Resume protocol differs'
     else:dest.write_text(json.dumps(manifest,indent=2)+'\n')
     rows_path=args.output/'requests.jsonl'
+    if args.reuse_run and not rows_path.exists():
+        import_completed(args.reuse_run,args.bank,selected,manifest,args.output)
     done={r['id']:r for r in map(json.loads,rows_path.read_text().splitlines())} if rows_path.exists() else {}
     if rows_path.exists() and len(done)!=len(rows_path.read_text().splitlines()):
         raise ValueError('Duplicate completed cases')
@@ -116,14 +170,14 @@ def main():
     for length in args.lengths:
         for task in bank['protocol']['tasks']:
             rows=[r for r in done.values() if r['length']==length and r['task']==task]
-            assert len(rows)==bank['protocol']['samples_per_task']
+            assert len(rows)==sum(c['length']==length and c['task']==task for c in selected)
             groups.append({'configured_context':length,'task':task,'n':len(rows),'mean_score':sum(r['score'] for r in rows)/len(rows),
                            'full_credit':sum(r['full_credit'] for r in rows),'near_window_cases':sum(r['near_window'] for r in rows),
                            'input_tokens_min':min(r['prompt_tokens'] for r in rows),'input_tokens_max':max(r['prompt_tokens'] for r in rows),
                            'truncated':sum(r['truncated'] for r in rows),'reasoning_markers':sum(r['reasoning_marker'] for r in rows),
                            'full_credit_clean_completion':sum(r['full_credit'] and not r['truncated'] and not r['reasoning_marker'] for r in rows)})
     result={'complete':True,'cases':len(done),'groups':groups,'manifest':manifest,'requests_sha256':sha(rows_path),
-            'scope':'Local RULER-derived four-example/task screen using NVIDIA metrics, not a full published leaderboard run. Report actual lengths; undersized tasks are not evidence at 1M. Short controls need not have identical synthetic golds; QA question IDs are shared. No inference about vLLM long-context accuracy.'}
+            'scope':'Local RULER-derived screen using NVIDIA metrics; per-group sample counts and any reused results are explicit, not a full published leaderboard run. Report actual lengths; undersized tasks are not evidence at 1M. Short controls need not have identical synthetic golds; QA question IDs are shared. No inference about vLLM long-context accuracy.'}
     (args.output/'results.json').write_text(json.dumps(result,indent=2)+'\n')
 
 

@@ -45,3 +45,27 @@ class ReasoningWrapperTests(unittest.TestCase):
         class Tokenizer:
             def apply_chat_template(self,*args,**kwargs):return '<|assistant|>'
         with self.assertRaises(ValueError):module('ruler_bank').render_prompt(Tokenizer(),'question','Answer:')
+
+class ReducedCohortTests(unittest.TestCase):
+    def test_selection_keeps_all_short_controls_and_fixed_first_long_indices(self):
+        bank={'protocol':{'samples_per_task':4},'cases':[{'id':f'{length}-{i}','length':length,'sample':i} for length in (32768,1048576) for i in range(4)]}
+        select=module('long_context').select_cases
+        selected=select(bank,[32768,1048576],2)
+        self.assertEqual([c['id'] for c in selected],['32768-0','32768-1','32768-2','32768-3','1048576-0','1048576-1'])
+        self.assertEqual(len(select(bank,[32768,1048576])),8)
+        with self.assertRaises(ValueError):select(bank,[32768,1048576],0)
+
+class ReuseProtocolTests(unittest.TestCase):
+    def test_invalid_reasoning_client_and_different_engine_cannot_be_reused(self):
+        import json
+        import tempfile
+        mod=module('long_context')
+        with tempfile.TemporaryDirectory() as folder:
+            source=Path(folder)
+            base={'bank_sha256':'bank','official_scorer_sha256':'scorer','image_id':'old','settings':{},'interface':'raw','minimum_free_MiB':1536}
+            (source/'manifest.json').write_text(json.dumps(dict(base,client_sha256='invalid-prefix-client')))
+            with self.assertRaisesRegex(ValueError,'Unqualified source client'):
+                mod.import_completed(source,source,[],base,source)
+            (source/'manifest.json').write_text(json.dumps(dict(base,client_sha256=mod.REUSE_CLIENT_SHA256)))
+            with self.assertRaisesRegex(ValueError,'image_id'):
+                mod.import_completed(source,source,[],dict(base,image_id='new-kernel-image'),source)

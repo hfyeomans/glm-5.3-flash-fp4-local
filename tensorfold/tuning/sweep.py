@@ -61,6 +61,8 @@ def main():
     p.add_argument('--quality', action='store_true')
     p.add_argument('--long-context-bank', type=Path)
     p.add_argument('--long-context-lengths', nargs='+', type=int)
+    p.add_argument('--long-context-samples', type=int)
+    p.add_argument('--long-context-reuse', type=Path)
     p.add_argument('--baseline-image', action='store_true')
     p.add_argument('--cache-check', action='store_true')
     p.add_argument('--cancel-check', action='store_true', help='Run the pinned image’s upstream prompt-cancellation/release fixture after timing')
@@ -74,6 +76,8 @@ def main():
     profiles = json.loads(args.profile_file.read_text())
     if bool(args.long_context_bank) != bool(args.long_context_lengths):
         p.error('Long-context bank and lengths must be supplied together')
+    if (args.long_context_samples is not None or args.long_context_reuse) and not args.long_context_bank:
+        p.error('Long-context sampling/reuse requires a bank')
     if args.minimum_free_mib < 0 or (args.minimum_free_mib and args.cache_check):
         p.error('Memory floor must be nonnegative and cannot be combined with cache checks')
     if args.context_stage_timeout < 1:
@@ -102,6 +106,10 @@ def main():
         protocol['long_context_bank_sha256'] = sha(args.long_context_bank / 'manifest.json')
         protocol['long_context_lengths'] = args.long_context_lengths
         protocol['long_context_client_sha256'] = sha(ROOT / 'quality/long_context.py')
+        if args.long_context_samples is not None:
+            protocol['long_context_samples'] = args.long_context_samples
+        if args.long_context_reuse:
+            protocol['long_context_reuse_sha256'] = sha(args.long_context_reuse / 'requests.jsonl')
     had_failure = False
     for number, profile in enumerate(args.profiles):
         folder = args.output / f'{number:02}-{profile}'
@@ -173,6 +181,10 @@ def main():
                     '--bank', str(args.long_context_bank), '--lengths', *map(str, args.long_context_lengths),
                     '--output', str(folder / 'long-context'), '--telemetry-file', str(folder / 'gpu.csv'),
                     '--minimum-free-mib', str(args.minimum_free_mib or 1536)]))
+                if args.long_context_samples is not None:
+                    commands[-1][1].extend(['--long-samples', str(args.long_context_samples)])
+                if args.long_context_reuse:
+                    commands[-1][1].extend(['--reuse-run', str(args.long_context_reuse)])
             for stage, command in commands:
                 print(f'{profile}: {stage}', flush=True)
                 with (folder / f'{stage}.log').open('w') as out:

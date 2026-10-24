@@ -778,8 +778,25 @@ responses and logs remain preserved.
 The corrected bank retains every task body/gold/seed/question selection, selects
 the Low header and explicitly closes the think prefix, adding two tokens per
 case. The client now validates actual prompt content and reports truncated or
-reasoning-marker responses separately from official substring scores. All 104
-cases are rerun separately. Recipe checks pass 54 tests. The earlier valid
+reasoning-marker responses separately from official substring scores. Corrected scoring began separately. Recipe checks pass 54 tests. The earlier valid
 256-case bakeoff, 512K qualification and prefill measurements are unaffected.
 [Failure record](../tensorfold/results/long-context-protocol-failure-v1.json) ·
 [Corrected bank](../tensorfold/results/long-context-bank-v2.json).
+
+
+## Reduced long-context cohort (user request, 2026-10-24)
+
+The user approved two fixed examples per long task instead of four after the
+corrected run had completed 71 valid responses. The full-plan client was stopped;
+its status records SIGTERM and is not presented as a completed full benchmark.
+All 52 shorter controls, including the one incorrect SQuAD answer, remain in the
+selected cohort. The first two long sample indices per task define 22 near-1M
+cases plus four undersized cases, independent of observed scores. Nine completed
+extra long cases are retained separately.
+
+Reuse preflight passed for 62 valid responses, leaving only 16 new scored requests.
+It checks the pinned corrected client, bank, image, settings, raw responses,
+prompt hashes, golds and memory floor. Invalid-prefix or different-engine results
+cannot be reused. Recipe checks pass 56 tests. The continued run uses the same
+immutable resident-scale image and `host-1m` profile; generation and grading are
+unchanged. [Reduction receipt](../tensorfold/results/long-context-reduction-v1.json).
