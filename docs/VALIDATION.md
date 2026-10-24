@@ -334,3 +334,41 @@ The workload semantic hash is
 `5c9cea16d0486aee749dd9543db76705f35e74f2e044233e70ee5e35b5151545`.
 CPU shell/syntax and lifecycle checks pass (34 tests, including the experimental
 image guard under development). GPU API checks passed before measured runs.
+
+## 2026-10-24 — native tuning gate evidence
+
+The local experimental image `glm53-fp4-tensorfold:sm120-tuning-v1` has image ID
+`sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee`;
+patch, source-tree and native/test binary hashes are recorded in
+`tensorfold/results/sm120-native-gates-v1.json`. The qualified image remains
+separate and is still the recipe default. Details and commands are in
+[tensorfold/tuning](../tensorfold/tuning/README.md).
+
+Completed pre-serve checks:
+
+- All screened expert prefill widths passed byte equality against the original
+  template instance on both GPUs, including repeated runs, valid partial tiles,
+  non-finite fixtures, output guards and unchanged inputs. Timing is isolated
+  synthetic screening, not an end-to-end speed claim.
+- The combined gate/up 8, down 16 tile image passed `info`, `glm-ref`, `quant-ref`,
+  `mxfp8`, `projection-f32` and selected real-checkpoint `glm-loader-gate` checks
+  on both GPUs. Each rank's loader gate reported 115 direct and 72 packed uploads,
+  three excluded entries and zero mismatches.
+- `zig build test-cuda-host` completed with exit code 0. Its deliberate negative
+  controls print failure/refusal messages; they are not failures of the command.
+- Split targets 192, 384 and 768 passed the quantized reference fixtures on GPU 0.
+  A separate tiled-BF16 probe checked eight matrix shapes and seven row counts
+  against independent FP64 dots for every column of the first three rows (or all
+  rows when fewer than three). All passed its bound; larger batches have sampled
+  FP64 coverage. Each larger policy had increased maximum absolute error in six
+  of 56 shape/row cells. Neither is a bit-preserving replacement or universally
+  numerically better. Per-cell evidence is in
+  `tensorfold/results/split-k-fp64-v1.json`.
+- Mapped-host BF16 embedding passed the selected real-checkpoint loader gate on
+  both GPUs. This establishes those upload checks, not yet full-model memory,
+  performance or context-capacity qualification.
+
+These are local SM120 checks. Full upstream kernel-contract registration, all
+supported architectures and release qualification have not been completed.
+The read-only ATC review and existing PR #1050 scope are recorded in the tuning
+contract; no upstream claim, issue, comment or PR was published.

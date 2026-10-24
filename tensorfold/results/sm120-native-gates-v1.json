@@ -1,0 +1,500 @@
+{
+  "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+  "source_tree": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+  "patch_sha256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+  "native_sha256": "236c25164923238842f10f374e27f014e6d216c65905d2536f14a7b675c47a25",
+  "gpu_test_sha256": "a0075563251804c40052729ecf9412d6987e998f8a269e7bb91b9500d7185b51",
+  "tile_gate_checks": [
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "info",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu0-info.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "6e0086f44fae14b14d7444127e544472b2acc5075f85ea28110a362b65201819"
+    },
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "glm-ref",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu0-glm-ref.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "6653b641a6ad4820c3473c2ac39f730bad61a4f4ad17de09fcdbacc077a220ba"
+    },
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "quant-ref",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu0-quant-ref.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "4d60d9f5551f9b960aeafc69e224e97a13662abeb596976c5bc952e1150fa945"
+    },
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "mxfp8",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu0-mxfp8.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "e42bf9fb66fa86cb1be3dac33e01e2e91185181b59eb4f01bdacd3376af7beb1"
+    },
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "projection-f32",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu0-projection-f32.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "eacd5e3e0b7920aefc309d74d3bda715dccff181dce582d4cd2e6375a6e726e8"
+    },
+    {
+      "device": "0",
+      "rank_geometry": 0,
+      "case": "glm-loader-gate",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu0-glm-loader-gate.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "ee8774712a6281a0f6fa3a8a196464e2f66fc218540bafca2308a1a57d806208"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "info",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu1-info.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "a883ab5a99ab06003aaf30faeeb320c8685618dd764bd54576c1d0fcf9831777"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "glm-ref",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu1-glm-ref.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "6653b641a6ad4820c3473c2ac39f730bad61a4f4ad17de09fcdbacc077a220ba"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "quant-ref",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu1-quant-ref.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "4d60d9f5551f9b960aeafc69e224e97a13662abeb596976c5bc952e1150fa945"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "mxfp8",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu1-mxfp8.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "e42bf9fb66fa86cb1be3dac33e01e2e91185181b59eb4f01bdacd3376af7beb1"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "projection-f32",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu1-projection-f32.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "eacd5e3e0b7920aefc309d74d3bda715dccff181dce582d4cd2e6375a6e726e8"
+    },
+    {
+      "device": "1",
+      "rank_geometry": 1,
+      "case": "glm-loader-gate",
+      "exit_code": 0,
+      "log": "logs/tensorfold/gpu-check-20261024T040036Z/gpu1-glm-loader-gate.log",
+      "decode_warps": "1",
+      "tuning": {
+        "TF_PATCH_SHA256": "4e1cf2a5666d6ddb1527bbf7192f785caa928614feb68ec2912608a95d8cfdef",
+        "TF_TUNED_TREE": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+        "TF_TUNE_PREFILL_UP": "8",
+        "TF_TUNE_PREFILL_DOWN": "16",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_TUNE_HOST_EMBED": "0"
+      },
+      "log_sha256": "8518ee856a32c2c512ebe20385b2bf183e9401615c927b4ead7dedf9e4fec199"
+    }
+  ],
+  "native_host_tests": {
+    "path": "logs/tuning/native-host-tests.log",
+    "sha256": "1a9ba0558cf22d3410681a9f072c6cabcc8e52d56257f36ce103fa34eac4d527",
+    "exit_code": 0,
+    "scope": "test-cuda-host; deliberate negative controls print FAIL, overall command exits zero"
+  },
+  "extra_gates": [
+    {
+      "test": "split-192-quant-ref-gpu0.log",
+      "exit_code": 0,
+      "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+      "log_sha256": "4d60d9f5551f9b960aeafc69e224e97a13662abeb596976c5bc952e1150fa945"
+    },
+    {
+      "test": "split-384-quant-ref-gpu0.log",
+      "exit_code": 0,
+      "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+      "log_sha256": "4d60d9f5551f9b960aeafc69e224e97a13662abeb596976c5bc952e1150fa945"
+    },
+    {
+      "test": "split-768-quant-ref-gpu0.log",
+      "exit_code": 0,
+      "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+      "log_sha256": "4d60d9f5551f9b960aeafc69e224e97a13662abeb596976c5bc952e1150fa945"
+    },
+    {
+      "test": "host-embed-loader-gpu0.log",
+      "exit_code": 0,
+      "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+      "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "log_sha256": "ee8774712a6281a0f6fa3a8a196464e2f66fc218540bafca2308a1a57d806208"
+    },
+    {
+      "test": "host-embed-loader-gpu1.log",
+      "exit_code": 0,
+      "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+      "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "log_sha256": "8518ee856a32c2c512ebe20385b2bf183e9401615c927b4ead7dedf9e4fec199"
+    }
+  ],
+  "tile_screen": {
+    "0": [
+      {
+        "op": "up",
+        "count": 1,
+        "median_ms": {
+          "1": 1.486018,
+          "2": 1.002906,
+          "4": 0.983177,
+          "8": 0.963174
+        },
+        "best_wn": 8
+      },
+      {
+        "op": "up",
+        "count": 8,
+        "median_ms": {
+          "1": 1.520947,
+          "2": 1.028814,
+          "4": 1.001813,
+          "8": 0.971639
+        },
+        "best_wn": 8
+      },
+      {
+        "op": "up",
+        "count": 16,
+        "median_ms": {
+          "1": 1.56672,
+          "2": 1.061171,
+          "4": 1.025535,
+          "8": 0.988501
+        },
+        "best_wn": 8
+      },
+      {
+        "op": "up",
+        "count": 32,
+        "median_ms": {
+          "1": 1.98912,
+          "2": 1.322428,
+          "4": 1.191765,
+          "8": 1.180467
+        },
+        "best_wn": 8
+      },
+      {
+        "op": "up",
+        "count": 64,
+        "median_ms": {
+          "1": 3.195346,
+          "2": 2.006595,
+          "4": 1.689349,
+          "8": 1.662191
+        },
+        "best_wn": 8
+      },
+      {
+        "op": "down",
+        "count": 1,
+        "median_ms": {
+          "1": 1.05059,
+          "2": 0.626483,
+          "16": 0.464247,
+          "8": 0.46435,
+          "4": 0.469947
+        },
+        "best_wn": 16
+      },
+      {
+        "op": "down",
+        "count": 8,
+        "median_ms": {
+          "1": 1.066551,
+          "2": 0.658773,
+          "16": 0.483191,
+          "8": 0.492544,
+          "4": 0.494285
+        },
+        "best_wn": 16
+      },
+      {
+        "op": "down",
+        "count": 16,
+        "median_ms": {
+          "1": 1.155584,
+          "2": 0.721545,
+          "16": 0.510566,
+          "8": 0.519475,
+          "4": 0.528998
+        },
+        "best_wn": 16
+      },
+      {
+        "op": "down",
+        "count": 32,
+        "median_ms": {
+          "1": 1.488096,
+          "2": 0.884668,
+          "16": 0.630955,
+          "8": 0.649932,
+          "4": 0.668571
+        },
+        "best_wn": 16
+      },
+      {
+        "op": "down",
+        "count": 64,
+        "median_ms": {
+          "1": 2.284749,
+          "2": 1.34185,
+          "16": 0.937745,
+          "8": 0.938974,
+          "4": 1.008229
+        },
+        "best_wn": 16
+      }
+    ],
+    "1": [
+      {
+        "op": "up",
+        "count": 1,
+        "median_ms": {
+          "1": 1.485312,
+          "2": 1.011849,
+          "4": 0.993689,
+          "8": 0.973757
+        },
+        "best_wn": 8
+      },
+      {
+        "op": "up",
+        "count": 8,
+        "median_ms": {
+          "1": 1.518013,
+          "2": 1.037824,
+          "4": 1.009801,
+          "8": 0.983859
+        },
+        "best_wn": 8
+      },
+      {
+        "op": "up",
+        "count": 16,
+        "median_ms": {
+          "1": 1.57655,
+          "2": 1.078033,
+          "4": 1.033455,
+          "8": 0.993826
+        },
+        "best_wn": 8
+      },
+      {
+        "op": "up",
+        "count": 32,
+        "median_ms": {
+          "1": 2.002841,
+          "2": 1.331781,
+          "4": 1.199275,
+          "8": 1.183573
+        },
+        "best_wn": 8
+      },
+      {
+        "op": "up",
+        "count": 64,
+        "median_ms": {
+          "1": 3.207919,
+          "2": 2.0025,
+          "4": 1.680179,
+          "8": 1.669188
+        },
+        "best_wn": 8
+      },
+      {
+        "op": "down",
+        "count": 1,
+        "median_ms": {
+          "1": 1.065813,
+          "2": 0.616141,
+          "16": 0.465954,
+          "8": 0.46848,
+          "4": 0.473394
+        },
+        "best_wn": 16
+      },
+      {
+        "op": "down",
+        "count": 8,
+        "median_ms": {
+          "1": 1.081481,
+          "2": 0.661299,
+          "16": 0.487014,
+          "8": 0.493193,
+          "4": 0.500941
+        },
+        "best_wn": 16
+      },
+      {
+        "op": "down",
+        "count": 16,
+        "median_ms": {
+          "1": 1.126878,
+          "2": 0.695876,
+          "16": 0.501897,
+          "8": 0.510601,
+          "4": 0.52265
+        },
+        "best_wn": 16
+      },
+      {
+        "op": "down",
+        "count": 32,
+        "median_ms": {
+          "1": 1.470362,
+          "2": 0.886919,
+          "16": 0.632593,
+          "8": 0.643958,
+          "4": 0.679218
+        },
+        "best_wn": 16
+      },
+      {
+        "op": "down",
+        "count": 64,
+        "median_ms": {
+          "1": 2.2912,
+          "2": 1.340211,
+          "16": 0.935561,
+          "8": 0.942797,
+          "4": 0.997443
+        },
+        "best_wn": 16
+      }
+    ]
+  },
+  "tile_logs": [
+    {
+      "path": "logs/tuning/tiles-gpu0.log",
+      "sha256": "bc86b28eaf0bb39d74eecd1d5f793727fcb21bef684b44cd742cf9b70b0c1772"
+    },
+    {
+      "path": "logs/tuning/tiles-gpu1.log",
+      "sha256": "3fe5e8f66ce2bacaa42ea25a30586b1ddb3a531e9db460c0d3474a50dfc137e4"
+    }
+  ],
+  "limits": "Local SM120 checks only; not complete upstream kernel-contract registration, all architectures or release qualification."
+}

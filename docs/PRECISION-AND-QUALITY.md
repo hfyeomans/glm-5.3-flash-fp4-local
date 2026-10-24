@@ -176,3 +176,28 @@ A score on 128 questions is an estimate, not the exact accuracy on all possible 
 Because both engines receive the same selected questions, paired comparisons are more informative than comparing two unrelated percentages. The report shows which items differ and a paired bootstrap interval for the score difference. Small differences with an interval spanning zero are inconclusive in this sample; that does not prove the engines are equivalent.
 
 Reasoning and final-answer text must be handled consistently. Our initial profile renders a shared prompt requesting low reasoning, allows 4,096 total output tokens, and grades only text after `</think>`, stripping surrounding whitespace. A missing closing marker is flagged and scored as an empty answer; truncations are reported rather than silently discarded. HTTP or tokenization errors abort a valid benchmark run instead of being presented as a quality score.
+
+## Prefill, decode and first-token time
+
+**Prefill throughput** measures processing of the input prompt. **Decode
+throughput** measures generation after the first output token. **TTFT** is the
+time until the client receives its first token/text; it also includes HTTP,
+queueing and other overhead. Server-specific prefill timers need not begin and
+end at identical boundaries. Report TTFT alongside them when comparing engines.
+For a short prompt, dividing a few tokens by fixed startup overhead can produce
+a low prefill rate that says little about long-prompt performance.
+
+Our shared speed test explicitly closes the thinking prefix and times the first
+nonempty raw text. This differs from timing the first visible answer after a
+variable reasoning phase. The [performance report](PERFORMANCE-BASELINE.md)
+keeps those definitions explicit. Its 256-token output cap is for throughput;
+it is not the output allowance used in the accuracy suite.
+
+**Teacher forcing** evaluates predictions at a fixed token history supplied by
+the test, rather than allowing each candidate to generate a different history.
+A small numerical change can select a different token when two logits are close;
+after that, freely generated text may diverge substantially even if later
+arithmetic is unchanged. Fixed-history comparisons therefore report target-token
+log probabilities, top-one changes and the original top-two margin. They help
+locate numerical effects, but agreement on sampled histories does not prove
+identical behavior for all prompts or replace task accuracy measurements.

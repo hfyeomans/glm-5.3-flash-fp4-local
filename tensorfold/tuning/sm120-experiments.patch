@@ -1,0 +1,256 @@
+diff --git a/zig/kernels/cuda/nvfp4_experts.cu b/zig/kernels/cuda/nvfp4_experts.cu
+index afbaac89..9a6ebcc6 100644
+--- a/zig/kernels/cuda/nvfp4_experts.cu
++++ b/zig/kernels/cuda/nvfp4_experts.cu
+@@ -335,3 +335,6 @@ template __global__ void nvfp4_expert_kernel<1, 1, 1>(const __nv_bfloat16* __res
+ TF_NVFP4_PROMPT(tf_nvfp4_prompt_relu2, 1, 1, 8)
+ TF_NVFP4_PROMPT(tf_nvfp4_prompt_swiglu, 2, 2, 4)
+ TF_NVFP4_PROMPT(tf_nvfp4_prompt_down, 1, 3, 8)
++
++TF_NVFP4_PROMPT(tf_nvfp4_prompt_swiglu_w8, 2, 2, 8)
++TF_NVFP4_PROMPT(tf_nvfp4_prompt_down_w16, 1, 3, 16)
+diff --git a/zig/src/cuda/experts.zig b/zig/src/cuda/experts.zig
+index a041df99..b64ce931 100644
+--- a/zig/src/cuda/experts.zig
++++ b/zig/src/cuda/experts.zig
+@@ -338,6 +338,7 @@ pub const Nvfp4Experts = struct {
+     resident: [4]usize, // blocks the grid may hold: per SM times SMs
+     prompt_fns: [3]Function, // relu^2 up, SwiGLU gate-up, bf16 sums down
+     warps: usize = 4,
++    selected_prompt_wn: [3]usize = prompt_wn,
+ 
+     pub const cols = 32; // output columns a block
+     pub const words = 144; // int32 a (32 columns, 32 inputs) block: 128 code words, then 16 of e4m3 scales
+@@ -391,7 +392,9 @@ pub const Nvfp4Experts = struct {
+             e.fns[i] = try mod.function(selected);
+             e.resident[i] = @max(1, try e.fns[i].occupancy(@intCast(warps * 32), 0)) * sms;
+         }
+-        for (symbols.prompt, &e.prompt_fns, [3]usize{ 1, 2, 1 }, prompt_wn) |name, *f, parts, wn| {
++        e.selected_prompt_wn = @import("sm120_tuning.zig").promptWidths();
++        const names = @import("sm120_tuning.zig").promptSymbols(e.selected_prompt_wn);
++        for (names, &e.prompt_fns, [3]usize{ 1, 2, 1 }, e.selected_prompt_wn) |name, *f, parts, wn| {
+             f.* = try mod.function(name);
+             try f.allowDynamicShared(promptSmem(parts, wn));
+         }
+@@ -445,7 +448,7 @@ pub const Nvfp4Experts = struct {
+         a.add(if (gate) l.limit else @as(f32, 0.0));
+         a.add(skip);
+         const fi: usize = if (!gate) 2 else if (l.relu2) 0 else 1;
+-        const cfg: launch_.Config = .{ .grid = .{ .x = @intCast(items * ((nb + prompt_wn[fi] - 1) / prompt_wn[fi])), .y = 1, .z = 1 }, .block = .{ .x = @intCast(prompt_wn[fi] * 32), .y = 1, .z = 1 }, .shared = promptSmem(parts, prompt_wn[fi]) };
++        const cfg: launch_.Config = .{ .grid = .{ .x = @intCast(items * ((nb + e.selected_prompt_wn[fi] - 1) / e.selected_prompt_wn[fi])), .y = 1, .z = 1 }, .block = .{ .x = @intCast(e.selected_prompt_wn[fi] * 32), .y = 1, .z = 1 }, .shared = promptSmem(parts, e.selected_prompt_wn[fi]) };
+         try launch_.launch(e.prompt_fns[fi], cfg, s, &a);
+     }
+ 
+diff --git a/zig/src/cuda/qmmf.zig b/zig/src/cuda/qmmf.zig
+index 166b0577..fa264692 100644
+--- a/zig/src/cuda/qmmf.zig
++++ b/zig/src/cuda/qmmf.zig
+@@ -43,7 +43,7 @@ pub fn splitK(n: usize, k: usize) u32 {
+     const tiles = (n + bn - 1) / bn;
+     const groups = k / group;
+     var sk: usize = 1;
+-    while (sk < 8 and tiles * sk < 192 and groups % (sk * 2) == 0 and groups / (sk * 2) >= 8) sk *= 2;
++    while (sk < 8 and tiles * sk < @import("sm120_tuning.zig").splitTarget() and groups % (sk * 2) == 0 and groups / (sk * 2) >= 8) sk *= 2;
+     return @intCast(sk);
+ }
+ 
+diff --git a/zig/src/cuda/root.zig b/zig/src/cuda/root.zig
+index 3d8265a2..8f00baae 100644
+--- a/zig/src/cuda/root.zig
++++ b/zig/src/cuda/root.zig
+@@ -1,5 +1,6 @@
+ //! TensorFold's CUDA runtime: the driver, cuBLASLt and NCCL through dlopen, our kernels and Triton's, no Python.
+ 
++pub const sm120_tuning = @import("sm120_tuning.zig");
+ pub const abi = @import("abi.zig");
+ pub const Driver = @import("driver.zig").Driver;
+ pub const copy_source = @import("copy_source.zig");
+diff --git a/zig/src/cuda/sm120_tuning.zig b/zig/src/cuda/sm120_tuning.zig
+new file mode 100644
+index 00000000..e673a00c
+--- /dev/null
++++ b/zig/src/cuda/sm120_tuning.zig
+@@ -0,0 +1,46 @@
++//! Explicit local tuning controls; unset values preserve the upstream schedule and placement.
++const std = @import("std");
++var split_cached: std.atomic.Value(usize) = .init(0);
++
++pub fn parse(raw: ?[]const u8, fallback: usize, allowed: []const usize) !usize {
++    const value = if (raw) |v| std.fmt.parseInt(usize, v, 10) catch return error.InvalidTuning else fallback;
++    if (std.mem.indexOfScalar(usize, allowed, value) == null) return error.InvalidTuning;
++    return value;
++}
++
++fn number(comptime name: [:0]const u8, fallback: usize, allowed: []const usize) usize {
++    const raw = if (std.c.getenv(name)) |v| std.mem.span(v) else null;
++    return parse(raw, fallback, allowed) catch std.debug.panic("Invalid setting: {s}", .{name});
++}
++
++pub fn splitTarget() usize {
++    const cached = split_cached.load(.monotonic);
++    if (cached != 0) return cached;
++    const value = number("TF_TUNE_SPLIT_TARGET", 192, &.{ 192, 384, 768 });
++    split_cached.store(value, .monotonic);
++    return value;
++}
++
++pub fn promptWidths() [3]usize {
++    return .{ 8, number("TF_TUNE_PREFILL_UP", 4, &.{ 4, 8 }), number("TF_TUNE_PREFILL_DOWN", 8, &.{ 8, 16 }) };
++}
++
++pub fn promptSymbols(widths: [3]usize) [3][:0]const u8 {
++    return .{ "tf_nvfp4_prompt_relu2", if (widths[1] == 8) "tf_nvfp4_prompt_swiglu_w8" else "tf_nvfp4_prompt_swiglu", if (widths[2] == 16) "tf_nvfp4_prompt_down_w16" else "tf_nvfp4_prompt_down" };
++}
++
++pub fn hostEmbed() bool {
++    return number("TF_TUNE_HOST_EMBED", 0, &.{ 0, 1 }) == 1;
++}
++
++pub fn fingerprint() [4]u32 {
++    const widths = promptWidths();
++    return .{ @intCast(widths[1]), @intCast(widths[2]), @intCast(splitTarget()), @intFromBool(hostEmbed()) };
++}
++
++test "local tuning values refuse unsupported schedules" {
++    try std.testing.expectEqual(@as(usize, 192), try parse(null, 192, &.{ 192, 384, 768 }));
++    try std.testing.expectEqual(@as(usize, 384), try parse("384", 192, &.{ 192, 384, 768 }));
++    try std.testing.expectError(error.InvalidTuning, parse("193", 192, &.{ 192, 384, 768 }));
++    try std.testing.expectError(error.InvalidTuning, parse("bad", 192, &.{ 192, 384, 768 }));
++}
+diff --git a/zig/src/families/glm/cuda_embed_host.zig b/zig/src/families/glm/cuda_embed_host.zig
+new file mode 100644
+index 00000000..020487ec
+--- /dev/null
++++ b/zig/src/families/glm/cuda_embed_host.zig
+@@ -0,0 +1,17 @@
++//! Own immutable BF16 embedding bytes in mapped host memory for the existing gather kernels.
++const std = @import("std");
++const cuda = @import("cuda");
++
++pub const Owned = struct { buffer: cuda.HostBuffer, ptr: u64 };
++
++pub fn put(loader: anytype) !Owned {
++    var buffer = try cuda.HostBuffer.allocMapped(loader.d, loader.host.items.len);
++    errdefer buffer.free();
++    @memcpy(buffer.bytes, loader.host.items);
++    const ptr = try buffer.device();
++    const name = try loader.gpa.dupe(u8, "embed");
++    errdefer loader.gpa.free(name);
++    try loader.w.named.append(loader.gpa, .{ .name = name, .ptr = ptr, .len = buffer.bytes.len });
++    loader.host.clearRetainingCapacity();
++    return .{ .buffer = buffer, .ptr = ptr };
++}
+diff --git a/zig/src/families/glm/cuda_mm.zig b/zig/src/families/glm/cuda_mm.zig
+index f6398a91..49f36609 100644
+--- a/zig/src/families/glm/cuda_mm.zig
++++ b/zig/src/families/glm/cuda_mm.zig
+@@ -66,8 +66,6 @@ pub const Kernels = struct {
+     }
+ };
+ 
+-const split_target = 192; // column tiles times K slices a launch aims at (the GB10's SMs, a few blocks each)
+-
+ fn bucket(i: usize) usize {
+     return @as(usize, 16) << @intCast(i);
+ }
+@@ -87,7 +85,7 @@ pub fn splitK(n: usize, k: usize) usize {
+     const tiles = (n + 63) / 64;
+     const steps = k / 64;
+     var sk: usize = 1;
+-    while (sk < 8 and tiles * sk < split_target and steps % (sk * 2) == 0 and steps / (sk * 2) >= 4) sk *= 2;
++    while (sk < 8 and tiles * sk < cuda.sm120_tuning.splitTarget() and steps % (sk * 2) == 0 and steps / (sk * 2) >= 4) sk *= 2;
+     return sk;
+ }
+ 
+diff --git a/zig/src/families/glm/cuda_q4.zig b/zig/src/families/glm/cuda_q4.zig
+index 382ca293..6e9c7251 100644
+--- a/zig/src/families/glm/cuda_q4.zig
++++ b/zig/src/families/glm/cuda_q4.zig
+@@ -52,7 +52,7 @@ pub fn splitK(n: usize, k: usize) usize {
+     const tiles = (n + 63) / 64;
+     const groups = k / 64;
+     var sk: usize = 1;
+-    while (sk < 8 and tiles * sk < 192 and groups % (sk * 2) == 0 and groups / (sk * 2) >= 8) sk *= 2;
++    while (sk < 8 and tiles * sk < cuda.sm120_tuning.splitTarget() and groups % (sk * 2) == 0 and groups / (sk * 2) >= 8) sk *= 2;
+     return sk;
+ }
+ 
+diff --git a/zig/src/families/glm/cuda_ranks.zig b/zig/src/families/glm/cuda_ranks.zig
+index 04bd50ad..7ee007da 100644
+--- a/zig/src/families/glm/cuda_ranks.zig
++++ b/zig/src/families/glm/cuda_ranks.zig
+@@ -99,7 +99,8 @@ pub fn environment(name: [:0]const u8) ?[]const u8 {
+ 
+ /// What every rank must agree on, as bytes the communicator carries.
+ pub const Fingerprint = extern struct {
+-    layout: u32 = 11, // this struct's version
++    layout: u32 = 12, // this struct's version
++    tuning: [4]u32 = .{ 4, 8, 192, 0 },
+     world: u32,
+     rank: u32,
+     kv8: u32 = 0,
+@@ -141,6 +142,7 @@ pub const Fingerprint = extern struct {
+         max_videos,
+         max_frames,
+         bits,
++        tuning,
+         capacity,
+         heat_high,
+         heat_low,
+@@ -161,6 +163,7 @@ pub const Fingerprint = extern struct {
+     ) Fingerprint {
+         const f: Fingerprint = .{
+             .kv8 = @intFromBool(s.kv8),
++            .tuning = cuda.sm120_tuning.fingerprint(),
+             .world = @intCast(world),
+             .rank = @intCast(rank),
+             .prompt_fixed_k = @intFromBool(s.prompt_fixed_k),
+@@ -205,6 +208,7 @@ pub fn mismatch(all: []const Fingerprint) ?Mismatch {
+             "max_videos",
+             "max_frames",
+             "bits",
++            "tuning",
+             "capacity",
+             "heat_high",
+             "heat_low",
+@@ -312,6 +316,7 @@ fn explain(f: Fingerprint.Field) []const u8 {
+         .max_videos => "the video count limit",
+         .max_frames => "the frame limit",
+         .bits => "TF_GLM_DENSE_BITS or TF_GLM_HEAD_BITS",
++        .tuning => "local prefill, split-K or embedding settings",
+         .capacity => "the sequence capacity (the context)",
+         .heat_high => "TF_HEAT_HIGH",
+         .heat_low => "TF_HEAT_LOW",
+diff --git a/zig/src/families/glm/cuda_weights.zig b/zig/src/families/glm/cuda_weights.zig
+index 46d8f8a5..48b6cd2b 100644
+--- a/zig/src/families/glm/cuda_weights.zig
++++ b/zig/src/families/glm/cuda_weights.zig
+@@ -43,6 +43,7 @@ pub const Weights = struct {
+     config: cfg.Config,
+     share: shard.Share,
+     embed: u64 = 0, // bf16 [vocab][dims]
++    host_embed: ?cuda.HostBuffer = null,
+     layers: []Layer = &.{},
+     norm: glue.Norm = .{ .bf16 = 0 },
+     head: projection.Proj = .{ .bf16 = 0 }, // [share.vocab][dims]: bf16, or MXFP8 for the lane
+@@ -53,6 +54,7 @@ pub const Weights = struct {
+ 
+     pub fn deinit(w: *Weights) void {
+         for (w.buffers.items) |*b| b.free();
++        if (w.host_embed) |*b| b.free();
+         for (w.named.items) |n| w.gpa.free(n.name);
+         w.buffers.deinit(w.gpa);
+         w.named.deinit(w.gpa);
+@@ -562,7 +564,11 @@ pub fn load(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, stream: c
+         ck.release(); // a rank reads about half the checkpoint: its pages would crowd the GPU's allocations out
+     }
+     try L.whole(try L.get("embed_tokens.weight", .{}), .bf16);
+-    w.embed = try L.put("embed", .{});
++    if (cuda.sm120_tuning.hostEmbed()) {
++        const mapped = try @import("cuda_embed_host.zig").put(&L);
++        w.host_embed = mapped.buffer;
++        w.embed = mapped.ptr;
++    } else w.embed = try L.put("embed", .{});
+     w.norm = try L.norm("norm.weight", .{}, "norm");
+     const vocab: formats.Part = .{ .rel = "lm_head", .rows = .{ share.vocab.lo, share.vocab.hi } };
+     w.head = try formats.cut(&L, &head_ck, &.{"lm_head"}, &.{vocab}, &.{ .bf16, .mxfp8 }, "head", .{});
