@@ -1,0 +1,395 @@
+{
+  "launch": {
+    "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+    "profile": "resident-512k",
+    "protocol": {
+      "profiles_sha256": "54c3f4195e4a2d7efced2b3917519528d8c708203e5b5d11efefd0fbade39875",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 2,
+      "mtp": "on",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-8192",
+        "prefill-32768"
+      ],
+      "teacher_histories_sha256": null,
+      "quality": false,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": true,
+      "context_targets": [
+        261888,
+        524032
+      ],
+      "context_stage_timeout_seconds": 7200
+    },
+    "settings": {
+      "TF_COMM_PORT": "29600",
+      "TF_CONTEXT": "524288",
+      "TF_MEMORY_RESERVE_GIB": "1.5",
+      "TF_NCCL_DEBUG": "WARN",
+      "TF_GLM_PROMPT_K": "one",
+      "TF_GLM_PREFILL_REDUCE": "split",
+      "NCCL_CUMEM_HOST_ENABLE": "0",
+      "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+      "TF_NVFP4_DECODE_WARPS": "1",
+      "TF_TUNE_SPLIT_TARGET": "192",
+      "TF_TUNE_SCALE_LAYOUT": "2",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "NCCL_CUMEM_ENABLE": "0",
+      "TF_HOST": "127.0.0.1",
+      "TF_PARALLEL": "1",
+      "TF_PROFILE": "0",
+      "TF_TUNE_PREFILL_UP": "4",
+      "TF_TUNE_PREFILL_DOWN": "8",
+      "TF_GLM_PDL": "1",
+      "TF_GLM_KDA_DECODE_WIDE": "1",
+      "TF_PORT": "8001",
+      "TF_PROMPT_CACHE_GIB": "0",
+      "TF_TUNE_HOST_EMBED": "1"
+    }
+  },
+  "context": {
+    "base_url": "http://127.0.0.1:8001",
+    "model": "glm-5.3-flash-fp4-local",
+    "checks": [
+      {
+        "target": 261888,
+        "tokenized_count": 261888,
+        "rows": 23064,
+        "needle_rows": [
+          2306,
+          11532,
+          20757
+        ],
+        "expected": [
+          "cedar-261888-41827",
+          "orchid-261888-63951",
+          "willow-261888-82746"
+        ],
+        "request_sha256": "09e3188a197f5c2ffece53440843c509ce60b82a1921d1c8d072970282827ca9",
+        "runs": [
+          {
+            "draft": true,
+            "seconds": 64.48008329397999,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-db997ea223a5692f29429a7962b454f9",
+              "object": "chat.completion",
+              "created": 1792862165,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-261888-41827\n2. orchid-261888-63951\n3. willow-261888-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 261888,
+                "completion_tokens": 38,
+                "total_tokens": 261926,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 131.8994908055806,
+                "seconds": 0.280516625,
+                "prefill_seconds": 64.189912681,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 64.196563452,
+                "sampling": "greedy",
+                "drafts": true,
+                "token_sha": "e86f3a3c3c3e",
+                "token_sha256": "e86f3a3c3c3eebe153e0f384b71d1f8b2bc82854e4b02f063dbd19a80f3ae9d6",
+                "min_rows": 3
+              },
+              "speculative": {
+                "rounds": 12,
+                "drafted": 33,
+                "accepted": 25,
+                "acceptance_rate": 0.7575757575757576,
+                "tokens_per_round": 3.1666666666666665
+              }
+            }
+          },
+          {
+            "draft": false,
+            "seconds": 66.2006870189798,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-a4e6d6c96d38f40924693b86bee23198",
+              "object": "chat.completion",
+              "created": 1792862230,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-261888-41827\n2. orchid-261888-63951\n3. willow-261888-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 261888,
+                "completion_tokens": 38,
+                "total_tokens": 261926,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 53.33771605982557,
+                "seconds": 0.693692995,
+                "prefill_seconds": 65.497050531,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 65.503948333,
+                "sampling": "greedy",
+                "drafts": false,
+                "token_sha": "e86f3a3c3c3e",
+                "token_sha256": "e86f3a3c3c3eebe153e0f384b71d1f8b2bc82854e4b02f063dbd19a80f3ae9d6",
+                "min_rows": 1
+              },
+              "speculative": {
+                "rounds": 37,
+                "drafted": 0,
+                "accepted": 0,
+                "acceptance_rate": 0.0,
+                "tokens_per_round": 1.027027027027027
+              }
+            }
+          }
+        ],
+        "draft_equals_plain": true
+      },
+      {
+        "target": 524032,
+        "tokenized_count": 524027,
+        "rows": 45195,
+        "needle_rows": [
+          4519,
+          22597,
+          40675
+        ],
+        "expected": [
+          "cedar-524032-41827",
+          "orchid-524032-63951",
+          "willow-524032-82746"
+        ],
+        "request_sha256": "6211a008f38a02c422d0290fbeded10ff8d4422f160f1d5d731f676351ccb286",
+        "runs": [
+          {
+            "draft": true,
+            "seconds": 144.7613764689886,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-b90a346dcff43f1860c20f59761b3d16",
+              "object": "chat.completion",
+              "created": 1792862298,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-524032-41827\n2. orchid-524032-63951\n3. willow-524032-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 524027,
+                "completion_tokens": 41,
+                "total_tokens": 524068,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 125.00383839911284,
+                "seconds": 0.319990174,
+                "prefill_seconds": 144.42410466,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 144.43647882,
+                "sampling": "greedy",
+                "drafts": true,
+                "token_sha": "9bc1e54ffd1e",
+                "token_sha256": "9bc1e54ffd1ec613690325e4cfb03814a9b0eb37af913c1e174bbe2e4f0436f0",
+                "min_rows": 3
+              },
+              "speculative": {
+                "rounds": 12,
+                "drafted": 33,
+                "accepted": 28,
+                "acceptance_rate": 0.8484848484848485,
+                "tokens_per_round": 3.4166666666666665
+              }
+            }
+          },
+          {
+            "draft": false,
+            "seconds": 144.89819632697618,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-bf229bf39dfb7ceec1d9fb23852efe0f",
+              "object": "chat.completion",
+              "created": 1792862443,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-524032-41827\n2. orchid-524032-63951\n3. willow-524032-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 524027,
+                "completion_tokens": 41,
+                "total_tokens": 524068,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 47.20905284385222,
+                "seconds": 0.847295118,
+                "prefill_seconds": 144.033336039,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 144.045920133,
+                "sampling": "greedy",
+                "drafts": false,
+                "token_sha": "9bc1e54ffd1e",
+                "token_sha256": "9bc1e54ffd1ec613690325e4cfb03814a9b0eb37af913c1e174bbe2e4f0436f0",
+                "min_rows": 1
+              },
+              "speculative": {
+                "rounds": 40,
+                "drafted": 0,
+                "accepted": 0,
+                "acceptance_rate": 0.0,
+                "tokens_per_round": 1.025
+              }
+            }
+          }
+        ],
+        "draft_equals_plain": true
+      }
+    ],
+    "scope": "Synthetic retrieval, not a general long-context accuracy qualification",
+    "passed": true
+  },
+  "complete": {
+    "profile": "resident-512k",
+    "protocol": {
+      "profiles_sha256": "54c3f4195e4a2d7efced2b3917519528d8c708203e5b5d11efefd0fbade39875",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 2,
+      "mtp": "on",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-8192",
+        "prefill-32768"
+      ],
+      "teacher_histories_sha256": null,
+      "quality": false,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": true,
+      "context_targets": [
+        261888,
+        524032
+      ],
+      "context_stage_timeout_seconds": 7200
+    },
+    "started_unix": 1792861959.4688284,
+    "token_hashes": {},
+    "repeat_and_mtp_identical": null,
+    "status": "pass",
+    "elapsed_seconds": 629.634993314743
+  },
+  "minimum_sampled_free_MiB": {
+    "0": 5443,
+    "1": 5596
+  },
+  "previous_mapped_512k_minimum_free_MiB": {
+    "0": 1547,
+    "1": 1700
+  },
+  "sampled_gain_MiB": {
+    "0": 3896,
+    "1": 3896
+  },
+  "logs": [
+    {
+      "path": "logs/csf-resident-v1/capacity-512k-v1/00-resident-512k/gpu.csv",
+      "sha256": "a1f0a1673ef3cf30182de6b8142b6636081c358ab8bf2fbce9e9fe760cc093f4"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-512k-v1/00-resident-512k/server.log",
+      "sha256": "f783409de9bb54f0c6d17ec024fad524fcc64afcfd385e6c531983bf5b035192"
+    },
+    {
+      "path": "logs/csf-resident-v1/capacity-512k-v1/00-resident-512k/context/report.json",
+      "sha256": "a51518ceccb8b2930b6d0a0189c9ce73d0e16ebcfd92e68e88eaf2e36dc15f63"
+    }
+  ],
+  "scope": "One slot, cache off, original checkpoint, 1.5 GiB reserve. One-second telemetry includes startup and requests. Comparison with the prior mapped-embedding image includes all runtime overhead, not just requested tensor payload savings."
+}

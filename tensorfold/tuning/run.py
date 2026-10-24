@@ -11,18 +11,19 @@ ROOT = HERE.parents[1]
 PROFILES = json.loads((HERE / 'profiles.json').read_text())
 
 
-def environment(name, baseline=False):
-    if name not in PROFILES['profiles']:
+def environment(name, baseline=False, profiles=None):
+    profiles = PROFILES if profiles is None else profiles
+    if name not in profiles['profiles']:
         raise ValueError('Unknown experiment profile')
     # Set all recipe defaults explicitly so ambient tuning values cannot leak between trials.
     sys.path.insert(0, str(ROOT / 'tensorfold/scripts'))
     import recipe
     env = dict(os.environ, **recipe.DEFAULTS)
-    env.update(PROFILES['common'])
-    env.update(PROFILES['profiles'][name])
+    env.update(profiles['common'])
+    env.update(profiles['profiles'][name])
     if not baseline:
-        env.update(TF_IMAGE=PROFILES['image'], TF_PATCH_SHA256=PROFILES['patch_sha256'],
-                   TF_TUNED_TREE=PROFILES['source_tree'])
+        env.update(TF_IMAGE=profiles['image'], TF_PATCH_SHA256=profiles['patch_sha256'],
+                   TF_TUNED_TREE=profiles['source_tree'])
     return env
 
 

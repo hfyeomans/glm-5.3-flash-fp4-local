@@ -1,0 +1,1505 @@
+diff --git a/zig/kernels/cuda/nvfp4_csf32.cuh b/zig/kernels/cuda/nvfp4_csf32.cuh
+new file mode 100644
+index 00000000..e6c4258b
+--- /dev/null
++++ b/zig/kernels/cuda/nvfp4_csf32.cuh
+@@ -0,0 +1,62 @@
++// Exact csf_32x2_v1 expansion into the native expert scale swizzle; no floating-point conversion.
++#pragma once
++struct TfCsf32 {
++  const uint8_t *bases, *codes;
++  const uint32_t* pages;
++  const uint16_t *offsets, *exceptions;
++};
++static_assert(sizeof(TfCsf32) == 40);
++
++extern "C" __global__ void __launch_bounds__(128)
++tf_nvfp4_csf32_expand(const TfCsf32* __restrict__ desc, uint4* __restrict__ out,
++                     const int* __restrict__ items, const int* __restrict__ counts,
++                     int NB, int KG, int parts, int experts, int prompt) {
++  const int which = blockIdx.y / parts, part = blockIdx.y % parts;
++  int e = which;
++  if (!prompt) {
++    if (which >= __ldg(counts)) return;
++    e = __ldg(items + which * 3);
++    // Native grouped plans put an expert's consecutive chunks next to one another.
++    if (which && __ldg(items + (which - 1) * 3) == e) return;
++  }
++  if (e < 0 || e >= experts) return;
++  const int q = blockIdx.x * blockDim.x + threadIdx.x;
++  if (q >= NB * KG * 4) return;
++  const int tile = q / 4, vec = q % 4, row_block = tile / KG, col_pair = tile % KG;
++  const TfCsf32 p = desc[e * parts + part];
++  const int block = ((row_block / 4) * (KG / 2) + col_pair / 2) * 8 + (col_pair % 2) * 4 + row_block % 4;
++  uint32_t words[4] = {0,0,0,0};
++#pragma unroll
++  for (int h = 0; h < 2; ++h) {
++#pragma unroll
++    for (int j = 0; j < 4; ++j) {
++#pragma unroll
++      for (int c = 0; c < 2; ++c) {
++        const int r = j * 8 + vec * 2 + c;
++        const uint8_t code = p.codes[(size_t)block * 32 + r];
++        const uint32_t value = uint32_t(p.bases[row_block * 32 + r]) + ((code >> (4*h)) & 15);
++        constexpr int bytes_per_word = 4;
++        const int b = (h * 4 + j) * 2 + c;
++        words[b / bytes_per_word] |= value << (8 * (b % bytes_per_word));
++      }
++    }
++  }
++  uint4 v = make_uint4(words[0],words[1],words[2],words[3]);
++  const int page = block / 256;
++  const uint32_t origin = p.pages[page] / 2;
++  const uint32_t lo = origin + p.offsets[block + page], hi = origin + p.offsets[block + page + 1];
++  for (uint32_t i = lo; i < hi; ++i) {
++    const uint16_t rec = p.exceptions[i];
++    const int r = (rec & 255) / 2, h = rec & 1;
++    if ((r % 8) / 2 != vec) continue;
++    const int b = (h * 4 + r / 8) * 2 + r % 2, shift = 8 * (b % 4);
++    const uint32_t mask = ~(255u << shift), value = uint32_t(rec >> 8) << shift;
++    switch (b / 4) {
++      case 0: v.x = (v.x & mask) | value; break;
++      case 1: v.y = (v.y & mask) | value; break;
++      case 2: v.z = (v.z & mask) | value; break;
++      default: v.w = (v.w & mask) | value;
++    }
++  }
++  out[((size_t)e * NB * KG + tile) * parts * 4 + part * 4 + vec] = v;
++}
+diff --git a/zig/kernels/cuda/nvfp4_experts.cu b/zig/kernels/cuda/nvfp4_experts.cu
+index 9a6ebcc6..39f808e8 100644
+--- a/zig/kernels/cuda/nvfp4_experts.cu
++++ b/zig/kernels/cuda/nvfp4_experts.cu
+@@ -37,14 +37,19 @@ struct Stage {
+   uint2 xa[2], xb[2];
+ };
+ 
+-template <int M>
++template <int M, bool SEPARATE = false>
+ __device__ __forceinline__ void load_stage(Stage<M>& st, const uint4* blk, int g, int lane, int t,
+-                                           const __nv_bfloat16* x0, const __nv_bfloat16* x1, bool v0, bool v1) {
++                                           const __nv_bfloat16* x0, const __nv_bfloat16* x1, bool v0, bool v1, const uint4* scales = nullptr) {
+   const uint4* b = blk + (size_t)g * (M * BLOCK4);
+ #pragma unroll
+   for (int m = 0; m < M; ++m) {
+-    st.w[m] = ld_nc(b + m * BLOCK4 + lane);
+-    st.s[m] = ld_nc(b + m * BLOCK4 + 32 + t);
++    if constexpr (SEPARATE) {
++      st.w[m] = ld_nc(blk + (size_t)(g * M + m) * 32 + lane);
++      st.s[m] = ld_nc(scales + (size_t)(g * M + m) * 4 + t);
++    } else {
++      st.w[m] = ld_nc(b + m * BLOCK4 + lane);
++      st.s[m] = ld_nc(b + m * BLOCK4 + 32 + t);
++    }
+   }
+   const uint2 zero = make_uint2(0u, 0u);
+   const int k0 = g * 32 + 4 * t;
+@@ -81,39 +86,41 @@ __device__ __forceinline__ void compute_stage(float (&acc)[M][1][NTW][4], const
+     }
+ }
+ 
+-template <int M>
++template <int M, bool SEPARATE = false>
+ __device__ __forceinline__ void k_loop(float (&acc)[M][1][NTW][4], const uint4* blk, int KG, int lane, int t,
+-                                       const __nv_bfloat16* x0, const __nv_bfloat16* x1, bool v0, bool v1) {
++                                       const __nv_bfloat16* x0, const __nv_bfloat16* x1, bool v0, bool v1, const uint4* scales = nullptr) {
+   constexpr int D = 2;
+   Stage<M> st[D];
+ #pragma unroll
+   for (int d = 0; d < D; ++d)
+-    if (d < KG) load_stage<M>(st[d], blk, d, lane, t, x0, x1, v0, v1);
++    if (d < KG) load_stage<M, SEPARATE>(st[d], blk, d, lane, t, x0, x1, v0, v1, scales);
+   for (int g0 = 0; g0 < KG; g0 += D) {
+ #pragma unroll
+     for (int d = 0; d < D; ++d) {
+       const int g = g0 + d;
+       if (g < KG) {
+         compute_stage<M>(acc, st[d], v1);
+-        if (g + D < KG) load_stage<M>(st[d], blk, g + D, lane, t, x0, x1, v0, v1);
++        if (g + D < KG) load_stage<M, SEPARATE>(st[d], blk, g + D, lane, t, x0, x1, v0, v1, scales);
+       }
+     }
+   }
+ }
+ 
+-template <int M, int EPI, int WARPS>
+-__global__ void __launch_bounds__(WARPS * 32)
+-    nvfp4_expert_kernel(const __nv_bfloat16* __restrict__ X, int x_stride, int slots, const uint4* __restrict__ W,
++template <int M, int EPI, int WARPS, bool SEPARATE>
++__device__ __forceinline__ void expert_body(const __nv_bfloat16* __restrict__ X, int x_stride, int slots, const uint4* __restrict__ W,
+                         const float* __restrict__ scale, int KG, int NB, const int* __restrict__ items,
+                         const int* __restrict__ counts, const int* __restrict__ members, void* __restrict__ out, int N,
+-                        float limit, int skip) {
++                        float limit, int skip, const uint4* scales) {
+   const int lane = threadIdx.x & 31, gq = lane >> 2, t = lane & 3;
+   const int units = __ldg(counts) * NB;
+   for (int unit = blockIdx.x * WARPS + (threadIdx.x >> 5); unit < units; unit += gridDim.x * WARPS) {
+     const int it = unit / NB, cb = unit - it * NB;
+     const int e = __ldg(items + 3 * it), first = __ldg(items + 3 * it + 1), cnt = __ldg(items + 3 * it + 2);
+     if (e == skip) continue;
+-    const uint4* blk = W + ((size_t)e * NB + cb) * (size_t)KG * (M * BLOCK4);
++    const size_t tile = ((size_t)e * NB + cb) * (size_t)KG * M;
++    const uint4* blk = W + tile * (SEPARATE ? 32 : BLOCK4);
++    const uint4* sb = nullptr;
++    if constexpr (SEPARATE) sb = scales + tile * 4;
+     for (int r0 = 0; r0 < cnt; r0 += 16) {
+       const bool v0 = r0 + gq < cnt, v1 = r0 + gq + 8 < cnt;
+       const int pr0 = v0 ? __ldg(members + first + r0 + gq) : 0;
+@@ -126,7 +133,7 @@ __global__ void __launch_bounds__(WARPS * 32)
+       for (int m = 0; m < M; ++m)
+ #pragma unroll
+         for (int j = 0; j < NTW; ++j) acc[m][0][j][0] = acc[m][0][j][1] = acc[m][0][j][2] = acc[m][0][j][3] = 0.f;
+-      k_loop<M>(acc, blk, KG, lane, t, x0, x1, v0, v1);
++      k_loop<M, SEPARATE>(acc, blk, KG, lane, t, x0, x1, v0, v1, sb);
+ #pragma unroll
+       for (int m = 0; m < M; ++m) {
+         const float g = __ldg(scale + e * M + m);
+@@ -140,6 +147,16 @@ __global__ void __launch_bounds__(WARPS * 32)
+   }
+ }
+ 
++template <int M, int EPI, int WARPS>
++__global__ void __launch_bounds__(WARPS * 32)
++    nvfp4_expert_kernel(const __nv_bfloat16* __restrict__ X, int x_stride, int slots, const uint4* __restrict__ W,
++                        const float* __restrict__ scale, int KG, int NB, const int* __restrict__ items,
++                        const int* __restrict__ counts, const int* __restrict__ members, void* __restrict__ out, int N,
++                        float limit, int skip) {
++  expert_body<M, EPI, WARPS, false>(X, x_stride, slots, W, scale, KG, NB, items, counts, members, out, N,
++                                    limit, skip, nullptr);
++}
++
+ // The prompt form's tile: 16 RT rows a warp, WM x WN warps (BM pairs of one item by WN 32-column blocks a CTA).
+ template <int M, int RT, int WM, int WN>
+ struct Prompt4 {
+@@ -167,11 +184,11 @@ __device__ __forceinline__ uint32_t mul2(uint32_t a, uint32_t b) {
+ }
+ 
+ // Prompt rows, 64 inputs a stage, one fp32 sum over K; NT (row tiles a warp) is constant so no branch splits mma.
+-template <int M, int EPI, int RT, int WM, int WN, int NT>
++template <int M, int EPI, int RT, int WM, int WN, int NT, bool SEPARATE = false>
+ __device__ __forceinline__ void prompt_tiles(const __nv_bfloat16* __restrict__ X, int x_stride, int slots,
+                                              const uint4* __restrict__ W, const float* __restrict__ scale, int KG,
+                                              int NB, const int* __restrict__ members, void* __restrict__ out, int N,
+-                                             float limit, int cbt, int e, int first, int cnt) {
++                                             float limit, int cbt, int e, int first, int cnt, const uint4* scales = nullptr) {
+   using P = Prompt4<M, RT, WM, WN>;
+   constexpr int STAGES = P::STAGES;
+   extern __shared__ uint4 sm[];
+@@ -199,7 +216,13 @@ __device__ __forceinline__ void prompt_tiles(const __nv_bfloat16* __restrict__ X
+     uint4* ws = xs + P::XU;
+     for (int q = tid; q < cbs * P::SG * P::WB; q += P::THREADS) {
+       const int j = q / (P::SG * P::WB), o = q - j * P::SG * P::WB;
+-      if (o < ng * P::WB) cp16(ws + q, wsrc + ((size_t)j * KG + g0) * P::WB + o);
++      if (o < ng * P::WB) {
++        if constexpr (SEPARATE) {
++          const size_t tile = (((size_t)e * NB + cbt * WN + j) * KG + g0) * M + o / BLOCK4;
++          const int v = o % BLOCK4;
++          cp16(ws + q, v < 32 ? W + tile * 32 + v : scales + tile * 4 + v - 32);
++        } else cp16(ws + q, wsrc + ((size_t)j * KG + g0) * P::WB + o);
++      }
+     }
+   };
+   constexpr int TA = NT > 0 ? NT : 1;  // array extent
+@@ -286,12 +309,12 @@ __device__ __forceinline__ void prompt_tiles(const __nv_bfloat16* __restrict__ X
+   }
+ }
+ 
+-template <int M, int EPI, int RT, int WM, int WN>
++template <int M, int EPI, int RT, int WM, int WN, bool SEPARATE = false>
+ __device__ __forceinline__ void prompt_body(const __nv_bfloat16* __restrict__ X, int x_stride, int slots,
+                                             const uint4* __restrict__ W, const float* __restrict__ scale, int KG,
+                                             int NB, const int* __restrict__ items, const int* __restrict__ counts,
+                                             const int* __restrict__ members, void* __restrict__ out, int N,
+-                                            float limit, int skip) {
++                                            float limit, int skip, const uint4* scales = nullptr) {
+   static_assert(RT == 4, "the dispatch below spells out 0 .. 4 row tiles");
+   const int nbt = (NB + WN - 1) / WN, it = blockIdx.x / nbt, cbt = blockIdx.x - it * nbt;
+   if (it >= __ldg(counts)) return;
+@@ -299,7 +322,7 @@ __device__ __forceinline__ void prompt_body(const __nv_bfloat16* __restrict__ X,
+   if (e == skip) return;  // an expert the family computes itself, left alone as the decode form does
+   const int nt = max(0, min(RT, (cnt - 16 * RT * ((threadIdx.x >> 5) / WN) + 15) >> 4));
+ #define TF_TILES(NT) \
+-  prompt_tiles<M, EPI, RT, WM, WN, NT>(X, x_stride, slots, W, scale, KG, NB, members, out, N, limit, cbt, e, first, cnt)
++  prompt_tiles<M, EPI, RT, WM, WN, NT, SEPARATE>(X, x_stride, slots, W, scale, KG, NB, members, out, N, limit, cbt, e, first, cnt, scales)
+   switch (nt) {
+     case 4: TF_TILES(4); break;
+     case 3: TF_TILES(3); break;
+@@ -338,3 +361,7 @@ TF_NVFP4_PROMPT(tf_nvfp4_prompt_down, 1, 3, 8)
+ 
+ TF_NVFP4_PROMPT(tf_nvfp4_prompt_swiglu_w8, 2, 2, 8)
+ TF_NVFP4_PROMPT(tf_nvfp4_prompt_down_w16, 1, 3, 16)
++
++#include "nvfp4_separate.cuh"
++
++#include "nvfp4_csf32.cuh"
+diff --git a/zig/kernels/cuda/nvfp4_separate.cuh b/zig/kernels/cuda/nvfp4_separate.cuh
+new file mode 100644
+index 00000000..7ef0bd21
+--- /dev/null
++++ b/zig/kernels/cuda/nvfp4_separate.cuh
+@@ -0,0 +1,33 @@
++// Separate code and expanded-scale storage; arithmetic stays in the common expert templates.
++#pragma once
++#define TF_SEPARATE_ARGS \
++ const __nv_bfloat16* __restrict__ X, int stride, int slots, const uint4* __restrict__ W, \
++ const float* __restrict__ global, int KG, int NB, const int* __restrict__ items, \
++ const int* __restrict__ counts, const int* __restrict__ members, void* __restrict__ out, \
++ int N, float limit, int skip, const uint4* __restrict__ scales
++#define TF_SEPARATE_PASS X, stride, slots, W, global, KG, NB, items, counts, members, out, N, limit, skip, scales
++#define TF_SEPARATE_DECODE(NAME, M, EPI, WARPS) \
++ extern "C" __global__ void __launch_bounds__(WARPS * 32) NAME(TF_SEPARATE_ARGS) { \
++   tf_nvfp4_experts::expert_body<M, EPI, WARPS, true>(TF_SEPARATE_PASS); \
++ }
++#define TF_SEPARATE_PROMPT(NAME, M, EPI, WN) \
++ extern "C" __global__ void __launch_bounds__(WN * 32) NAME(TF_SEPARATE_ARGS) { \
++   tf_nvfp4_experts::prompt_body<M, EPI, 4, 1, WN, true>(TF_SEPARATE_PASS); \
++ }
++TF_SEPARATE_DECODE(tf_nvfp4_separate_up_w1, 2, 2, 1)
++TF_SEPARATE_DECODE(tf_nvfp4_separate_down_f32_w1, 1, 0, 1)
++TF_SEPARATE_DECODE(tf_nvfp4_separate_down_bf16_w1, 1, 3, 1)
++TF_SEPARATE_DECODE(tf_nvfp4_separate_relu2_w1, 1, 1, 1)
++TF_SEPARATE_DECODE(tf_nvfp4_separate_up_w4, 2, 2, 4)
++TF_SEPARATE_DECODE(tf_nvfp4_separate_down_f32_w4, 1, 0, 4)
++TF_SEPARATE_DECODE(tf_nvfp4_separate_down_bf16_w4, 1, 3, 4)
++TF_SEPARATE_DECODE(tf_nvfp4_separate_relu2_w4, 1, 1, 4)
++TF_SEPARATE_PROMPT(tf_nvfp4_separate_prompt_relu2_w8, 1, 1, 8)
++TF_SEPARATE_PROMPT(tf_nvfp4_separate_prompt_up_w4, 2, 2, 4)
++TF_SEPARATE_PROMPT(tf_nvfp4_separate_prompt_up_w8, 2, 2, 8)
++TF_SEPARATE_PROMPT(tf_nvfp4_separate_prompt_down_w8, 1, 3, 8)
++TF_SEPARATE_PROMPT(tf_nvfp4_separate_prompt_down_w16, 1, 3, 16)
++#undef TF_SEPARATE_ARGS
++#undef TF_SEPARATE_PASS
++#undef TF_SEPARATE_DECODE
++#undef TF_SEPARATE_PROMPT
+diff --git a/zig/src/core/contract/nvfp4_separate_records.zig b/zig/src/core/contract/nvfp4_separate_records.zig
+new file mode 100644
+index 00000000..68417db4
+--- /dev/null
++++ b/zig/src/core/contract/nvfp4_separate_records.zig
+@@ -0,0 +1,18 @@
++//! Compiler-derived separate-storage expert launch records; CUDA 13.3, five SASS targets.
++const R = @import("registry.zig").CudaRecord;
++pub const cuda = [_]R{
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_csf32_expand", .symbol = "tf_nvfp4_csf32_expand", .image = "nvfp4_experts", .threads = 128 }, .usage = .{ .{ .regs = 31, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 40, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 40, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 40, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 40, .static = 0, .bound = 128, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_down_bf16_w1", .symbol = "tf_nvfp4_separate_down_bf16_w1", .image = "nvfp4_experts", .threads = 32, .dynamic = 0, .opt_in = true }, .usage = .{ .{ .regs = 81, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 83, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 91, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 32, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_down_bf16_w4", .symbol = "tf_nvfp4_separate_down_bf16_w4", .image = "nvfp4_experts", .threads = 128, .dynamic = 0, .opt_in = true }, .usage = .{ .{ .regs = 80, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 80, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 80, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 128, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_down_f32_w1", .symbol = "tf_nvfp4_separate_down_f32_w1", .image = "nvfp4_experts", .threads = 32, .dynamic = 0, .opt_in = true }, .usage = .{ .{ .regs = 81, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 83, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 91, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 32, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_down_f32_w4", .symbol = "tf_nvfp4_separate_down_f32_w4", .image = "nvfp4_experts", .threads = 128, .dynamic = 0, .opt_in = true }, .usage = .{ .{ .regs = 80, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 80, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 80, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 128, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_prompt_down_w16", .symbol = "tf_nvfp4_separate_prompt_down_w16", .image = "nvfp4_experts", .threads = 512, .dynamic = 53248, .opt_in = true }, .usage = .{ .{ .regs = 128, .static = 0, .bound = 512, .local = 0 }, .{ .regs = 128, .static = 0, .bound = 512, .local = 0 }, .{ .regs = 128, .static = 0, .bound = 512, .local = 0 }, .{ .regs = 127, .static = 0, .bound = 512, .local = 0 }, .{ .regs = 127, .static = 0, .bound = 512, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_prompt_down_w8", .symbol = "tf_nvfp4_separate_prompt_down_w8", .image = "nvfp4_experts", .threads = 256, .dynamic = 34816, .opt_in = true }, .usage = .{ .{ .regs = 154, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 154, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 154, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 128, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 128, .static = 0, .bound = 256, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_prompt_relu2_w8", .symbol = "tf_nvfp4_separate_prompt_relu2_w8", .image = "nvfp4_experts", .threads = 256, .dynamic = 34816, .opt_in = true }, .usage = .{ .{ .regs = 154, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 154, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 154, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 128, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 128, .static = 0, .bound = 256, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_prompt_up_w4", .symbol = "tf_nvfp4_separate_prompt_up_w4", .image = "nvfp4_experts", .threads = 128, .dynamic = 34816, .opt_in = true }, .usage = .{ .{ .regs = 251, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 251, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 251, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 254, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 254, .static = 0, .bound = 128, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_prompt_up_w8", .symbol = "tf_nvfp4_separate_prompt_up_w8", .image = "nvfp4_experts", .threads = 256, .dynamic = 53248, .opt_in = true }, .usage = .{ .{ .regs = 246, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 246, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 246, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 252, .static = 0, .bound = 256, .local = 0 }, .{ .regs = 252, .static = 0, .bound = 256, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_relu2_w1", .symbol = "tf_nvfp4_separate_relu2_w1", .image = "nvfp4_experts", .threads = 32, .dynamic = 0, .opt_in = true }, .usage = .{ .{ .regs = 81, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 83, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 91, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 32, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_relu2_w4", .symbol = "tf_nvfp4_separate_relu2_w4", .image = "nvfp4_experts", .threads = 128, .dynamic = 0, .opt_in = true }, .usage = .{ .{ .regs = 80, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 80, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 80, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 94, .static = 0, .bound = 128, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_up_w1", .symbol = "tf_nvfp4_separate_up_w1", .image = "nvfp4_experts", .threads = 32, .dynamic = 0, .opt_in = true }, .usage = .{ .{ .regs = 118, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 118, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 122, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 126, .static = 0, .bound = 32, .local = 0 }, .{ .regs = 126, .static = 0, .bound = 32, .local = 0 } } },
++    .{ .launch = .{ .name = "nvfp4_experts tf_nvfp4_separate_up_w4", .symbol = "tf_nvfp4_separate_up_w4", .image = "nvfp4_experts", .threads = 128, .dynamic = 0, .opt_in = true }, .usage = .{ .{ .regs = 118, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 118, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 120, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 126, .static = 0, .bound = 128, .local = 0 }, .{ .regs = 126, .static = 0, .bound = 128, .local = 0 } } },
++};
+diff --git a/zig/src/core/contract/registry.zig b/zig/src/core/contract/registry.zig
+index faa99bb0..d3b09dac 100644
+--- a/zig/src/core/contract/registry.zig
++++ b/zig/src/core/contract/registry.zig
+@@ -17,7 +17,7 @@ const qmmf_f32_symbol = "_ZN7tf_qmmf11qmmf_kernelILi0ELi{d}ELi64ELi1ELi4ELi4ELb1
+ const vision80_symbol = "_ZN20tf_prefill_attention13vision_kernelILi80ELi8EEEvPK13__nv_bfloat16PS1_iif";
+ const full72_symbol = "_ZN20tf_prefill_attention11full_kernelILi72ELi8ELi8EEEvPK13__nv_bfloat16PS1_iif";
+ /// CUDA kernels as launched; tf-cuda-test kernel-contract-limits re-derives the usage records.
+-pub const cuda = @import("flashnext_cuda_records.zig").cuda ++ [_]CudaRecord{
++pub const cuda = @import("nvfp4_separate_records.zig").cuda ++ @import("flashnext_cuda_records.zig").cuda ++ [_]CudaRecord{
+     .{ .launch = .{ .name = "embed_rows tf_embed_rows_bf16_copies", .symbol = "tf_embed_rows_bf16_copies", .image = "embed_rows", .threads = 256 }, .usage = .{ .{ .regs = 32, .static = 0, .bound = 256 }, .{ .regs = 40, .static = 0, .bound = 256 }, .{ .regs = 40, .static = 0, .bound = 256 }, .{ .regs = 40, .static = 0, .bound = 256 }, .{ .regs = 40, .static = 0, .bound = 256 } } },
+     .{ .launch = .{ .name = "norms tf_rms_rows_sums", .symbol = "tf_rms_rows_sums", .image = "norms", .threads = 1024 }, .usage = .{ .{ .regs = 31, .static = 132, .bound = 1024 }, .{ .regs = 37, .static = 132, .bound = 1024 }, .{ .regs = 37, .static = 132, .bound = 1024 }, .{ .regs = 34, .static = 132, .bound = 1024 }, .{ .regs = 34, .static = 132, .bound = 1024 } } },
+     .{ .launch = .{ .name = "route_rows tf_route_logits", .symbol = "tf_route_logits", .image = "route_rows", .threads = 128, .dynamic = 26112 }, .usage = .{ .{ .regs = 32, .static = 0, .bound = 128 }, .{ .regs = 39, .static = 0, .bound = 128 }, .{ .regs = 39, .static = 0, .bound = 128 }, .{ .regs = 35, .static = 0, .bound = 128 }, .{ .regs = 34, .static = 0, .bound = 128 } } },
+diff --git a/zig/src/core/nvfp4_csf32_slice.zig b/zig/src/core/nvfp4_csf32_slice.zig
+new file mode 100644
+index 00000000..38676a24
+--- /dev/null
++++ b/zig/src/core/nvfp4_csf32_slice.zig
+@@ -0,0 +1,94 @@
++//! Lossless aligned TP rectangles: retain row bases, nibbles and exceptions, rebuilding compact page indexes.
++const std = @import("std");
++const codec = @import("nvfp4_csf32.zig");
++
++fn u16at(b: []const u8, at: usize) usize {
++    return std.mem.readInt(u16, b[at * 2 ..][0..2], .little);
++}
++fn u32at(b: []const u8, at: usize) usize {
++    return std.mem.readInt(u32, b[at * 4 ..][0..4], .little);
++}
++fn w16(b: []u8, at: usize, v: usize) !void {
++    const n = std.math.cast(u16, v) orelse return error.CsfShape;
++    std.mem.writeInt(u16, b[at * 2 ..][0..2], n, .little);
++}
++fn w32(b: []u8, at: usize, v: usize) !void {
++    const n = std.math.cast(u32, v) orelse return error.CsfShape;
++    std.mem.writeInt(u32, b[at * 4 ..][0..4], n, .little);
++}
++
++/// Runtime geometry is deliberately narrower than the general codec: complete 128-row by 4-column tiles.
++pub fn slice(a: std.mem.Allocator, p: codec.Parts, rows: usize, cols: usize, rr: [2]usize, cc: [2]usize) !codec.Encoded {
++    if (rows == 0 or cols == 0 or rows % 128 != 0 or cols % 4 != 0 or rr[0] >= rr[1] or cc[0] >= cc[1] or
++        rr[1] > rows or cc[1] > cols or rr[0] % 128 != 0 or rr[1] % 128 != 0 or cc[0] % 4 != 0 or cc[1] % 4 != 0)
++        return error.CsfShape;
++    const extent = std.math.mul(usize, rows, cols) catch return error.CsfShape;
++    const decoded = try a.alloc(u8, extent);
++    defer a.free(decoded);
++    try codec.decode(p, rows, cols, decoded);
++    const nr = rr[1] - rr[0];
++    const nc = cc[1] - cc[0];
++    const blocks = nr / 32 * (nc / 2);
++    const pages = (blocks + 255) / 256;
++    const bases = try a.dupe(u8, p.bases[rr[0]..rr[1]]);
++    errdefer a.free(bases);
++    const codes = try a.alloc(u8, nr * nc / 2);
++    errdefer a.free(codes);
++    const page_bases = try a.alloc(u8, pages * 4);
++    errdefer a.free(page_bases);
++    const offsets = try a.alloc(u8, 2 * (blocks + pages));
++    errdefer a.free(offsets);
++    var exceptions: std.ArrayList(u8) = .empty;
++    errdefer exceptions.deinit(a);
++    var origin: usize = 0;
++    for (0..blocks) |b| {
++        const tile = b / 8;
++        const row = rr[0] + tile / (nc / 4) * 128 + (b % 4) * 32;
++        const col = cc[0] + tile % (nc / 4) * 4 + (b % 8 / 4) * 2;
++        const src = ((row / 128) * (cols / 4) + col / 4) * 8 + (col % 4 / 2) * 4 + (row % 128 / 32);
++        @memcpy(codes[b * 32 ..][0..32], p.codes[src * 32 ..][0..32]);
++        if (b % 256 == 0) {
++            origin = exceptions.items.len;
++            try w32(page_bases, b / 256, origin);
++            try w16(offsets, b + b / 256, 0);
++        }
++        const page = src / 256;
++        const lo = u32at(p.page_bases, page) + 2 * u16at(p.offsets, src + page);
++        const hi = u32at(p.page_bases, page) + 2 * u16at(p.offsets, src + page + 1);
++        try exceptions.appendSlice(a, p.exceptions[lo..hi]);
++        try w16(offsets, b + b / 256 + 1, (exceptions.items.len - origin) / 2);
++    }
++    return .{ .bases = bases, .codes = codes, .page_bases = page_bases, .offsets = offsets, .exceptions = try exceptions.toOwnedSlice(a) };
++}
++
++test "row and column cuts preserve every byte, retain original bases and regroup pages" {
++    const a = std.testing.allocator;
++    const rows = 256;
++    const cols = 128;
++    var values: [rows * cols]u8 = undefined;
++    for (&values, 0..) |*v, i| v.* = if (i % 17 == 0) @truncate(i * 13) else @intCast(48 + i % 16);
++    const original = try codec.encode(a, &values, rows, cols);
++    defer original.deinit(a);
++    for ([_][4]usize{ .{ 0, 128, 0, 128 }, .{ 128, 256, 0, 128 }, .{ 0, 256, 0, 64 }, .{ 0, 256, 64, 128 }, .{ 128, 256, 4, 12 } }) |cut| {
++        const r = try slice(a, original.parts(), rows, cols, .{ cut[0], cut[1] }, .{ cut[2], cut[3] });
++        defer r.deinit(a);
++        const nr = cut[1] - cut[0];
++        const nc = cut[3] - cut[2];
++        const got = try a.alloc(u8, nr * nc);
++        defer a.free(got);
++        try codec.decode(r.parts(), nr, nc, got);
++        try std.testing.expectEqualSlices(u8, original.bases[cut[0]..cut[1]], r.bases);
++        for (0..nr) |row| try std.testing.expectEqualSlices(u8, values[(row + cut[0]) * cols + cut[2] ..][0..nc], got[row * nc ..][0..nc]);
++    }
++}
++
++test "malformed input and unaligned geometry are refused before producing a slice" {
++    const a = std.testing.allocator;
++    var values: [128 * 64]u8 = @splat(0x38);
++    const p = try codec.encode(a, &values, 128, 64);
++    defer p.deinit(a);
++    try std.testing.expectError(error.CsfShape, slice(a, p.parts(), 128, 64, .{ 0, 32 }, .{ 0, 64 }));
++    try std.testing.expectError(error.CsfShape, slice(a, p.parts(), 128, 64, .{ 0, 128 }, .{ 2, 64 }));
++    p.bases[0] = 241;
++    try std.testing.expectError(error.CsfBase, slice(a, p.parts(), 128, 64, .{ 0, 128 }, .{ 0, 32 }));
++}
+diff --git a/zig/src/core/root.zig b/zig/src/core/root.zig
+index 9481f2fe..3a2b4aad 100644
+--- a/zig/src/core/root.zig
++++ b/zig/src/core/root.zig
+@@ -36,6 +36,7 @@ pub const embed_ref = @import("embed_ref.zig");
+ /// The kernel contract every GPU kernel's test registers with (zig/tests/contract, tf-cuda-test kernel-contract).
+ pub const contract = @import("contract.zig");
+ pub const nvfp4 = @import("nvfp4.zig");
++pub const nvfp4_csf32_slice = @import("nvfp4_csf32_slice.zig");
+ pub const nvfp4_csf32 = @import("nvfp4_csf32.zig");
+ pub const modelopt = @import("modelopt.zig");
+ /// Pictures as 0.6.6 loaded them: PNG, JPEG through the pinned libjpeg-turbo, orientation, the shared bicubic resizes.
+@@ -96,6 +97,7 @@ test {
+     _ = proposal_rows;
+     _ = nvfp4;
+     _ = nvfp4_csf32;
++    _ = nvfp4_csf32_slice;
+     _ = modelopt;
+     _ = picture;
+     _ = qwen_vl;
+diff --git a/zig/src/cuda/experts.zig b/zig/src/cuda/experts.zig
+index b64ce931..493f59cf 100644
+--- a/zig/src/cuda/experts.zig
++++ b/zig/src/cuda/experts.zig
+@@ -23,6 +23,10 @@ pub const Layer = struct {
+     exl3: ?@import("exl3_experts.zig").Layer = null,
+     up: u64, // affine4 [E][NI/32][D/64][288] int32; fp8g [E][NI/32][D/32][2][32][2][4]; nvfp4 [E][NI/32][D/32][2][144]; iq2xxs [E][NI/16][D/256][1056] bytes (ggml.zig)
+     down: u64, // affine4 [E][D/32][NI/64][288]; fp8g [E][D/32][NI/32][1][32][2][4]; nvfp4 [E][D/32][NI/32][1][144]; iq2xxs [E][D/16][NI/256][1056]
++    up_csf: u64 = 0, // compressed descriptors, zero for persistent expanded scales
++    down_csf: u64 = 0,
++    up_blocks: u64 = 0, // separate native-swizzled E4M3 scale bytes; zero selects the interleaved layout
++    down_blocks: u64 = 0,
+     up_scale: u64 = 0, // fp8g [E][2][NI/128][D/128] fp32; nvfp4 [E][2] global scales; affine4's are in the blocks
+     down_scale: u64 = 0, // fp8g [E][1][D/128][NI/128]; nvfp4 [E][1]
+     width: usize, // NI
+@@ -333,6 +337,7 @@ pub const Fp8Experts = struct {
+ 
+ /// NVFP4 experts (nvfp4_experts.cu): decode rows 16 pairs at a time; prompt rows staged, 64 pairs a CTA.
+ pub const Nvfp4Experts = struct {
++    separate: @import("nvfp4_separate.zig").Kernels = undefined,
+     mod: Module,
+     fns: [4]Function, // by Epi, then relu^2 up
+     resident: [4]usize, // blocks the grid may hold: per SM times SMs
+@@ -355,18 +360,9 @@ pub const Nvfp4Experts = struct {
+     pub const prompt_wn = [3]usize{ 8, 4, 8 };
+ 
+     /// Prompt4<M, 4, 1, WN>'s dynamic shared bytes: stages of 64 rows' 64 inputs, then WN x 2 blocks of `parts`.
+-    pub fn promptSmem(parts: usize, wn: usize) u32 {
+-        const stage: u32 = @intCast((64 * 8 + wn * 2 * parts * 36) * 16);
+-        const stages: u32 = if (stage * 4 <= 49152) 4 else if (stage * 3 <= 49152) 3 else 2;
+-        return stages * stage;
+-    }
++    pub const promptSmem = @import("nvfp4_separate.zig").promptSmem;
+ 
+-    pub fn decodeWarps(value: ?[]const u8) !usize {
+-        const v = value orelse return 4;
+-        if (std.mem.eql(u8, v, "1")) return 1;
+-        if (std.mem.eql(u8, v, "4")) return 4;
+-        return error.BadExpertWarps;
+-    }
++    pub const decodeWarps = @import("nvfp4_separate.zig").decodeWarps;
+ 
+     pub fn load(d: *const Driver, sms: usize) !Nvfp4Experts {
+         const value = if (std.c.getenv("TF_NVFP4_DECODE_WARPS")) |v| std.mem.span(v) else null;
+@@ -398,6 +394,7 @@ pub const Nvfp4Experts = struct {
+             f.* = try mod.function(name);
+             try f.allowDynamicShared(promptSmem(parts, wn));
+         }
++        e.separate = try @import("nvfp4_separate.zig").Kernels.load(mod, sms, warps, e.selected_prompt_wn);
+         return e;
+     }
+ 
+@@ -411,7 +408,8 @@ pub const Nvfp4Experts = struct {
+         const kg = (if (gate) l.dims else l.width) / 32;
+         const nb = (if (gate) l.width else l.dims) / cols;
+         const ei: usize = if (gate and l.relu2) 3 else @backingInt(epi);
+-        const grid = @min((items * nb + e.warps - 1) / e.warps, e.resident[ei]);
++        const blocks = if (gate) l.up_blocks else l.down_blocks;
++        const grid = @min((items * nb + e.warps - 1) / e.warps, if (blocks != 0) e.separate.resident[ei] else e.resident[ei]);
+         if (grid < 1) return;
+         var a: launch_.Args = .{};
+         a.add(in.x);
+@@ -425,7 +423,10 @@ pub const Nvfp4Experts = struct {
+         a.add(@as(i32, @intCast(if (gate) l.width else l.dims)));
+         a.add(if (gate) l.limit else @as(f32, 0.0));
+         a.add(skip);
+-        try launch_.launch(e.fns[ei], .{ .grid = .{ .x = @intCast(grid), .y = 1, .z = 1 }, .block = .{ .x = @intCast(e.warps * 32), .y = 1, .z = 1 } }, s, &a);
++        const csf = if (gate) l.up_csf else l.down_csf;
++        if (csf != 0) try @import("nvfp4_csf32.zig").expand(e.separate.expand, s, csf, blocks, p, if (gate) l.width else l.dims, if (gate) l.dims else l.width, if (gate and !l.relu2) 2 else 1, l.experts, items, false);
++        if (blocks != 0) a.add(blocks);
++        try launch_.launch(if (blocks != 0) e.separate.decode[ei] else e.fns[ei], .{ .grid = .{ .x = @intCast(grid), .y = 1, .z = 1 }, .block = .{ .x = @intCast(e.warps * 32), .y = 1, .z = 1 } }, s, &a);
+     }
+ 
+     /// Prompt rows on a plan of at most `items` items of 64 pairs: up (relu^2 or SwiGLU by the layer), bf16 sums down.
+@@ -449,7 +450,11 @@ pub const Nvfp4Experts = struct {
+         a.add(skip);
+         const fi: usize = if (!gate) 2 else if (l.relu2) 0 else 1;
+         const cfg: launch_.Config = .{ .grid = .{ .x = @intCast(items * ((nb + e.selected_prompt_wn[fi] - 1) / e.selected_prompt_wn[fi])), .y = 1, .z = 1 }, .block = .{ .x = @intCast(e.selected_prompt_wn[fi] * 32), .y = 1, .z = 1 }, .shared = promptSmem(parts, e.selected_prompt_wn[fi]) };
+-        try launch_.launch(e.prompt_fns[fi], cfg, s, &a);
++        const blocks = if (gate) l.up_blocks else l.down_blocks;
++        const csf = if (gate) l.up_csf else l.down_csf;
++        if (csf != 0) try @import("nvfp4_csf32.zig").expand(e.separate.expand, s, csf, blocks, p, if (gate) l.width else l.dims, if (gate) l.dims else l.width, parts, l.experts, items, true);
++        if (blocks != 0) a.add(blocks);
++        try launch_.launch(if (blocks != 0) e.separate.prompt[fi] else e.prompt_fns[fi], cfg, s, &a);
+     }
+ 
+     /// Bytes of `count` experts' blocks for n outputs from k inputs: [E][n/32][k/32][parts][144] int32.
+diff --git a/zig/src/cuda/nvfp4_csf32.zig b/zig/src/cuda/nvfp4_csf32.zig
+new file mode 100644
+index 00000000..6fe1a321
+--- /dev/null
++++ b/zig/src/cuda/nvfp4_csf32.zig
+@@ -0,0 +1,30 @@
++//! Typed compressed descriptors and ordered expansion into caller-owned native scale scratch.
++const std = @import("std");
++const Function = @import("module.zig").Function;
++const Stream = @import("stream.zig").Stream;
++const launch = @import("launch.zig");
++const Plan = @import("grouped.zig").Plan;
++
++pub const Descriptor = extern struct {
++    bases: u64,
++    codes: u64,
++    pages: u64,
++    offsets: u64,
++    exceptions: u64,
++};
++
++pub fn expand(f: Function, stream: Stream, descriptors: u64, out: u64, plan: Plan, n: usize, k: usize, parts: usize, experts: usize, items: usize, prompt: bool) !void {
++    if (descriptors == 0 or out == 0 or n == 0 or k == 0 or n % 128 != 0 or k % 64 != 0 or
++        (parts != 1 and parts != 2) or experts == 0) return error.CsfGeometry;
++    const y = (if (prompt) experts else items) * parts;
++    if (y == 0) return;
++    var args: launch.Args = .{};
++    for ([_]u64{ descriptors, out, plan.items, plan.counts }) |p| args.add(p);
++    for ([_]usize{ n / 32, k / 32, parts, experts, @intFromBool(prompt) }) |v| args.add(@as(i32, @intCast(v)));
++    try launch.launch(f, .{ .grid = .{ .x = @intCast((n / 32 * (k / 32) * 4 + 127) / 128), .y = @intCast(y) }, .block = .{ .x = 128 } }, stream, &args);
++}
++
++test "descriptor ABI is five 64-bit addresses" {
++    try std.testing.expectEqual(@as(usize, 40), @sizeOf(Descriptor));
++    try std.testing.expectEqual(@as(usize, 32), @offsetOf(Descriptor, "exceptions"));
++}
+diff --git a/zig/src/cuda/nvfp4_separate.zig b/zig/src/cuda/nvfp4_separate.zig
+new file mode 100644
+index 00000000..812482e0
+--- /dev/null
++++ b/zig/src/cuda/nvfp4_separate.zig
+@@ -0,0 +1,81 @@
++//! Code/scale storage separation with the original native tile swizzle and arithmetic.
++const std = @import("std");
++const Module = @import("module.zig").Module;
++const Function = @import("module.zig").Function;
++
++pub const Kernels = struct {
++    expand: Function,
++    decode: [4]Function,
++    resident: [4]usize,
++    prompt: [3]Function,
++
++    pub fn load(mod: Module, sms: usize, warps: usize, widths: [3]usize) !Kernels {
++        var out: Kernels = undefined;
++        out.expand = try mod.function("tf_nvfp4_csf32_expand");
++        var buf: [128]u8 = undefined;
++        for ([_][]const u8{ "up", "down_f32", "down_bf16", "relu2" }, 0..) |kind, i| {
++            const name = try std.fmt.bufPrintSentinel(&buf, "tf_nvfp4_separate_{s}_w{d}", .{ kind, warps }, 0);
++            out.decode[i] = try mod.function(name);
++            out.resident[i] = @max(1, try out.decode[i].occupancy(@intCast(warps * 32), 0)) * sms;
++        }
++        for ([_][]const u8{ "relu2", "up", "down" }, widths, 0..) |kind, wn, i| {
++            const name = try std.fmt.bufPrintSentinel(&buf, "tf_nvfp4_separate_prompt_{s}_w{d}", .{ kind, wn }, 0);
++            out.prompt[i] = try mod.function(name);
++            const stage: u32 = @intCast((64 * 8 + wn * 2 * @as(usize, if (i == 1) 2 else 1) * 36) * 16);
++            const stages: u32 = if (stage * 4 <= 49152) 4 else if (stage * 3 <= 49152) 3 else 2;
++            try out.prompt[i].allowDynamicShared(stage * stages);
++        }
++        return out;
++    }
++};
++
++pub const Split = struct {
++    codes: []u32,
++    scales: []u32,
++
++    pub fn deinit(s: Split, a: std.mem.Allocator) void {
++        a.free(s.codes);
++        a.free(s.scales);
++    }
++};
++
++/// Deinterleave native 144-word tiles, without decoding or changing any byte.
++pub fn split(a: std.mem.Allocator, interleaved: []const u32) !Split {
++    if (interleaved.len == 0 or interleaved.len % 144 != 0) return error.InvalidPackedExtent;
++    const tiles = interleaved.len / 144;
++    const codes = try a.alloc(u32, tiles * 128);
++    errdefer a.free(codes);
++    const scales = try a.alloc(u32, tiles * 16);
++    for (0..tiles) |t| {
++        @memcpy(codes[t * 128 ..][0..128], interleaved[t * 144 ..][0..128]);
++        @memcpy(scales[t * 16 ..][0..16], interleaved[t * 144 + 128 ..][0..16]);
++    }
++    return .{ .codes = codes, .scales = scales };
++}
++
++test "separation preserves arbitrary code and scale bits across expert and projection boundaries" {
++    var interleaved: [144 * 6]u32 = undefined;
++    for (&interleaved, 0..) |*v, i| v.* = @truncate(i * 0x9e3779b9);
++    const s = try split(std.testing.allocator, &interleaved);
++    defer s.deinit(std.testing.allocator);
++    for (0..6) |t| {
++        try std.testing.expectEqualSlices(u32, interleaved[t * 144 ..][0..128], s.codes[t * 128 ..][0..128]);
++        try std.testing.expectEqualSlices(u32, interleaved[t * 144 + 128 ..][0..16], s.scales[t * 16 ..][0..16]);
++    }
++    try std.testing.expectEqual(interleaved.len, s.codes.len + s.scales.len);
++    try std.testing.expectError(error.InvalidPackedExtent, split(std.testing.allocator, &.{}));
++    try std.testing.expectError(error.InvalidPackedExtent, split(std.testing.allocator, interleaved[0..143]));
++}
++
++pub fn promptSmem(parts: usize, wn: usize) u32 {
++    const stage: u32 = @intCast((64 * 8 + wn * 2 * parts * 36) * 16);
++    const stages: u32 = if (stage * 4 <= 49152) 4 else if (stage * 3 <= 49152) 3 else 2;
++    return stages * stage;
++}
++
++pub fn decodeWarps(value: ?[]const u8) !usize {
++    const v = value orelse return 4;
++    if (std.mem.eql(u8, v, "1")) return 1;
++    if (std.mem.eql(u8, v, "4")) return 4;
++    return error.BadExpertWarps;
++}
+diff --git a/zig/src/cuda/root.zig b/zig/src/cuda/root.zig
+index 8f00baae..ddcc0a80 100644
+--- a/zig/src/cuda/root.zig
++++ b/zig/src/cuda/root.zig
+@@ -136,6 +136,8 @@ pub const train_q4 = @import("train_q4.zig");
+ pub const train_attn = @import("train_attn.zig");
+ 
+ test {
++    _ = nvfp4_separate;
++    _ = nvfp4_csf32;
+     _ = tp_group;
+     _ = arena;
+     _ = pack;
+@@ -148,3 +150,6 @@ test {
+     _ = exl3.block.lin2;
+     _ = exl3.block.x3gm;
+ }
++
++pub const nvfp4_separate = @import("nvfp4_separate.zig");
++pub const nvfp4_csf32 = @import("nvfp4_csf32.zig");
+diff --git a/zig/src/cuda/sm120_tuning.zig b/zig/src/cuda/sm120_tuning.zig
+index e673a00c..5c9426ef 100644
+--- a/zig/src/cuda/sm120_tuning.zig
++++ b/zig/src/cuda/sm120_tuning.zig
+@@ -33,9 +33,13 @@ pub fn hostEmbed() bool {
+     return number("TF_TUNE_HOST_EMBED", 0, &.{ 0, 1 }) == 1;
+ }
+ 
+-pub fn fingerprint() [4]u32 {
++pub fn scaleLayout() usize {
++    return number("TF_TUNE_SCALE_LAYOUT", 0, &.{ 0, 1, 2 });
++}
++
++pub fn fingerprint() [5]u32 {
+     const widths = promptWidths();
+-    return .{ @intCast(widths[1]), @intCast(widths[2]), @intCast(splitTarget()), @intFromBool(hostEmbed()) };
++    return .{ @intCast(widths[1]), @intCast(widths[2]), @intCast(splitTarget()), @intFromBool(hostEmbed()), @intCast(scaleLayout()) };
+ }
+ 
+ test "local tuning values refuse unsupported schedules" {
+diff --git a/zig/src/families/glm/cuda_engine.zig b/zig/src/families/glm/cuda_engine.zig
+index 919f0f54..e6012d58 100644
+--- a/zig/src/families/glm/cuda_engine.zig
++++ b/zig/src/families/glm/cuda_engine.zig
+@@ -94,6 +94,8 @@ pub const Engine = struct {
+ 
+     /// Opens rank `rank` of `world` over `comm`; the ranks agree on settings (cuda_ranks) before the weights load.
+     pub fn init(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, ctx: *const cuda.Context, checkpoint: []const u8, lib: *const cuda.nccl.Library, comm: cuda.nccl.Comm, rank: usize, world: usize, o: Options) !*Engine {
++        if (cuda.sm120_tuning.scaleLayout() == 2 and (world != 2 or o.drafter or o.vision != null))
++            return error.UnsupportedCsfResidentMode;
+         if (world > ranks.max_world) return error.TooManyRanks; // before anything is allocated
+         const e = try gpa.create(Engine);
+         errdefer gpa.destroy(e);
+@@ -245,6 +247,7 @@ pub const Engine = struct {
+ 
+     /// Binds slot `slot`'s sequence for the steps that follow, making it (a zeroed state) on first use.
+     pub fn bind(e: *Engine, slot: u32) !void {
++        if (cuda.sm120_tuning.scaleLayout() == 2 and slot != 0) return error.CsfResidentSingleSlot;
+         if (slot >= e.seqs.items.len) try e.seqs.appendNTimes(e.gpa, null, slot + 1 - e.seqs.items.len);
+         if (e.seqs.items[slot] == null) {
+             const q = try e.gpa.create(Seq);
+diff --git a/zig/src/families/glm/cuda_expert_csf.zig b/zig/src/families/glm/cuda_expert_csf.zig
+new file mode 100644
+index 00000000..57f54f9b
+--- /dev/null
++++ b/zig/src/families/glm/cuda_expert_csf.zig
+@@ -0,0 +1,109 @@
++//! TP2 resident CSF32 experts: codes-only uploads, one compact arena per layer, shared native scale scratch.
++const std = @import("std");
++const cuda = @import("cuda");
++const core = @import("core");
++const formats = @import("cuda_formats.zig");
++const X = cuda.experts.Nvfp4Experts;
++const D = cuda.nvfp4_csf32.Descriptor;
++
++fn scratch(L: anytype, size: usize) !u64 {
++    var b = try cuda.DeviceBuffer.alloc(L.d, size);
++    errdefer b.free();
++    try L.w.buffers.append(L.gpa, b);
++    return b.ptr;
++}
++
++fn component(a: std.mem.Allocator, blob: *std.ArrayList(u8), bytes: []const u8) !u64 {
++    const pad = (16 - blob.items.len % 16) % 16;
++    try blob.appendNTimes(a, 0, pad);
++    const offset = blob.items.len;
++    try blob.appendSlice(a, bytes);
++    return @intCast(offset);
++}
++
++fn append(a: std.mem.Allocator, blob: *std.ArrayList(u8), p: core.nvfp4_csf32.Parts) !D {
++    return .{ .bases = try component(a, blob, p.bases), .codes = try component(a, blob, p.codes), .pages = try component(a, blob, p.page_bases), .offsets = try component(a, blob, p.offsets), .exceptions = try component(a, blob, p.exceptions) };
++}
++
++fn codesOnly(out: []u32, interleaved: []const u32) void {
++    std.debug.assert(interleaved.len % 144 == 0 and out.len == interleaved.len / 144 * 128);
++    for (0..interleaved.len / 144) |tile| @memcpy(out[tile * 128 ..][0..128], interleaved[tile * 144 ..][0..128]);
++}
++
++pub fn load(L: anytype, i: u32) !cuda.experts.Layer {
++    const a = L.gpa;
++    const c = &L.w.config;
++    const cut = L.w.share.moe;
++    if (L.w.share.world != 2 or c.hidden != 4096 or c.moe_inter != 2048 or c.experts != 288)
++        return error.UnsupportedCsfResidentGeometry;
++    const n = cut.len();
++    const d: usize = c.hidden;
++    const count: usize = c.experts;
++    const tiles = n / 32 * (d / 32);
++    const up = try a.alloc(u32, count * tiles * 2 * 128);
++    defer a.free(up);
++    const down = try a.alloc(u32, count * tiles * 128);
++    defer a.free(down);
++    const tmp = try a.alloc(u32, tiles * 2 * 144);
++    defer a.free(tmp);
++    const global_up = try a.alloc(f32, count * 2);
++    defer a.free(global_up);
++    const global_down = try a.alloc(f32, count);
++    defer a.free(global_down);
++    const du = try a.alloc(D, count * 2);
++    defer a.free(du);
++    const dd = try a.alloc(D, count);
++    defer a.free(dd);
++    var blob: std.ArrayList(u8) = .empty;
++    defer blob.deinit(a);
++    const per = c.moe_inter * d / 16;
++    const decoded = try a.alloc(u8, per * 3);
++    defer a.free(decoded);
++    const down_codes = try a.alloc(u8, d * n / 2);
++    defer a.free(down_codes);
++    const down_scales = try a.alloc(u8, d * n / 16);
++    defer a.free(down_scales);
++    for (0..count) |e| {
++        var ls: [3]core.nvfp4.Linear = undefined;
++        inline for (.{ "gate_proj", "up_proj", "down_proj" }, 0..) |proj, m| {
++            const name = try std.fmt.bufPrint(&L.name_buf, "model.language_model.layers.{d}.mlp.experts.{d}." ++ proj, .{ i, e });
++            try L.formatIn(L.ck, name, .nvfp4_csf);
++            ls[m] = try formats.csfLinear(L.ck, name, decoded[m * per ..][0..per]);
++            const src = try formats.csfParts(L.ck, name);
++            const rr: [2]usize = if (m == 2) .{ 0, d } else .{ cut.lo, cut.hi };
++            const cc: [2]usize = if (m == 2) .{ cut.lo / 16, cut.hi / 16 } else .{ 0, d / 16 };
++            const sliced = try core.nvfp4_csf32_slice.slice(a, src, ls[m].n, ls[m].k / 16, rr, cc);
++            defer sliced.deinit(a);
++            const desc = try append(a, &blob, sliced.parts());
++            if (m == 2) dd[e] = desc else du[e * 2 + m] = desc;
++        }
++        X.packGateUp(tmp, .{ ls[0].codes[cut.lo * d / 2 ..][0 .. n * d / 2], ls[0].scales[cut.lo * d / 16 ..][0 .. n * d / 16] }, .{ ls[1].codes[cut.lo * d / 2 ..][0 .. n * d / 2], ls[1].scales[cut.lo * d / 16 ..][0 .. n * d / 16] }, n, d);
++        codesOnly(up[e * tiles * 2 * 128 ..][0 .. tiles * 2 * 128], tmp);
++        for (0..d) |r| {
++            @memcpy(down_codes[r * n / 2 ..][0 .. n / 2], ls[2].codes[r * ls[2].k / 2 + cut.lo / 2 ..][0 .. n / 2]);
++            @memcpy(down_scales[r * n / 16 ..][0 .. n / 16], ls[2].scales[r * ls[2].k / 16 + cut.lo / 16 ..][0 .. n / 16]);
++        }
++        X.packOne(tmp[0 .. tiles * 144], down_codes, down_scales, d, n);
++        codesOnly(down[e * tiles * 128 ..][0 .. tiles * 128], tmp[0 .. tiles * 144]);
++        global_up[e * 2] = ls[0].global;
++        global_up[e * 2 + 1] = ls[1].global;
++        global_down[e] = ls[2].global;
++    }
++    try L.host.appendSlice(a, blob.items);
++    const arena = try L.put("layers.{d}.moe.experts.csf_arena", .{i});
++    for ([_][]D{ du, dd }) |descs| for (descs) |*desc| {
++        inline for (comptime std.meta.fieldNames(D)) |name| @field(desc, name) += arena;
++    };
++    var ptr: [6]u64 = undefined;
++    for (&ptr, [_][]const u8{ std.mem.sliceAsBytes(up), std.mem.sliceAsBytes(down), std.mem.sliceAsBytes(global_up), std.mem.sliceAsBytes(global_down), std.mem.sliceAsBytes(du), std.mem.sliceAsBytes(dd) }, [_][]const u8{ "up", "down", "up_scale", "down_scale", "up_csf", "down_csf" }) |*p, bytes, name| {
++        try L.host.appendSlice(a, bytes);
++        p.* = try L.put("layers.{d}.moe.experts.{s}", .{ i, name });
++    }
++    if (L.w.csf_scratch[0] == 0) {
++        L.w.csf_scratch[0] = try scratch(L, count * tiles * 2 * 64);
++        L.w.csf_scratch[1] = try scratch(L, count * tiles * 64);
++        std.log.info("resident CSF32 scale scratch per rank: up={d} down={d} bytes", .{ count * tiles * 2 * 64, count * tiles * 64 });
++    }
++    std.log.info("resident CSF32 layer {d}: codes={d} compressed={d} descriptors={d} bytes", .{ i, (up.len + down.len) * 4, blob.items.len, (du.len + dd.len) * @sizeOf(D) });
++    return .{ .format = .nvfp4, .up = ptr[0], .down = ptr[1], .up_scale = ptr[2], .down_scale = ptr[3], .up_blocks = L.w.csf_scratch[0], .down_blocks = L.w.csf_scratch[1], .up_csf = ptr[4], .down_csf = ptr[5], .width = n, .dims = d, .experts = count, .limit = c.swiglu_limit };
++}
+diff --git a/zig/src/families/glm/cuda_expert_separate.zig b/zig/src/families/glm/cuda_expert_separate.zig
+new file mode 100644
+index 00000000..df7bb08d
+--- /dev/null
++++ b/zig/src/families/glm/cuda_expert_separate.zig
+@@ -0,0 +1,17 @@
++//! Upload codes and block scales separately; MTP and non-experimental callers keep their legacy layout.
++const std = @import("std");
++const cuda = @import("cuda");
++
++pub fn upload(L: anytype, i: u32, up: []const u32, down: []const u32, up_global: []const f32, down_global: []const f32) !cuda.experts.Layer {
++    const u = try cuda.nvfp4_separate.split(L.gpa, up);
++    defer u.deinit(L.gpa);
++    const d = try cuda.nvfp4_separate.split(L.gpa, down);
++    defer d.deinit(L.gpa);
++    var ptrs: [6]u64 = undefined;
++    const arrays = [_][]const u8{ std.mem.sliceAsBytes(u.codes), std.mem.sliceAsBytes(d.codes), std.mem.sliceAsBytes(up_global), std.mem.sliceAsBytes(down_global), std.mem.sliceAsBytes(u.scales), std.mem.sliceAsBytes(d.scales) };
++    for (&ptrs, arrays, [_][]const u8{ "up", "down", "up_scale", "down_scale", "up_blocks", "down_blocks" }) |*p, bytes, name| {
++        try L.host.appendSlice(L.gpa, bytes);
++        p.* = try L.put("layers.{d}.moe.experts.{s}", .{ i, name });
++    }
++    return .{ .format = .nvfp4, .up = ptrs[0], .down = ptrs[1], .up_scale = ptrs[2], .down_scale = ptrs[3], .up_blocks = ptrs[4], .down_blocks = ptrs[5], .width = L.w.share.moe.len(), .dims = L.w.config.hidden, .experts = L.w.config.experts, .limit = L.w.config.swiglu_limit };
++}
+diff --git a/zig/src/families/glm/cuda_formats.zig b/zig/src/families/glm/cuda_formats.zig
+index 25b0774e..da6771cc 100644
+--- a/zig/src/families/glm/cuda_formats.zig
++++ b/zig/src/families/glm/cuda_formats.zig
+@@ -82,6 +82,18 @@ fn checked(v: error{Overflow}!usize) error{ShapeOverflow}!usize {
+     return v catch error.ShapeOverflow;
+ }
+ 
++/// Validated component tensor types; the codec validates extents and record contents.
++pub fn csfParts(ck: *core.Checkpoint, module: []const u8) !core.nvfp4_csf32.Parts {
++    var buf: [256]u8 = undefined;
++    var p: core.nvfp4_csf32.Parts = undefined;
++    inline for (.{ "bases", "codes", "page_bases", "offsets", "exceptions" }, .{ .u8, .u8, .u32, .u16, .u16 }) |part, dtype| {
++        const t = try ck.get(try std.fmt.bufPrint(&buf, "{s}.weight_scale.csf32_" ++ part, .{module}));
++        if (t.dtype != dtype or t.rank != 1) return error.BadNvfp4;
++        @field(p, part) = t.bytes;
++    }
++    return p;
++}
++
+ /// `module`'s NVFP4 linear whose block scales are csf_32x2_v1 parts, decoded into `scales` ([n, k/16] e4m3).
+ pub fn csfLinear(ck: *core.Checkpoint, module: []const u8, scales: []u8) !core.nvfp4.Linear {
+     var buf: [256]u8 = undefined;
+@@ -91,12 +103,7 @@ pub fn csfLinear(ck: *core.Checkpoint, module: []const u8, scales: []u8) !core.n
+     if (n == 0 or w.shape[1] == 0) return error.EmptyShape;
+     const k = try checked(std.math.mul(usize, 2, w.shape[1]));
+     if (k % core.nvfp4.group != 0 or scales.len != try checked(std.math.mul(usize, n, k)) / core.nvfp4.group) return error.BadNvfp4;
+-    var p: core.nvfp4_csf32.Parts = undefined;
+-    inline for (.{ "bases", "codes", "page_bases", "offsets", "exceptions" }, .{ .u8, .u8, .u32, .u16, .u16 }) |part, dtype| {
+-        const t = try ck.get(try std.fmt.bufPrint(&buf, "{s}.weight_scale.csf32_" ++ part, .{module}));
+-        if (t.dtype != dtype or t.rank != 1) return error.BadNvfp4;
+-        @field(p, part) = t.bytes;
+-    }
++    const p = try csfParts(ck, module);
+     try core.nvfp4_csf32.decode(p, n, k / core.nvfp4.group, scales);
+     const g = try ck.get(try std.fmt.bufPrint(&buf, "{s}.weight_scale_2", .{module}));
+     if (g.dtype != .f32 or g.numel() != 1) return error.BadNvfp4;
+diff --git a/zig/src/families/glm/cuda_ranks.zig b/zig/src/families/glm/cuda_ranks.zig
+index 7ee007da..6f887b82 100644
+--- a/zig/src/families/glm/cuda_ranks.zig
++++ b/zig/src/families/glm/cuda_ranks.zig
+@@ -99,8 +99,8 @@ pub fn environment(name: [:0]const u8) ?[]const u8 {
+ 
+ /// What every rank must agree on, as bytes the communicator carries.
+ pub const Fingerprint = extern struct {
+-    layout: u32 = 12, // this struct's version
+-    tuning: [4]u32 = .{ 4, 8, 192, 0 },
++    layout: u32 = 13, // this struct's version
++    tuning: [5]u32 = .{ 4, 8, 192, 0, 0 },
+     world: u32,
+     rank: u32,
+     kv8: u32 = 0,
+diff --git a/zig/src/families/glm/cuda_weights.zig b/zig/src/families/glm/cuda_weights.zig
+index 48b6cd2b..465affa6 100644
+--- a/zig/src/families/glm/cuda_weights.zig
++++ b/zig/src/families/glm/cuda_weights.zig
+@@ -20,13 +20,11 @@ const glue = @import("cuda_glue.zig");
+ 
+ const Tensor = core.checkpoint.Tensor;
+ const prefix = "model.language_model.";
+-
+ /// A hyper-connection site: fn bf16 [s (s + 2)][s d], base and scale widened to fp32.
+ pub const Hc = struct { fn_w: u64, base: u64, scale: u64 };
+ 
+ pub const Mixer = union(cfg.Kind) { kda: kda_block.Layer, mla: dsa_block.Layer };
+ pub const Ffn = union(enum) { dense: mlp.Layer, moe: moe.Layer };
+-
+ pub const Layer = struct { index: u32, attn_hc: Hc, ffn_hc: Hc, in_norm: glue.Norm, post_norm: glue.Norm, mixer: Mixer, ffn: Ffn };
+ 
+ /// The MTP head (weights.MTPW): norms, eh_proj, a DSA + MoE layer (NVFP4 experts), shared_head.norm, 4-bit draft head.
+@@ -44,6 +42,7 @@ pub const Weights = struct {
+     share: shard.Share,
+     embed: u64 = 0, // bf16 [vocab][dims]
+     host_embed: ?cuda.HostBuffer = null,
++    csf_scratch: [2]u64 = .{ 0, 0 }, // owned in buffers; one native stream consumes routed experts at a time
+     layers: []Layer = &.{},
+     norm: glue.Norm = .{ .bf16 = 0 },
+     head: projection.Proj = .{ .bf16 = 0 }, // [share.vocab][dims]: bf16, or MXFP8 for the lane
+@@ -478,6 +477,8 @@ const Loader = struct {
+         const cut = L.w.share.moe;
+         const ni = cut.len();
+         const count: usize = c.experts;
++        if (i < c.layers and cuda.sm120_tuning.scaleLayout() == 2)
++            return @import("cuda_expert_csf.zig").load(L, i);
+         const up_len = X.bytes(1, ni, d, 2) / 4;
+         const down_len = X.bytes(1, d, ni, 1) / 4;
+         const up = try L.gpa.alloc(u32, count * up_len);
+@@ -517,6 +518,8 @@ const Loader = struct {
+             up_scale[e * 2 + 1] = ls[1].global;
+             down_scale[e] = l.global;
+         }
++        if (i < c.layers and cuda.sm120_tuning.scaleLayout() == 1)
++            return @import("cuda_expert_separate.zig").upload(L, i, up, down, up_scale, down_scale);
+         var ptrs: [4]u64 = undefined;
+         for (&ptrs, [_][]const u8{ std.mem.sliceAsBytes(up), std.mem.sliceAsBytes(down), std.mem.sliceAsBytes(up_scale), std.mem.sliceAsBytes(down_scale) }, [_][]const u8{ "up", "down", "up_scale", "down_scale" }) |*p, bytes, what| {
+             try L.host.appendSlice(L.gpa, bytes);
+diff --git a/zig/tests/cuda/contract_csf32.zig b/zig/tests/cuda/contract_csf32.zig
+new file mode 100644
+index 00000000..b4b3ad6b
+--- /dev/null
++++ b/zig/tests/cuda/contract_csf32.zig
+@@ -0,0 +1,129 @@
++//! Integer-only CSF32 expansion: every output byte against CPU decode and the legacy scale packer.
++const std = @import("std");
++const cuda = @import("cuda");
++const core = @import("core");
++const rig_ = @import("contract_rig.zig");
++const check_ = @import("check.zig");
++const c = core.contract.spec;
++const g = core.contract.gates;
++const codec = core.nvfp4_csf32;
++const X = cuda.experts.Nvfp4Experts;
++const E = 3;
++const M = 2;
++fn depth(_: c.Shape) usize {
++    return 0;
++}
++const spec: c.Spec = .{ .name = "cuda CSF32 native scale bytes", .accum = .none, .depth = depth, .out = .raw, .nan = .{ .stated = "all E4M3 encodings, including signed zero and NaN, preserve their exact bytes" }, .replaces = "CPU CSF32 decoder followed by legacy native scale packing", .tiles = .{ .{ .size = 1 }, .{ .size = 256, .step = 128, .min = 128 }, .{ .size = 128, .step = 64, .min = 64 } }, .served = &.{ .{ .rows = 1, .n = 1024, .k = 4096 }, .{ .rows = 1, .n = 4096, .k = 1024 } } };
++
++const Test = struct {
++    rig: rig_.Rig,
++    f: cuda.Function,
++    shape: c.Shape = undefined,
++    desc: u64 = 0,
++    out: u64 = 0,
++    plan: cuda.grouped.Plan = undefined,
++    want: []u8 = &.{},
++    active: []u8 = &.{},
++    const vt = g.hooks(Test);
++    fn kernel(t: *Test) g.Kernel {
++        return .{ .spec = spec, .ctx = t, .vt = &vt };
++    }
++    fn deinit(t: *Test) void {
++        t.rig.gpu.gpa.free(t.want);
++        t.rig.gpu.gpa.free(t.active);
++        t.rig.deinit();
++    }
++    pub fn prepare(t: *Test, s: c.Shape, _: g.Fill, seed: u64) !bool {
++        if (s.n == 0 or s.k == 0 or s.n % 128 != 0 or s.k % 64 != 0) return false;
++        t.rig.reset();
++        const a = t.rig.gpu.gpa;
++        a.free(t.want);
++        t.want = &.{};
++        a.free(t.active);
++        t.active = &.{};
++        t.shape = s;
++        const tiles = s.n / 32 * (s.k / 32);
++        t.want = try a.alloc(u8, E * M * tiles * 64);
++        var desc: [E * M]cuda.nvfp4_csf32.Descriptor = undefined;
++        const oracle = try a.alloc(u8, t.want.len);
++        defer a.free(oracle);
++        const scale = try a.alloc(u8, s.n * s.k / 16);
++        defer a.free(scale);
++        const decoded = try a.alloc(u8, scale.len);
++        defer a.free(decoded);
++        const codes = try a.alloc(u8, s.n * s.k / 2);
++        defer a.free(codes);
++        @memset(codes, 0);
++        const interleaved = try a.alloc(u32, tiles * 144);
++        defer a.free(interleaved);
++        var prng = std.Random.DefaultPrng.init(seed);
++        for (&desc, 0..) |*d, matrix| {
++            prng.random().bytes(scale);
++            for (scale[0..@min(256, scale.len)], 0..) |*v, i| v.* = @intCast(i);
++            const enc = try codec.encode(a, scale, s.n, s.k / 16);
++            defer enc.deinit(a);
++            try codec.decode(enc.parts(), s.n, s.k / 16, decoded);
++            try check_.sameBytes("CSF fixture CPU decode", decoded, scale);
++            X.packOne(interleaved, codes, decoded, s.n, s.k);
++            for (0..tiles) |tile| {
++                const dest = ((matrix / M * tiles + tile) * M + matrix % M) * 64;
++                @memcpy(t.want[dest..][0..64], std.mem.sliceAsBytes(interleaved[tile * 144 + 128 ..][0..16]));
++            }
++            @import("glm_csf_scale_oracle.zig").writeMatrix(oracle[matrix / M * tiles * M * 64 ..][0 .. tiles * M * 64], decoded, s.k / 16, 0, 0, s.n, s.k, M, matrix % M);
++            d.* = .{ .bases = try t.rig.input(enc.bases), .codes = try t.rig.input(enc.codes), .pages = try t.rig.input(enc.page_bases), .offsets = try t.rig.input(enc.offsets), .exceptions = try t.rig.input(enc.exceptions) };
++        }
++        try check_.sameBytes("CPU scale-only oracle versus legacy packer", oracle, t.want);
++        t.desc = try t.rig.input(std.mem.asBytes(&desc));
++        // Duplicate adjacent plan chunks for expert 2 must have a single writer; expert 1 remains untouched.
++        const items = [9]i32{ 0, 0, 1, 2, 1, 16, 2, 17, 1 };
++        const counts = [2]i32{ 3, 0 };
++        t.plan = .{ .items = try t.rig.input(std.mem.asBytes(&items)), .counts = try t.rig.input(std.mem.asBytes(&counts)), .members = 0, .rank = 0, .hist = 0 };
++        t.out = try t.rig.output(t.want.len);
++        t.active = try a.dupe(u8, t.want);
++        @memset(t.active[M * tiles * 64 ..][0 .. M * tiles * 64], 0);
++        return true;
++    }
++    pub fn run(t: *Test) !void {
++        try cuda.nvfp4_csf32.expand(t.f, t.rig.s, t.desc, t.out, t.plan, t.shape.n, t.shape.k, M, E, 3, true);
++    }
++    pub fn replaced(t: *Test) ![]const u8 {
++        return t.want;
++    }
++    pub fn count(t: *Test) usize {
++        return t.want.len;
++    }
++    pub fn reference(t: *Test, want: []f64, mag: []f64) !void {
++        for (want, t.want) |*v, b| v.* = @floatFromInt(b);
++        @memset(mag, 0);
++    }
++    pub fn check(t: *Test, _: g.Gate) !?[]const u8 {
++        if (!std.mem.eql(u8, try t.rig.outputBytes(), t.want)) return "CSF expanded bytes differ from CPU decode/native pack";
++        return null;
++    }
++    fn routes(t: *Test) !void {
++        try t.rig.zero(t.out, t.want.len);
++        try cuda.nvfp4_csf32.expand(t.f, t.rig.s, t.desc, t.out, t.plan, t.shape.n, t.shape.k, M, E, 4, false);
++        try check_.sameBytes("CSF active and duplicate routes", try t.rig.outputBytes(), t.active);
++        const counts: cuda.DeviceBuffer = .{ .d = t.rig.gpu.d, .ptr = t.plan.counts, .len = 8 };
++        try counts.fill8(0, t.rig.s.handle);
++        try cuda.nvfp4_csf32.expand(t.f, t.rig.s, t.desc, t.out, t.plan, t.shape.n, t.shape.k, M, E, 4, false);
++        try check_.sameBytes("CSF empty route preserves scratch", try t.rig.outputBytes(), t.active);
++        try t.run();
++        try check_.sameBytes("CSF scratch reuse restores all experts", try t.rig.outputBytes(), t.want);
++        try check_.expect(try t.rig.intact(), "CSF expansion touched a guard", .{});
++    }
++};
++
++pub fn run(gpu: check_.Gpu) !void {
++    var stream = try cuda.Stream.init(gpu.d, false);
++    defer stream.deinit();
++    var mod = try cuda.Module.load(gpu.d, cuda.kernels.nvfp4_experts);
++    defer mod.unload();
++    var test_: Test = .{ .rig = .{ .gpu = gpu, .s = stream }, .f = try mod.function("tf_nvfp4_csf32_expand") };
++    defer test_.deinit();
++    var tally: g.Tally = .{};
++    try g.runAll(gpu.gpa, &.{test_.kernel()}, 0x63736632, &tally);
++    try test_.routes();
++    std.debug.print("SUMMARY CSF32 byte expansion: {d} pass, {d} fail; active/duplicate/empty/reused scratch passed\n", .{ tally.passed, tally.failed });
++    try check_.expect(tally.problems() == 0, "CSF32 contract failures", .{});
++}
+diff --git a/zig/tests/cuda/contract_nvfp4_separate.zig b/zig/tests/cuda/contract_nvfp4_separate.zig
+new file mode 100644
+index 00000000..8d271142
+--- /dev/null
++++ b/zig/tests/cuda/contract_nvfp4_separate.zig
+@@ -0,0 +1,235 @@
++//! The separate-storage expert consumers against identical-input legacy operators and FP64 stress sums.
++const std = @import("std");
++const cuda = @import("cuda");
++const core = @import("core");
++const rig_ = @import("contract_rig.zig");
++const check_ = @import("check.zig");
++const c = core.contract.spec;
++const g = core.contract.gates;
++const X = cuda.experts.Nvfp4Experts;
++const E = 3;
++
++pub const Kind = enum { up, down_f32, down_bf16, relu2, prompt_up, prompt_down, prompt_relu2 };
++fn depth(s: c.Shape) usize {
++    return s.k + 8;
++}
++fn isUp(k: Kind) bool {
++    return k == .up or k == .relu2 or k == .prompt_up or k == .prompt_relu2;
++}
++fn isPrompt(k: Kind) bool {
++    return k == .prompt_up or k == .prompt_down or k == .prompt_relu2;
++}
++fn isRelu(k: Kind) bool {
++    return k == .relu2 or k == .prompt_relu2;
++}
++fn spec(kind: Kind) c.Spec {
++    return .{ .name = switch (kind) {
++        .up => "cuda separate NVFP4 decode up",
++        .down_f32 => "cuda separate NVFP4 decode f32 down",
++        .down_bf16 => "cuda separate NVFP4 decode bf16 down",
++        .relu2 => "cuda separate NVFP4 decode relu2",
++        .prompt_up => "cuda separate NVFP4 prompt up",
++        .prompt_down => "cuda separate NVFP4 prompt down",
++        .prompt_relu2 => "cuda separate NVFP4 prompt relu2",
++    }, .accum = .f32, .depth = depth, .ops = 4, .out = if (kind == .down_f32) .f32 else .bf16, .replaces = "legacy interleaved NVFP4 expert with identical arithmetic and launch grouping", .nan = .{ .stated = "byte-identical to legacy for NaN/infinite activations and global scales" }, .tiles = .{ .{ .size = if (isPrompt(kind)) 64 else 16 }, .{ .size = 256, .step = 32, .min = 32 }, .{ .size = 64, .step = 32, .min = 32 } }, .served = if (isUp(kind)) &.{ .{ .rows = 1, .n = 1024, .k = 4096 }, .{ .rows = 65, .n = 1024, .k = 4096 } } else &.{ .{ .rows = 1, .n = 4096, .k = 1024 }, .{ .rows = 65, .n = 4096, .k = 1024 } } };
++}
++
++pub const Test = struct {
++    rig: rig_.Rig,
++    kind: Kind,
++    kernels: *const X,
++    shape: c.Shape = undefined,
++    x: []u16 = &.{},
++    codes: []u8 = &.{},
++    scales: []u8 = &.{},
++    globals: [E * 2]f32 = @splat(1),
++    legacy: cuda.experts.Layer = undefined,
++    candidate: cuda.experts.Layer = undefined,
++    plan: cuda.grouped.Plan = undefined,
++    items: usize = 0,
++    xd: u64 = 0,
++    out: u64 = 0,
++    base: u64 = 0,
++
++    const vt = g.hooks(Test);
++
++    fn free(t: *Test) void {
++        const a = t.rig.gpu.gpa;
++        a.free(t.x);
++        a.free(t.codes);
++        a.free(t.scales);
++        t.x = &.{};
++        t.codes = &.{};
++        t.scales = &.{};
++    }
++    pub fn deinit(t: *Test) void {
++        t.free();
++        t.rig.deinit();
++    }
++    pub fn kernel(t: *Test) g.Kernel {
++        return .{ .spec = spec(t.kind), .ctx = t, .vt = &vt };
++    }
++    fn parts(t: *const Test) usize {
++        return if (isUp(t.kind) and !isRelu(t.kind)) 2 else 1;
++    }
++    pub fn count(t: *Test) usize {
++        return E * t.shape.rows * t.shape.n;
++    }
++    fn bytes(t: *Test) usize {
++        return t.count() * c.size(spec(t.kind).out);
++    }
++
++    pub fn prepare(t: *Test, s: c.Shape, fill: g.Fill, seed: u64) !bool {
++        if (s.rows == 0 or s.n == 0 or s.k == 0 or s.n % 32 != 0 or s.k % 32 != 0) return false;
++        t.free();
++        t.rig.reset();
++        t.shape = s;
++        const a = t.rig.gpu.gpa;
++        const m = t.parts();
++        const xr = s.rows * @as(usize, if (isUp(t.kind)) 1 else E);
++        t.x = try a.alloc(u16, xr * s.k);
++        t.codes = try a.alloc(u8, E * m * s.n * s.k / 2);
++        t.scales = try a.alloc(u8, E * m * s.n * s.k / 16);
++        var prng = std.Random.DefaultPrng.init(seed);
++        const rng = prng.random();
++        rng.bytes(t.codes);
++        @memset(t.scales, 0x38);
++        @memset(&t.globals, 1);
++        for (t.x) |*v| v.* = c.toBf16((@as(f32, @floatFromInt(rng.uintLessThan(u32, 65))) - 32) / 32);
++        if (fill == .stress) {
++            @memset(t.scales, 0x50);
++            for (0..xr) |r| for (0..s.k / 2) |i| {
++                const coarse: f32 = @as(f32, @floatFromInt(4 + 2 * rng.uintLessThan(u32, 2))) * 16;
++                const v = coarse + @as(f32, if (isUp(t.kind)) 0 else @floatFromInt(1 + rng.uintLessThan(u32, 8)));
++                t.x[r * s.k + i] = c.toBf16(v);
++                t.x[r * s.k + s.k / 2 + i] = c.toBf16(if (i < 8) v - @as(f32, if (isUp(t.kind)) 16 else 1) else v);
++            };
++            for (0..E * m * s.n) |r| for (0..s.k / 2) |i| {
++                const v: u8 = 6 + rng.uintLessThan(u8, 2);
++                put(t.codes[r * s.k / 2 ..], i, v);
++                put(t.codes[r * s.k / 2 ..], i + s.k / 2, v | 8);
++            };
++        } else if (fill == .nonfinite) {
++            t.x[0] = 0x7fc0;
++            t.x[3] = 0x7f80;
++            t.x[7] = 0xff80;
++            t.globals[0] = std.math.nan(f32);
++            t.globals[m] = std.math.inf(f32);
++        }
++        const words = X.bytes(E, s.n, s.k, m) / 4;
++        const native = try a.alloc(u32, words);
++        defer a.free(native);
++        const wb = s.n * s.k / 2;
++        const sb = s.n * s.k / 16;
++        for (0..E) |e| {
++            const at = e * m;
++            const dest = native[e * words / E ..][0 .. words / E];
++            if (m == 2) X.packGateUp(dest, .{ t.codes[at * wb ..][0..wb], t.scales[at * sb ..][0..sb] }, .{ t.codes[(at + 1) * wb ..][0..wb], t.scales[(at + 1) * sb ..][0..sb] }, s.n, s.k) else X.packOne(dest, t.codes[at * wb ..][0..wb], t.scales[at * sb ..][0..sb], s.n, s.k);
++        }
++        const separated = try cuda.nvfp4_separate.split(a, native);
++        defer separated.deinit(a);
++        const w = try t.rig.input(std.mem.sliceAsBytes(native));
++        const alpha = try t.rig.input(std.mem.sliceAsBytes(t.globals[0 .. E * m]));
++        t.legacy = .{ .format = .nvfp4, .up = w, .down = w, .up_scale = alpha, .down_scale = alpha, .width = if (isUp(t.kind)) s.n else s.k, .dims = if (isUp(t.kind)) s.k else s.n, .experts = E, .relu2 = isRelu(t.kind) };
++        t.candidate = t.legacy;
++        t.candidate.up = try t.rig.input(std.mem.sliceAsBytes(separated.codes));
++        t.candidate.down = t.candidate.up;
++        t.candidate.up_blocks = try t.rig.input(std.mem.sliceAsBytes(separated.scales));
++        t.candidate.down_blocks = t.candidate.up_blocks;
++        t.xd = try t.rig.input(std.mem.sliceAsBytes(t.x));
++        const tile: usize = if (isPrompt(t.kind)) 64 else 16;
++        t.items = E * ((s.rows + tile - 1) / tile);
++        const items = try a.alloc(i32, t.items * 3);
++        defer a.free(items);
++        const members = try a.alloc(i32, E * s.rows);
++        defer a.free(members);
++        var at: usize = 0;
++        for (0..E) |e| {
++            for (0..s.rows) |r| members[e * s.rows + r] = @intCast(r * E + e);
++            var row: usize = 0;
++            while (row < s.rows) : (row += tile) {
++                items[at * 3] = @intCast(e);
++                items[at * 3 + 1] = @intCast(e * s.rows + row);
++                items[at * 3 + 2] = @intCast(@min(tile, s.rows - row));
++                at += 1;
++            }
++        }
++        const counts = [2]i32{ @intCast(t.items), 0 };
++        t.plan = .{ .items = try t.rig.input(std.mem.sliceAsBytes(items)), .members = try t.rig.input(std.mem.sliceAsBytes(members)), .counts = try t.rig.input(std.mem.asBytes(&counts)), .rank = 0, .hist = 0 };
++        t.out = try t.rig.output(t.bytes());
++        t.base = try t.rig.scratch(t.bytes());
++        return true;
++    }
++    fn put(b: []u8, i: usize, v: u8) void {
++        if (i % 2 == 0) b[i / 2] = (b[i / 2] & 0xf0) | v else b[i / 2] = (b[i / 2] & 0x0f) | (v << 4);
++    }
++    fn launch(t: *Test, layer: cuda.experts.Layer, out: u64) !void {
++        const epi: cuda.experts.Epi = if (isUp(t.kind)) .up else if (t.kind == .down_f32) .down_f32 else .down_bf16;
++        const rows: cuda.experts.Rows = .{ .x = t.xd, .stride = t.shape.k, .slots = if (isUp(t.kind)) E else 0 };
++        if (isPrompt(t.kind)) try t.kernels.runPrompt(t.rig.s, epi, rows, layer, t.plan, out, t.items, -1) else try t.kernels.run(t.rig.s, epi, rows, layer, t.plan, out, t.items, -1);
++    }
++    pub fn run(t: *Test) !void {
++        try t.launch(t.candidate, t.out);
++    }
++    pub fn replaced(t: *Test) ![]const u8 {
++        try t.launch(t.legacy, t.base);
++        return t.rig.bytes(t.base, t.bytes());
++    }
++    pub fn check(t: *Test, gate: g.Gate) !?[]const u8 {
++        const got = try t.rig.outputBytes();
++        const want = try t.replaced();
++        if (!std.mem.eql(u8, got, want)) return "separate-storage bytes differ from legacy";
++        if (gate != .nonfinite) return null;
++        for (0..t.count()) |i| if (c.classOf(c.read(spec(t.kind).out, got, i)) != .finite) return null;
++        return "no planted non-finite output reached the consumer";
++    }
++    fn terms(t: *Test, p: usize, j: usize, part: usize, dst: []f64) void {
++        const k = t.shape.k;
++        const wr = ((p % E) * t.parts() + part) * t.shape.n + j;
++        const xr = if (isUp(t.kind)) p / E else p;
++        for (dst, 0..) |*v, i| {
++            const b = t.codes[wr * k / 2 + i / 2];
++            const nib = if (i % 2 == 0) b & 15 else b >> 4;
++            v.* = c.fromBf16(t.x[xr * k + i]) * core.quant.nvfp4.e2m1(nib) * core.quant.fp8.e4m3(t.scales[wr * k / 16 + i / 16]);
++        }
++    }
++    fn sums(t: *Test, acc: c.Accum, order: g.Order, out: []f64, mag: ?[]f64) !void {
++        const terms_ = try t.rig.gpu.gpa.alloc(f64, t.shape.k);
++        defer t.rig.gpu.gpa.free(terms_);
++        for (0..E * t.shape.rows) |p| for (0..t.shape.n) |j| {
++            var sums_: [2]f64 = @splat(0);
++            var magnitude: f64 = 0;
++            for (0..t.parts()) |part| {
++                t.terms(p, j, part, terms_);
++                sums_[part] = core.contract.rows.sumIn(acc, order, terms_) * t.globals[(p % E) * t.parts() + part];
++                for (terms_) |v| magnitude += @abs(v);
++            }
++            const v = sums_[0];
++            out[p * t.shape.n + j] = if (!isUp(t.kind)) v else if (isRelu(t.kind)) @max(v, 0) * @max(v, 0) else v / (1 + @exp(-v)) * sums_[1];
++            if (mag) |m| m[p * t.shape.n + j] = magnitude * (1 + @abs(v) + @abs(sums_[1]));
++        };
++    }
++    pub fn reference(t: *Test, want: []f64, mag: []f64) !void {
++        try t.sums(.none, .sequential, want, mag);
++    }
++    pub fn simulate(t: *Test, acc: c.Accum, order: g.Order, out: []f64) !void {
++        try t.sums(acc, order, out, null);
++    }
++};
++
++pub fn run(gpu: check_.Gpu) !void {
++    var stream = try cuda.Stream.init(gpu.d, false);
++    defer stream.deinit();
++    var tally: g.Tally = .{};
++    for ([_]usize{ 1, 4 }) |warps| {
++        var kernels = try X.loadWarps(gpu.d, @intCast(try gpu.ctx.attribute(.multiprocessor_count)), warps);
++        defer kernels.unload();
++        for (std.enums.values(Kind)) |kind| {
++            var t: Test = .{ .rig = .{ .gpu = gpu, .s = stream }, .kind = kind, .kernels = &kernels };
++            defer t.deinit();
++            try g.runAll(gpu.gpa, &.{t.kernel()}, 0x637366, &tally);
++        }
++    }
++    std.debug.print("SUMMARY separate NVFP4: {d} pass, {d} fail, {d} known; targeted gates, full runner required separately\n", .{ tally.passed, tally.failed, tally.known });
++    try check_.expect(tally.problems() == 0, "separate-storage contract failures", .{});
++}
+diff --git a/zig/tests/cuda/contract_tests.zig b/zig/tests/cuda/contract_tests.zig
+index cf8874a2..5c88e46b 100644
+--- a/zig/tests/cuda/contract_tests.zig
++++ b/zig/tests/cuda/contract_tests.zig
+@@ -63,7 +63,7 @@ const h3_image = struct {
+ pub fn image(name: []const u8) error{UnknownContractImage}![]const u8 {
+     if (@import("contract_deepseek_images.zig").image(name)) |bytes| return bytes;
+     if (std.mem.eql(u8, name, "h3")) return &h3_image.bytes;
+-    inline for (.{ "tree_round", "act_rows", "gdn_prep", "qk_rows", "norms", "moe", "experts", "qwen36_mtp", "nemotron_attention", "nemotron_route", "nemotron_latent", "qmm_group", "lane_gemv", "prompt16", "qmmf", "ck_experts", "rank_sum", "prefill_attention", "vit", "embed_rows", "route_rows", "flashnext_gdn", "flashnext_batch", "flashnext_hc", "flashnext_attn", "flashnext_mtp", "qwen_vision", "exl3_linear", "exl3_experts", "exl3_candidate", "experts3", "experts3_prefill", "drama3", "drama3_fp8", "drama3_codec", "glm_mm", "glm_dflash", "glm_glue", "nemotron_mamba", "sample", "qwen35", "qwen35_keep", "qwen35_kv8", "qwen35_draft", "ck_lane", "gdn_train", "train_q4", "train_attn", "flashnext_train", "train", "attn_train", "qwen27_train", "tree_attention", "block_attention", "window_attention", "moe_glue", "dense_rows", "qmm", "flashnext_fact", "flashnext_hcf", "flashnext_fexp", "experts_rows" }) |n| if (std.mem.eql(u8, name, n)) return @field(kk, n);
++    inline for (.{ "nvfp4_experts", "tree_round", "act_rows", "gdn_prep", "qk_rows", "norms", "moe", "experts", "qwen36_mtp", "nemotron_attention", "nemotron_route", "nemotron_latent", "qmm_group", "lane_gemv", "prompt16", "qmmf", "ck_experts", "rank_sum", "prefill_attention", "vit", "embed_rows", "route_rows", "flashnext_gdn", "flashnext_batch", "flashnext_hc", "flashnext_attn", "flashnext_mtp", "qwen_vision", "exl3_linear", "exl3_experts", "exl3_candidate", "experts3", "experts3_prefill", "drama3", "drama3_fp8", "drama3_codec", "glm_mm", "glm_dflash", "glm_glue", "nemotron_mamba", "sample", "qwen35", "qwen35_keep", "qwen35_kv8", "qwen35_draft", "ck_lane", "gdn_train", "train_q4", "train_attn", "flashnext_train", "train", "attn_train", "qwen27_train", "tree_attention", "block_attention", "window_attention", "moe_glue", "dense_rows", "qmm", "flashnext_fact", "flashnext_hcf", "flashnext_fexp", "experts_rows" }) |n| if (std.mem.eql(u8, name, n)) return @field(kk, n);
+     if (std.mem.eql(u8, name, "contract_controls")) return if (options.controls) &controls.bytes else &.{};
+     std.debug.print("FAIL kernel-contract: unknown image name: {s}\n", .{name});
+     return error.UnknownContractImage;
+@@ -420,6 +420,8 @@ pub fn run(gpu: check.Gpu) !void {
+     f32w_control.bf16_gamma = true;
+     defer f32w_control.deinit();
+     try kernels.append(a, f32w_control.kernel());
++    try @import("contract_nvfp4_separate.zig").run(gpu);
++    try @import("contract_csf32.zig").run(gpu);
+     var t: g.Tally = .{};
+     try @import("contract_dump.zig").run(a, kernels.items);
+     const t0 = check.now(gpu.io);
+diff --git a/zig/tests/cuda/glm_csf_materialize_gate.zig b/zig/tests/cuda/glm_csf_materialize_gate.zig
+new file mode 100644
+index 00000000..b64f2c4c
+--- /dev/null
++++ b/zig/tests/cuda/glm_csf_materialize_gate.zig
+@@ -0,0 +1,31 @@
++//! Every real resident-CSF layer expanded on GPU and compared with independently cut CPU checkpoint scales.
++const std = @import("std");
++const cuda = @import("cuda");
++const glm = @import("glm_cuda");
++const check = @import("check.zig");
++
++pub fn run(gpu: check.Gpu, m: *const glm.forward.Modules, stream: cuda.Stream, w: *const glm.weights.Weights, oracle: anytype) !void {
++    var matrices: usize = 0;
++    var bytes: usize = 0;
++    for (w.layers) |layer| {
++        if (layer.ffn != .moe) continue;
++        const l = layer.ffn.moe.routed;
++        if (l.up_csf == 0) continue;
++        for ([_]bool{ true, false }) |up| {
++            const want = try oracle.expected(layer.index, up);
++            defer gpu.gpa.free(want);
++            const ptr = if (up) l.up_blocks else l.down_blocks;
++            try cuda.nvfp4_csf32.expand(m.experts.nvfp4.separate.expand, stream, if (up) l.up_csf else l.down_csf, ptr, .{ .items = 0, .counts = 0, .members = 0, .rank = 0, .hist = 0 }, if (up) l.width else l.dims, if (up) l.dims else l.width, if (up) 2 else 1, l.experts, 0, true);
++            try stream.synchronize();
++            const got = try gpu.gpa.alloc(u8, want.len);
++            defer gpu.gpa.free(got);
++            try (cuda.DeviceBuffer{ .d = gpu.d, .ptr = ptr, .len = got.len }).download(0, got);
++            var label: [128]u8 = undefined;
++            try check.sameBytes(try std.fmt.bufPrint(&label, "CSF32 rank {d} layer {d} {s}", .{ w.share.rank, layer.index, if (up) "up" else "down" }), got, want);
++            matrices += l.experts * @as(usize, if (up) 2 else 1);
++            bytes += got.len;
++        }
++    }
++    try check.expect(matrices > 0, "no resident CSF32 matrices checked", .{});
++    std.debug.print("PASS CSF32 materialization rank {d}: {d} matrices, {d} expanded scale bytes match CPU/native oracle\n", .{ w.share.rank, matrices, bytes });
++}
+diff --git a/zig/tests/cuda/glm_csf_scale_oracle.zig b/zig/tests/cuda/glm_csf_scale_oracle.zig
+new file mode 100644
+index 00000000..0f736e88
+--- /dev/null
++++ b/zig/tests/cuda/glm_csf_scale_oracle.zig
+@@ -0,0 +1,40 @@
++//! Real checkpoint CPU scales in the legacy swizzle, without needlessly repacking all weight-code nibbles.
++const std = @import("std");
++const core = @import("core");
++const glm = @import("glm_cuda");
++
++pub fn reference(a: std.mem.Allocator, ck: *core.Checkpoint, c: *const glm.config.Config, share: glm.shard.Share, layer: u32, up: bool) ![]u8 {
++    const cut = share.moe;
++    const d: usize = c.hidden;
++    const n = if (up) cut.len() else d;
++    const k = if (up) d else cut.len();
++    const parts: usize = if (up) 2 else 1;
++    const nb = n / 32;
++    const kg = k / 32;
++    const decoded = try a.alloc(u8, c.moe_inter * d / 16);
++    defer a.free(decoded);
++    const out = try a.alloc(u8, c.experts * nb * kg * parts * 64);
++    errdefer a.free(out);
++    for (0..c.experts) |e| for (0..parts) |part| {
++        const proj = if (!up) "down_proj" else if (part == 0) "gate_proj" else "up_proj";
++        var name: [256]u8 = undefined;
++        const module = try std.fmt.bufPrint(&name, "model.language_model.layers.{d}.mlp.experts.{d}.{s}", .{ layer, e, proj });
++        const lin = try glm.weights.formats.csfLinear(ck, module, decoded);
++        writeMatrix(out[e * nb * kg * parts * 64 ..][0 .. nb * kg * parts * 64], decoded, lin.k / 16, if (up) cut.lo else 0, if (up) 0 else cut.lo / 16, n, k, parts, part);
++    };
++    return out;
++}
++
++/// The original packer's scale swizzle, applied to a rectangle of CPU-decoded checkpoint bytes.
++pub fn writeMatrix(out: []u8, decoded: []const u8, src_cols: usize, row_start: usize, col_start: usize, n: usize, k: usize, parts: usize, part: usize) void {
++    const nb = n / 32;
++    const kg = k / 32;
++    std.debug.assert(out.len == nb * kg * parts * 64 and part < parts);
++    for (0..nb) |cb| for (0..kg) |g| {
++        const dest = out[((cb * kg + g) * parts + part) * 64 ..][0..64];
++        for (0..4) |t| for (0..2) |h| for (0..4) |j| for (0..2) |col| {
++            const row = row_start + cb * 32 + j * 8 + t * 2 + col;
++            dest[((t * 2 + h) * 4 + j) * 2 + col] = decoded[row * src_cols + col_start + g * 2 + h];
++        };
++    };
++}
+diff --git a/zig/tests/cuda/glm_loader_gate.zig b/zig/tests/cuda/glm_loader_gate.zig
+index b2941b46..01857b8d 100644
+--- a/zig/tests/cuda/glm_loader_gate.zig
++++ b/zig/tests/cuda/glm_loader_gate.zig
+@@ -204,7 +204,9 @@ fn moe(p: *Plan, c: *const Config, s: glm.shard.Share, i: u32, what: []const u8)
+     } else if (eql(what, "bias")) {
+         try p.whole(at ++ "gate.e_score_correction_bias", .{i}, .f32);
+     } else if (eql(what, "experts.up") or eql(what, "experts.down")) {
+-        return expertsMade(p, c, s, i, eql(what, "experts.up"));
++        return expertsMade(p, c, s, i, eql(what, "experts.up"), false);
++    } else if (eql(what, "experts.up_blocks") or eql(what, "experts.down_blocks")) {
++        return expertsMade(p, c, s, i, eql(what, "experts.up_blocks"), true);
+     } else if (eql(what, "experts.up_scale") or eql(what, "experts.down_scale")) {
+         // the MTP layer's bf16 experts take the GPU quantizer's scales; W4A16_NVFP4 ones (FP4-Local's) keep their own
+         if (i == c.layers and !p.ck.has(try std.fmt.allocPrint(p.a, at ++ "experts.0.gate_proj.weight_scale_2", .{i}))) {
+@@ -282,7 +284,8 @@ fn denseMade(p: *Plan, c: *const Config, s: glm.shard.Share, i: u32, what: []con
+ }
+ 
+ /// The routed experts' tiles: gate and up by the rank's rows (packGateUp), down by its inputs (packOne).
+-fn expertsMade(p: *Plan, c: *const Config, s: glm.shard.Share, i: u32, up: bool) !Want {
++fn expertsMade(p: *Plan, c: *const Config, s: glm.shard.Share, i: u32, up: bool, scales_only: bool) !Want {
++    if (scales_only) return .{ .made = try @import("glm_csf_scale_oracle.zig").reference(p.gpa, p.ck, c, s, i, up) };
+     const at = P ++ "layers.{d}.mlp.experts.{d}.";
+     if (i == c.layers and (try p.ck.get(try std.fmt.allocPrint(p.a, at ++ "gate_proj.weight", .{ i, 0 }))).dtype == .bf16) {
+         return .{ .skip = "the GPU quantizer's, from the MTP layer's bf16 experts" };
+@@ -308,6 +311,15 @@ fn expertsMade(p: *Plan, c: *const Config, s: glm.shard.Share, i: u32, up: bool)
+         defer for (u) |b| p.gpa.free(b);
+         X.packGateUp(block, .{ g[0], g[1] }, .{ u[0], u[1] }, ni, d);
+     }
++    if (i < c.layers and cuda.sm120_tuning.scaleLayout() != 0) {
++        const width: usize = if (scales_only) 16 else 128;
++        const offset: usize = if (scales_only) 128 else 0;
++        const expected = try p.gpa.alloc(u8, out.len / 144 * width * 4);
++        for (0..out.len / 144) |tile| {
++            @memcpy(expected[tile * width * 4 ..][0 .. width * 4], std.mem.sliceAsBytes(out[tile * 144 + offset ..][0..width]));
++        }
++        return .{ .made = expected };
++    }
+     return .{ .made = try p.gpa.dupe(u8, std.mem.sliceAsBytes(out)) };
+ }
+ 
+@@ -436,6 +448,22 @@ fn bf16(v: f32) u16 {
+ /// What a run changes on purpose: one bit of upload `name`'s downloaded bytes; the copies changed and those caught.
+ const Tamper = struct { name: ?[]const u8, done: usize = 0, caught: usize = 0 };
+ 
++fn materialized(gpu: check.Gpu, a: std.mem.Allocator, ck: *core.Checkpoint, c: *const Config, s: glm.shard.Share, m: *const glm.forward.Modules, stream: cuda.Stream, w: *const glm.weights.Weights) !void {
++    const Oracle = struct {
++        gpu: check.Gpu,
++        arena: std.mem.Allocator,
++        ck: *core.Checkpoint,
++        c: *const Config,
++        share: glm.shard.Share,
++        pub fn expected(o: @This(), i: u32, up: bool) ![]u8 {
++            var p: Plan = .{ .a = o.arena, .gpa = o.gpu.gpa, .ck = o.ck };
++            const want = try expertsMade(&p, o.c, o.share, i, up, true);
++            return want.made;
++        }
++    };
++    try @import("glm_csf_materialize_gate.zig").run(gpu, m, stream, w, Oracle{ .gpu = gpu, .arena = a, .ck = ck, .c = c, .share = s });
++}
++
+ /// Rank `rank` of `world` loaded, each upload compared: how many differ or are not known, one more if none was.
+ fn rankGate(gpu: check.Gpu, a: std.mem.Allocator, ck: *core.Checkpoint, c: *const Config, m: *const glm.forward.Modules, stream: cuda.Stream, dir: []const u8, layers: []const u32, rank: usize, world: usize, tamper: *Tamper) !usize {
+     const s = try glm.shard.Share.of(c, rank, world);
+@@ -446,7 +474,11 @@ fn rankGate(gpu: check.Gpu, a: std.mem.Allocator, ck: *core.Checkpoint, c: *cons
+     var made: usize = 0;
+     var bytes: usize = 0;
+     var left: std.ArrayList([2][]const u8) = .empty;
++    if (cuda.sm120_tuning.scaleLayout() == 2) try materialized(gpu, a, ck, c, s, m, stream, &w);
+     for (w.named.items) |n| {
++        if (std.mem.endsWith(u8, n.name, ".csf_arena") or std.mem.endsWith(u8, n.name, ".up_csf") or
++            std.mem.endsWith(u8, n.name, ".down_csf")) continue; // contents checked by full materialization above
++
+         var p: Plan = .{ .a = a, .gpa = gpu.gpa, .ck = ck };
+         const how = plan(&p, c, s, n.name) catch |e| {
+             std.debug.print("FAIL TP={d} rank {d} {s}: {t}\n", .{ world, rank, n.name, e });
+diff --git a/zig/tests/cuda/main.zig b/zig/tests/cuda/main.zig
+index 3250f57e..680ab0be 100644
+--- a/zig/tests/cuda/main.zig
++++ b/zig/tests/cuda/main.zig
+@@ -299,6 +299,8 @@ fn run(gpu: check.Gpu, cmd: []const u8, rest: []const [:0]const u8) !void {
+     if (std.mem.eql(u8, cmd, "fp8-lane")) return fp8_tests.lane(gpu, try arg(rest, 0));
+     if (std.mem.eql(u8, cmd, "fp8-experts")) return fp8_experts_tests.experts(gpu, try arg(rest, 0));
+     if (std.mem.eql(u8, cmd, "nvfp4")) return nvfp4_tests.run(gpu, try arg(rest, 0));
++    if (std.mem.eql(u8, cmd, "csf32-contract")) return @import("contract_csf32.zig").run(gpu);
++    if (std.mem.eql(u8, cmd, "nvfp4-separate-contract")) return @import("contract_nvfp4_separate.zig").run(gpu);
+     if (std.mem.eql(u8, cmd, "nvfp4-experts")) return nvfp4_experts_tests.experts(gpu, try arg(rest, 0));
+     if (std.mem.eql(u8, cmd, "projection-f32")) return projection_f32_tests.run(gpu);
+     if (std.mem.eql(u8, cmd, "mxfp8")) return mxfp8_tests.run(gpu);

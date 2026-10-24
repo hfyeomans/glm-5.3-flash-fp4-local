@@ -1,0 +1,57 @@
+{
+  "candidate_tree": "b02cfca0f02235fa8f4b87c0ae921664a73d1807",
+  "parent_tree": "0c2bc6ddf016c0d96d63fbd7d1238b6355603578",
+  "full_suite_exit_code": 1,
+  "full_suite_devices": [
+    0
+  ],
+  "numerical_kernels_passed": 146,
+  "numerical_failures": 0,
+  "planted_controls_caught": 33,
+  "planted_controls_missed": 0,
+  "resource_record_problems": 949,
+  "static_table_problems": 885,
+  "live_record_mismatches": 64,
+  "live_mismatches_exceeding_observed_device_launch_limits": 0,
+  "parent_diagnostic_devices": [
+    0,
+    1
+  ],
+  "parent_counts": [
+    949,
+    949
+  ],
+  "parent_live_failure_lines_identical": true,
+  "new_launch_records_passed": [
+    "PASS limits live nvfp4_experts tf_nvfp4_csf32_expand: 128 threads launched, the driver allows 128; 40 registers, 0 + 0 shared bytes (recorded 40, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_down_bf16_w1: 32 threads launched, the driver allows 32; 94 registers, 0 + 0 shared bytes (recorded 94, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_down_bf16_w4: 128 threads launched, the driver allows 128; 94 registers, 0 + 0 shared bytes (recorded 94, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_down_f32_w1: 32 threads launched, the driver allows 32; 94 registers, 0 + 0 shared bytes (recorded 94, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_down_f32_w4: 128 threads launched, the driver allows 128; 94 registers, 0 + 0 shared bytes (recorded 94, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_prompt_down_w16: 512 threads launched, the driver allows 512; 127 registers, 0 + 53248 shared bytes (recorded 127, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_prompt_down_w8: 256 threads launched, the driver allows 256; 128 registers, 0 + 34816 shared bytes (recorded 128, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_prompt_relu2_w8: 256 threads launched, the driver allows 256; 128 registers, 0 + 34816 shared bytes (recorded 128, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_prompt_up_w4: 128 threads launched, the driver allows 128; 254 registers, 0 + 34816 shared bytes (recorded 254, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_prompt_up_w8: 256 threads launched, the driver allows 256; 252 registers, 0 + 53248 shared bytes (recorded 252, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_relu2_w1: 32 threads launched, the driver allows 32; 94 registers, 0 + 0 shared bytes (recorded 94, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_relu2_w4: 128 threads launched, the driver allows 128; 94 registers, 0 + 0 shared bytes (recorded 94, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_up_w1: 32 threads launched, the driver allows 32; 126 registers, 0 + 0 shared bytes (recorded 126, 0)",
+    "PASS limits live nvfp4_experts tf_nvfp4_separate_up_w4: 128 threads launched, the driver allows 128; 126 registers, 0 + 0 shared bytes (recorded 126, 0)"
+  ],
+  "parent_diagnostic_binary_sha256": "801060ce3252b1b2638838c397133153e478a4145037ec12a5d1e890a3be8c77",
+  "logs": [
+    {
+      "path": "logs/csf-resident-v1/full-kernel-contract-both-v2.log",
+      "sha256": "69949354a7095f6cce60b456c72f38f919fcd4943c583fb02ecca71e32f953b3"
+    },
+    {
+      "path": "logs/csf-resident-v1/limits-parent-both.log",
+      "sha256": "06122d3a48bf578e1d0198e02420b89b44cc24b5011977e6f49cba44aa2c86e0"
+    },
+    {
+      "path": "logs/csf-resident-v1/limits-diagnostic-only.patch",
+      "sha256": "401eefd00ef62920e2d9564f6db4930b84926719be77526d7147d0052603ec21"
+    }
+  ],
+  "limits": "The full suite is not a pass: its existing resource records remain incomplete/stale. GPU1 full numerical suite was not reached after GPU0 exited 1; all new operator contracts and all-layer loader audits ran separately on both devices. The parent diagnostic calls existing live() only, preserving the parent registry and kernels; its exit zero merely means the diagnostic completed. Counts and exact failure lines are compared explicitly."
+}

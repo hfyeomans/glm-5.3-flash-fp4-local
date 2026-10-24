@@ -22,7 +22,7 @@ Model: `nvidia/GLM-5.3-Flash-FP4-Local@76348ddb2be2e35e39ecfc00e75dc07703f4f3d5`
 | PDL and KDA | Retain supported BF16 PDL and wide KDA decode | PDL-off showed no clear gain; narrow KDA lost roughly 1.3–2% decode. |
 | Collectives / allocation | Retain split prefill reduction, NCCL cuMem flags off | Gather lost 6.5–6.8% prefill; ring and cuMem variants showed no compelling benefit. cuMem flags select allocation mechanisms, not extra VRAM. |
 | Embedding placement | Optional immutable BF16 mapped-host embedding in a separate image | Saves 1,208 MiB/GPU; roughly 1.11–1.29% prefill cost in screening, decode approximately unchanged. Capacity tradeoff, not default placement or quantization. |
-| Resident CSF32 | Proposed only | PR loader currently expands on CPU. New accounting and loader/kernel plan below; no GPU-resident implementation or 1M success claim. |
+| Resident CSF32 | Implemented in a separate local experiment; served qualification in progress | Exact GPU reconstruction passed for all routed matrices on both ranks. Requested net saving 3.81765 GiB/rank; runtime headroom and 1M inference still pending. |
 
 Screening covered 18 fresh configurations: two controls and 16 candidates, 144 measured timing requests plus 72 excluded warmups. Small percentages in the initial screen are not causal gains; retained overlap received a separate control–candidate–control confirmation. Automatic clocks/temperatures varied and were recorded. The full [tuning results](TUNING-RESULTS.md) preserve rejected candidates and limitations.
 
@@ -40,7 +40,7 @@ Local history separates `7e06307` (one-warp adoption), `ba1a549` (isolated sourc
 - The combined profile's fixed-history comparison covered 1,439 positions: zero top-one flips and zero target-token log-probability difference. See [probability receipt](results/host-embedding-probabilities-v1.json).
 - Normal-cache tests at 3,648/7,993 input tokens matched cold/warm and MTP/plain output hashes. The final shared 2K–64K refresh matched all 48 original native responses, including warmups and both MTP modes.
 - Mapped embedding plus four-piece overlap passed retrieval at 261,888 and 524,027 actual prompt tokens, MTP on/off, with all three markers and identical outputs. The 512K configuration left 1,547/1,700 MiB sampled free. This does not qualify broad long-context reasoning or multiple active slots.
-- The old device-embedding 1M configuration failed allocation. A new compressed-resident 1M configuration has not been implemented or run.
+- The old device-embedding 1M configuration failed allocation. A new compressed-resident implementation is built; 1M inference has not yet been qualified.
 
 Portable evidence: [decode](results/decode-warps-v1.json), [screen](results/served-screen-v1.json), [overlap confirmation](results/overlap4-confirmation-v1.json), [normal quality](results/overlap4-quality-v1.json), [normal cache](results/overlap4-cache-v1.json), [mapped quality](results/host-embedding-quality-v1.json), [capacity](results/host-embedding-capacity-v1.json). The chronological [validation record](../docs/VALIDATION.md) includes actual GPU checks and failures; raw local logs remain outside Git.
 
@@ -62,3 +62,9 @@ The [compressed-scale plan](COMPRESSED-SCALES-PLAN.md) proposes codes-only persi
 Questions for eventual maintainer coordination: preferred descriptor/owner boundary; scratch lifetime across native stream modes; supported TP slicing envelope; whether storage separation should land independently; required platforms and performance gates. These are topics for a later authorized upstream discussion, not requests already sent.
 
 As checked on 2026-10-24, PR #1050 is still open and GitHub reports merge conflicts against current main. Refresh that state and coordinate with its author before rebasing or proposing an upstream change. No public posting, issue claim, merge or release was performed.
+
+## Resident-scale implementation record
+
+The [separate recipe](csf-resident/README.md) adds compact TP slices, typed GPU descriptors, shared expansion scratch, codes-only consumers and native contract tests. It extends the credited PR integration and the earlier mapped-embedding/tuning patch. The [loader receipt](results/csf-resident-loader-v1.json) records actual payload allocations, exact scale reconstruction and explicit draft-head exclusions. The original planning estimates above are preserved for comparison. Normal defaults remain legacy storage; this is an opt-in one-slot TP2 experiment.
+
+A pinned vLLM source audit also found hybrid A4 prefill enabled by the supplied flags. That is a separate arithmetic choice from TensorFold's W4A16 expert path; see [precision notes](../docs/PRECISION-AND-QUALITY.md). No timing ablation attributes the full cross-engine gap to this policy.

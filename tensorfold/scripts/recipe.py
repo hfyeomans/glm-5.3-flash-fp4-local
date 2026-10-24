@@ -31,7 +31,7 @@ DEFAULTS = {
     'TF_NVFP4_DECODE_WARPS': '1',
     'TF_PATCH_SHA256': '', 'TF_TUNED_TREE': '',
     'TF_TUNE_PREFILL_UP': '4', 'TF_TUNE_PREFILL_DOWN': '8',
-    'TF_TUNE_SPLIT_TARGET': '192', 'TF_TUNE_HOST_EMBED': '0',
+    'TF_TUNE_SPLIT_TARGET': '192', 'TF_TUNE_HOST_EMBED': '0', 'TF_TUNE_SCALE_LAYOUT': '0',
     'TF_GLM_OVERLAP_PIECES': '4', 'TF_GLM_PDL': '1', 'TF_GLM_PROMPT_K': 'one',
     'TF_GLM_KDA_DECODE_WIDE': '1', 'TF_GLM_PREFILL_REDUCE': 'split',
     'NCCL_CUMEM_ENABLE': '0', 'NCCL_CUMEM_HOST_ENABLE': '0',
@@ -72,7 +72,7 @@ def config(path=None, environ=None):
     if result['TF_NVFP4_DECODE_WARPS'] not in ('1', '4'):
         raise ValueError('TF_NVFP4_DECODE_WARPS must be 1 or 4')
     choices = {'TF_TUNE_PREFILL_UP': ('4', '8'), 'TF_TUNE_PREFILL_DOWN': ('8', '16'),
-               'TF_TUNE_SPLIT_TARGET': ('192', '384', '768'), 'TF_TUNE_HOST_EMBED': ('0', '1'),
+               'TF_TUNE_SPLIT_TARGET': ('192', '384', '768'), 'TF_TUNE_HOST_EMBED': ('0', '1'), 'TF_TUNE_SCALE_LAYOUT': ('0', '1', '2'),
                'TF_GLM_PDL': ('0', '1'), 'TF_GLM_PROMPT_K': ('one', 'shape'),
                'TF_GLM_KDA_DECODE_WIDE': ('0', '1'), 'TF_GLM_PREFILL_REDUCE': ('split', 'ring', 'gather'),
                'NCCL_CUMEM_ENABLE': ('0', '1'), 'NCCL_CUMEM_HOST_ENABLE': ('0', '1'),
@@ -85,8 +85,10 @@ def config(path=None, environ=None):
     if result['TF_PATCH_SHA256']:
         if not re.fullmatch(r'[0-9a-f]{64}', result['TF_PATCH_SHA256']) or not re.fullmatch(r'[0-9a-f]{40}', result['TF_TUNED_TREE']):
             raise ValueError('Invalid experimental patch or source-tree hash')
-    elif any(result[k] != DEFAULTS[k] for k in ('TF_TUNE_PREFILL_UP', 'TF_TUNE_PREFILL_DOWN', 'TF_TUNE_SPLIT_TARGET', 'TF_TUNE_HOST_EMBED')):
+    elif any(result[k] != DEFAULTS[k] for k in ('TF_TUNE_PREFILL_UP', 'TF_TUNE_PREFILL_DOWN', 'TF_TUNE_SPLIT_TARGET', 'TF_TUNE_HOST_EMBED', 'TF_TUNE_SCALE_LAYOUT')):
         raise ValueError('Non-default local tuning requires a pinned experimental image')
+    if result['TF_TUNE_SCALE_LAYOUT'] == '2' and result['TF_PARALLEL'] != '1':
+        raise ValueError('Resident CSF32 is currently supports only single-slot experiments')
     if int(result['TF_PORT']) in (int(result['TF_COMM_PORT']), int(result['TF_COMM_PORT']) + 1):
         raise ValueError('HTTP, NCCL and NCCL watchdog ports must be distinct')
     if not re.fullmatch(r'\d+,\d+', result['TF_GPUS']) or len(set(result['TF_GPUS'].split(','))) != 2:
@@ -127,6 +129,10 @@ def image(c):
         raise ValueError('Experimental patch identity differs; the qualified image is separate')
     if c['TF_PATCH_SHA256'] and labels.get('lab.glm53.tensorfold.base_tree') != MERGED_TREE:
         raise ValueError('Experimental image does not start from the pinned merged source')
+    if c['TF_TUNE_SCALE_LAYOUT'] != '0' and labels.get('lab.glm53.tensorfold.scale_layout') not in ('1', '2'):
+        raise ValueError('Image lacks the pinned scale-layout implementation')
+    if c['TF_TUNE_SCALE_LAYOUT'] == '2' and labels.get('lab.glm53.tensorfold.scale_layout') != '2':
+        raise ValueError('Image lacks resident CSF32 implementation')
     return data['Id']
 
 
@@ -242,7 +248,7 @@ def launch(c, m, image_id):
     for k in ('TF_HOST', 'TF_PORT', 'TF_COMM_PORT', 'TF_CONTEXT', 'TF_PARALLEL', 'TF_MODEL_NAME',
               'TF_PROMPT_CACHE_GIB', 'TF_MEMORY_RESERVE_GIB', 'TF_PROFILE', 'TF_NCCL_DEBUG',
               'TF_NVFP4_DECODE_WARPS', 'TF_TUNE_PREFILL_UP', 'TF_TUNE_PREFILL_DOWN',
-              'TF_TUNE_SPLIT_TARGET', 'TF_TUNE_HOST_EMBED', 'TF_GLM_OVERLAP_PIECES',
+              'TF_TUNE_SPLIT_TARGET', 'TF_TUNE_HOST_EMBED', 'TF_TUNE_SCALE_LAYOUT', 'TF_GLM_OVERLAP_PIECES',
               'TF_GLM_PDL', 'TF_GLM_PROMPT_K', 'TF_GLM_KDA_DECODE_WIDE',
               'TF_GLM_PREFILL_REDUCE', 'NCCL_CUMEM_ENABLE', 'NCCL_CUMEM_HOST_ENABLE'):
         args += ['-e', f'{k}={c[k]}']
@@ -254,15 +260,21 @@ def gpu_checks(c, m, ident):
     folder = ROOT / 'logs/tensorfold' / datetime.now(timezone.utc).strftime('gpu-check-%Y%m%dT%H%M%SZ')
     folder.mkdir(parents=True, exist_ok=False)
     results = []
+    cases = ('info', 'glm-ref', 'quant-ref', 'mxfp8', 'projection-f32')
+    if c['TF_TUNE_SCALE_LAYOUT'] != '0':
+        cases += ('nvfp4-separate-contract',)
+    if c['TF_TUNE_SCALE_LAYOUT'] == '2':
+        cases += ('csf32-contract',)
+    cases += ('glm-loader-gate',)
     for rank, device in enumerate(c['TF_GPUS'].split(',')):
-        for case in ('info', 'glm-ref', 'quant-ref', 'mxfp8', 'projection-f32', 'glm-loader-gate'):
+        for case in cases:
             name = c['TF_CONTAINER'] + '-check'
             args = ['docker', 'run', '--rm', '--name', name, '--init', '--network', 'none',
                     '--gpus', 'device=' + device, '--ipc', 'host', '--shm-size', '32g',
                     '--ulimit', 'memlock=-1', '--ulimit', 'stack=67108864:67108864',
                     '--label', f'{LABEL}={HERE}', *mount(m),
                     '-e', f'TF_NVFP4_DECODE_WARPS={c["TF_NVFP4_DECODE_WARPS"]}',
-                    *sum((['-e', f'{key}={c[key]}'] for key in ('TF_TUNE_PREFILL_UP', 'TF_TUNE_PREFILL_DOWN', 'TF_TUNE_SPLIT_TARGET', 'TF_TUNE_HOST_EMBED', 'TF_GLM_PDL')), []),
+                    *sum((['-e', f'{key}={c[key]}'] for key in ('TF_TUNE_PREFILL_UP', 'TF_TUNE_PREFILL_DOWN', 'TF_TUNE_SPLIT_TARGET', 'TF_TUNE_HOST_EMBED', 'TF_TUNE_SCALE_LAYOUT', 'TF_GLM_PDL')), []),
                     '-e', 'TF_GATE_WORLDS=2', '-e', f'TF_GATE_RANKS={rank}',
                     '-e', 'TF_GATE_LAYERS=0,3,4,43,44',
                     '--entrypoint', '/opt/tensorfold/bin/tf-cuda-test', ident, case]

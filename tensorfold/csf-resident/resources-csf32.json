@@ -1,0 +1,40 @@
+{
+  "nvcc": "13.3",
+  "tf_nvfp4_csf32_expand": {
+    "80": {
+      "regs": 31,
+      "stack": 0,
+      "static": 0,
+      "local": 0,
+      "bound": 128
+    },
+    "86": {
+      "regs": 40,
+      "stack": 0,
+      "static": 0,
+      "local": 0,
+      "bound": 128
+    },
+    "89": {
+      "regs": 40,
+      "stack": 0,
+      "static": 0,
+      "local": 0,
+      "bound": 128
+    },
+    "120": {
+      "regs": 40,
+      "stack": 0,
+      "static": 0,
+      "local": 0,
+      "bound": 128
+    },
+    "121": {
+      "regs": 40,
+      "stack": 0,
+      "static": 0,
+      "local": 0,
+      "bound": 128
+    }
+  }
+}

@@ -1,0 +1,555 @@
+{
+  "model_id": "nvidia/GLM-5.3-Flash-FP4-Local",
+  "revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+  "source_tree": "b02cfca0f02235fa8f4b87c0ae921664a73d1807",
+  "patch_sha256": "567b5953034033ed5432fc31255149c9315d5e7fc93e1aaaffbc2f05c5d46905",
+  "binary_sha256": "166aed0bcbc2037661f7936f98c12868fe72ae00865cdd1a927634494f2ae852",
+  "ranks": [
+    {
+      "rank": 0,
+      "scratch_bytes": 226492416,
+      "layers": [
+        {
+          "layer": 3,
+          "codes": 1811939328,
+          "compressed_arena": 123517640,
+          "descriptors": 34560
+        },
+        {
+          "layer": 4,
+          "codes": 1811939328,
+          "compressed_arena": 123481644,
+          "descriptors": 34560
+        },
+        {
+          "layer": 5,
+          "codes": 1811939328,
+          "compressed_arena": 123470178,
+          "descriptors": 34560
+        },
+        {
+          "layer": 6,
+          "codes": 1811939328,
+          "compressed_arena": 123472958,
+          "descriptors": 34560
+        },
+        {
+          "layer": 7,
+          "codes": 1811939328,
+          "compressed_arena": 123488268,
+          "descriptors": 34560
+        },
+        {
+          "layer": 8,
+          "codes": 1811939328,
+          "compressed_arena": 123494632,
+          "descriptors": 34560
+        },
+        {
+          "layer": 9,
+          "codes": 1811939328,
+          "compressed_arena": 123489394,
+          "descriptors": 34560
+        },
+        {
+          "layer": 10,
+          "codes": 1811939328,
+          "compressed_arena": 123482854,
+          "descriptors": 34560
+        },
+        {
+          "layer": 11,
+          "codes": 1811939328,
+          "compressed_arena": 123487598,
+          "descriptors": 34560
+        },
+        {
+          "layer": 12,
+          "codes": 1811939328,
+          "compressed_arena": 123476180,
+          "descriptors": 34560
+        },
+        {
+          "layer": 13,
+          "codes": 1811939328,
+          "compressed_arena": 123478508,
+          "descriptors": 34560
+        },
+        {
+          "layer": 14,
+          "codes": 1811939328,
+          "compressed_arena": 123450782,
+          "descriptors": 34560
+        },
+        {
+          "layer": 15,
+          "codes": 1811939328,
+          "compressed_arena": 123435786,
+          "descriptors": 34560
+        },
+        {
+          "layer": 16,
+          "codes": 1811939328,
+          "compressed_arena": 123437938,
+          "descriptors": 34560
+        },
+        {
+          "layer": 17,
+          "codes": 1811939328,
+          "compressed_arena": 123433172,
+          "descriptors": 34560
+        },
+        {
+          "layer": 18,
+          "codes": 1811939328,
+          "compressed_arena": 123445092,
+          "descriptors": 34560
+        },
+        {
+          "layer": 19,
+          "codes": 1811939328,
+          "compressed_arena": 123438100,
+          "descriptors": 34560
+        },
+        {
+          "layer": 20,
+          "codes": 1811939328,
+          "compressed_arena": 123460788,
+          "descriptors": 34560
+        },
+        {
+          "layer": 21,
+          "codes": 1811939328,
+          "compressed_arena": 123444092,
+          "descriptors": 34560
+        },
+        {
+          "layer": 22,
+          "codes": 1811939328,
+          "compressed_arena": 123429956,
+          "descriptors": 34560
+        },
+        {
+          "layer": 23,
+          "codes": 1811939328,
+          "compressed_arena": 123445648,
+          "descriptors": 34560
+        },
+        {
+          "layer": 24,
+          "codes": 1811939328,
+          "compressed_arena": 123422914,
+          "descriptors": 34560
+        },
+        {
+          "layer": 25,
+          "codes": 1811939328,
+          "compressed_arena": 123430194,
+          "descriptors": 34560
+        },
+        {
+          "layer": 26,
+          "codes": 1811939328,
+          "compressed_arena": 123426404,
+          "descriptors": 34560
+        },
+        {
+          "layer": 27,
+          "codes": 1811939328,
+          "compressed_arena": 123429806,
+          "descriptors": 34560
+        },
+        {
+          "layer": 28,
+          "codes": 1811939328,
+          "compressed_arena": 123429392,
+          "descriptors": 34560
+        },
+        {
+          "layer": 29,
+          "codes": 1811939328,
+          "compressed_arena": 123433442,
+          "descriptors": 34560
+        },
+        {
+          "layer": 30,
+          "codes": 1811939328,
+          "compressed_arena": 123428932,
+          "descriptors": 34560
+        },
+        {
+          "layer": 31,
+          "codes": 1811939328,
+          "compressed_arena": 123436202,
+          "descriptors": 34560
+        },
+        {
+          "layer": 32,
+          "codes": 1811939328,
+          "compressed_arena": 123431696,
+          "descriptors": 34560
+        },
+        {
+          "layer": 33,
+          "codes": 1811939328,
+          "compressed_arena": 123434362,
+          "descriptors": 34560
+        },
+        {
+          "layer": 34,
+          "codes": 1811939328,
+          "compressed_arena": 123431354,
+          "descriptors": 34560
+        },
+        {
+          "layer": 35,
+          "codes": 1811939328,
+          "compressed_arena": 123434922,
+          "descriptors": 34560
+        },
+        {
+          "layer": 36,
+          "codes": 1811939328,
+          "compressed_arena": 123443442,
+          "descriptors": 34560
+        },
+        {
+          "layer": 37,
+          "codes": 1811939328,
+          "compressed_arena": 123439868,
+          "descriptors": 34560
+        },
+        {
+          "layer": 38,
+          "codes": 1811939328,
+          "compressed_arena": 123444728,
+          "descriptors": 34560
+        },
+        {
+          "layer": 39,
+          "codes": 1811939328,
+          "compressed_arena": 123447574,
+          "descriptors": 34560
+        },
+        {
+          "layer": 40,
+          "codes": 1811939328,
+          "compressed_arena": 123465760,
+          "descriptors": 34560
+        },
+        {
+          "layer": 41,
+          "codes": 1811939328,
+          "compressed_arena": 123481732,
+          "descriptors": 34560
+        },
+        {
+          "layer": 42,
+          "codes": 1811939328,
+          "compressed_arena": 123514266,
+          "descriptors": 34560
+        },
+        {
+          "layer": 43,
+          "codes": 1811939328,
+          "compressed_arena": 123547188,
+          "descriptors": 34560
+        },
+        {
+          "layer": 44,
+          "codes": 1811939328,
+          "compressed_arena": 123851840,
+          "descriptors": 34560
+        }
+      ],
+      "matrices": 36288,
+      "decoded_scale_bytes": 9512681472,
+      "totals": {
+        "codes": 76101451776,
+        "compressed_arena": 5185567226,
+        "descriptors": 1451520
+      },
+      "net_requested_scale_storage_saving_bytes": 4099170310
+    },
+    {
+      "rank": 1,
+      "scratch_bytes": 226492416,
+      "layers": [
+        {
+          "layer": 3,
+          "codes": 1811939328,
+          "compressed_arena": 123514096,
+          "descriptors": 34560
+        },
+        {
+          "layer": 4,
+          "codes": 1811939328,
+          "compressed_arena": 123483966,
+          "descriptors": 34560
+        },
+        {
+          "layer": 5,
+          "codes": 1811939328,
+          "compressed_arena": 123471052,
+          "descriptors": 34560
+        },
+        {
+          "layer": 6,
+          "codes": 1811939328,
+          "compressed_arena": 123474552,
+          "descriptors": 34560
+        },
+        {
+          "layer": 7,
+          "codes": 1811939328,
+          "compressed_arena": 123493974,
+          "descriptors": 34560
+        },
+        {
+          "layer": 8,
+          "codes": 1811939328,
+          "compressed_arena": 123491114,
+          "descriptors": 34560
+        },
+        {
+          "layer": 9,
+          "codes": 1811939328,
+          "compressed_arena": 123489302,
+          "descriptors": 34560
+        },
+        {
+          "layer": 10,
+          "codes": 1811939328,
+          "compressed_arena": 123481908,
+          "descriptors": 34560
+        },
+        {
+          "layer": 11,
+          "codes": 1811939328,
+          "compressed_arena": 123487598,
+          "descriptors": 34560
+        },
+        {
+          "layer": 12,
+          "codes": 1811939328,
+          "compressed_arena": 123478396,
+          "descriptors": 34560
+        },
+        {
+          "layer": 13,
+          "codes": 1811939328,
+          "compressed_arena": 123477080,
+          "descriptors": 34560
+        },
+        {
+          "layer": 14,
+          "codes": 1811939328,
+          "compressed_arena": 123450444,
+          "descriptors": 34560
+        },
+        {
+          "layer": 15,
+          "codes": 1811939328,
+          "compressed_arena": 123438460,
+          "descriptors": 34560
+        },
+        {
+          "layer": 16,
+          "codes": 1811939328,
+          "compressed_arena": 123437880,
+          "descriptors": 34560
+        },
+        {
+          "layer": 17,
+          "codes": 1811939328,
+          "compressed_arena": 123434622,
+          "descriptors": 34560
+        },
+        {
+          "layer": 18,
+          "codes": 1811939328,
+          "compressed_arena": 123443800,
+          "descriptors": 34560
+        },
+        {
+          "layer": 19,
+          "codes": 1811939328,
+          "compressed_arena": 123434666,
+          "descriptors": 34560
+        },
+        {
+          "layer": 20,
+          "codes": 1811939328,
+          "compressed_arena": 123463080,
+          "descriptors": 34560
+        },
+        {
+          "layer": 21,
+          "codes": 1811939328,
+          "compressed_arena": 123443116,
+          "descriptors": 34560
+        },
+        {
+          "layer": 22,
+          "codes": 1811939328,
+          "compressed_arena": 123428480,
+          "descriptors": 34560
+        },
+        {
+          "layer": 23,
+          "codes": 1811939328,
+          "compressed_arena": 123440370,
+          "descriptors": 34560
+        },
+        {
+          "layer": 24,
+          "codes": 1811939328,
+          "compressed_arena": 123422480,
+          "descriptors": 34560
+        },
+        {
+          "layer": 25,
+          "codes": 1811939328,
+          "compressed_arena": 123430078,
+          "descriptors": 34560
+        },
+        {
+          "layer": 26,
+          "codes": 1811939328,
+          "compressed_arena": 123425192,
+          "descriptors": 34560
+        },
+        {
+          "layer": 27,
+          "codes": 1811939328,
+          "compressed_arena": 123429364,
+          "descriptors": 34560
+        },
+        {
+          "layer": 28,
+          "codes": 1811939328,
+          "compressed_arena": 123427580,
+          "descriptors": 34560
+        },
+        {
+          "layer": 29,
+          "codes": 1811939328,
+          "compressed_arena": 123432496,
+          "descriptors": 34560
+        },
+        {
+          "layer": 30,
+          "codes": 1811939328,
+          "compressed_arena": 123429978,
+          "descriptors": 34560
+        },
+        {
+          "layer": 31,
+          "codes": 1811939328,
+          "compressed_arena": 123436834,
+          "descriptors": 34560
+        },
+        {
+          "layer": 32,
+          "codes": 1811939328,
+          "compressed_arena": 123430858,
+          "descriptors": 34560
+        },
+        {
+          "layer": 33,
+          "codes": 1811939328,
+          "compressed_arena": 123434484,
+          "descriptors": 34560
+        },
+        {
+          "layer": 34,
+          "codes": 1811939328,
+          "compressed_arena": 123431736,
+          "descriptors": 34560
+        },
+        {
+          "layer": 35,
+          "codes": 1811939328,
+          "compressed_arena": 123435946,
+          "descriptors": 34560
+        },
+        {
+          "layer": 36,
+          "codes": 1811939328,
+          "compressed_arena": 123445622,
+          "descriptors": 34560
+        },
+        {
+          "layer": 37,
+          "codes": 1811939328,
+          "compressed_arena": 123443604,
+          "descriptors": 34560
+        },
+        {
+          "layer": 38,
+          "codes": 1811939328,
+          "compressed_arena": 123445058,
+          "descriptors": 34560
+        },
+        {
+          "layer": 39,
+          "codes": 1811939328,
+          "compressed_arena": 123442814,
+          "descriptors": 34560
+        },
+        {
+          "layer": 40,
+          "codes": 1811939328,
+          "compressed_arena": 123464784,
+          "descriptors": 34560
+        },
+        {
+          "layer": 41,
+          "codes": 1811939328,
+          "compressed_arena": 123479336,
+          "descriptors": 34560
+        },
+        {
+          "layer": 42,
+          "codes": 1811939328,
+          "compressed_arena": 123514048,
+          "descriptors": 34560
+        },
+        {
+          "layer": 43,
+          "codes": 1811939328,
+          "compressed_arena": 123536826,
+          "descriptors": 34560
+        },
+        {
+          "layer": 44,
+          "codes": 1811939328,
+          "compressed_arena": 123843972,
+          "descriptors": 34560
+        }
+      ],
+      "matrices": 36288,
+      "decoded_scale_bytes": 9512681472,
+      "totals": {
+        "codes": 76101451776,
+        "compressed_arena": 5185541046,
+        "descriptors": 1451520
+      },
+      "net_requested_scale_storage_saving_bytes": 4099196490
+    }
+  ],
+  "gpu_audit_exit_code": 0,
+  "limits": [
+    "Requested bytes are not physical allocator use, loading peak or 1M inference proof.",
+    "All compressed arenas/descriptors were validated by complete GPU materialization against a CPU checkpoint oracle.",
+    "The existing loader gate excludes three GPU-quantized draft-head uploads per rank; no new precision claim for those tensors.",
+    "Other GPU architectures are unrun. This read-only loader audit does not substitute for served-model quality checks."
+  ],
+  "evidence_sha256": {
+    "logs/csf-resident-v1/resident-loader-full-both.log": "4ade995b176ff8f94f50abea4fc7e375c38366a37e99bd68d692a7528b4ba9c5",
+    "logs/csf-resident-v1/native-layout-contract-v3.log": "624be54cb478a9f057c5fe5aa25139c63b9d27f4ea963fc04ce61778b4171a66",
+    "logs/csf-resident-v1/csf32-contract-both.log": "60b0cb50c36d068bf58958971fa4bda113e41f572d89f65078aecf1020177c6d",
+    "logs/csf-resident-v1/upstream-host-checks.log": "c404d03f1730fc40364d0dce6f05b6c9199640d5ff6ddd35f218517ec16a6655",
+    "logs/csf-resident-v1/upstream-plain-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

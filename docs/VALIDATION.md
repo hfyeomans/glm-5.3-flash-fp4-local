@@ -578,3 +578,72 @@ zero restarts, image `sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8
 and passing readiness/model identity. No service restart, new GPU inference,
 checkpoint write, power/clock change or engine configuration change occurred
 in this research step.
+
+
+## 2026-10-24 — resident CSF32 implementation, loader/operator gates
+
+The user authorized local implementation and GPU testing and stopping this recipe's
+vLLM container. `glm53-fp4-tp2` is stopped and preserved; no unrelated container,
+clock/power setting, checkpoint, vLLM parameter or normal TensorFold image changed.
+
+Experimental source tree `b02cfca0f02235fa8f4b87c0ae921664a73d1807`, patch
+`567b5953034033ed5432fc31255149c9315d5e7fc93e1aaaffbc2f05c5d46905`, image
+`sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f`.
+It builds on tuned tree `0c2bc6ddf016c0d96d63fbd7d1238b6355603578`; exact
+NVIDIA revision and compressed-scale format are unchanged.
+
+Completed evidence (raw logs under `logs/csf-resident-v1/`):
+
+- Separate-layout contract: 14/14 cases on each SM120 GPU, including five identical
+  repeats, guards, unchanged inputs and FP64/FP32 accumulation stress gates.
+- CSF32 integer expansion: nine shapes per GPU, exact bytes, all 256 byte encodings,
+  active/duplicate/empty grouped plans and scratch reuse.
+- Real checkpoint loader: each rank's 36,288 matrices / 9,512,681,472 expanded scale
+  bytes matched the CPU legacy oracle. All 42 routed layers audited on both ranks.
+  Per rank, 1,380 non-CSF raw uploads (80,455 MiB) also matched. The three existing
+  draft-head GPU quantizer upload exclusions remain explicit, not counted as passes.
+- Mode-1 separated expanded storage: all 1,464 raw uploads / 89,527 MiB per rank
+  matched. This mode isolates layout and saves no scale payload memory.
+- Host slicing/ABI tests; upstream `test`, `test-kernel-contract`, `test-golden`,
+  `fuzz-cortheon`; separate plain build: all exit zero. Negative-fixture output is
+  intentional. Lean: 438 inherited findings in both trees, zero new findings.
+- Final experimental Docker build succeeded; source and patch identities checked.
+  Recipe checks passed 46 tests at this stage.
+
+The [portable loader receipt](../tensorfold/results/csf-resident-loader-v1.json)
+records source/binary/log hashes and the per-layer allocation ledger. Net requested
+saving is 3.817650/3.817674 GiB per rank, after descriptors, alignment and 216 MiB
+scratch. Physical allocator/request peaks and near-1M inference are not established
+by this byte audit. Full GPU contract and served tests follow as separate evidence.
+
+Preserved failed attempts: a test callback lifetime bug (fixed by static callback
+storage), a weak down-projection accumulation stress fixture (strengthened inputs,
+unchanged gate), and a full-suite prebuilt-assets invocation missing an unrelated H3
+image (rebuilt with complete assets). None is silently counted as a passing run.
+
+
+### Resident scales: full contract and served quality
+
+The full CUDA suite on GPU0 passed 146/146 numerical kernels, all 33 planted
+controls, and its additional gradient/operator checks. It **exited 1**, reporting
+885 static-table problems and 64 stale live resource records. All live launches
+still fit the device's observed thread/shared-memory limits. An isolated parent-tree
+diagnostic reproduced all 949 problems on each GPU, with identical live failure
+lines; the 14 added launch records passed. The full numerical suite on GPU1 was not
+reached because the original command used `&&`. New operator contracts and real
+loader audits independently passed on both GPUs. This is not a clean full upstream
+release qualification. See [contract receipt](../tensorfold/results/csf-resident-contract-v1.json).
+
+The experimental image then passed completion, JSON, tool and streaming smoke tests;
+cold three-marker retrieval at 2,046/8,182 actual prompt tokens, MTP/plain identical;
+and all 32 benchmark output hashes (including warmups) matched the mapped-embedding
+baseline. The initial 16K-context timing screen overlapped CPU-only diagnostic
+compilation and is not used to claim a causal performance improvement.
+
+Full quality: all **256/256 output hashes and grades identical** to the original
+TensorFold baseline, GSM8K 120/128; IFEval strict 113/128, loose 114/128. Fixed-history
+comparison: 1,439 positions, zero top-one flips, zero target-token log-probability
+difference. These bounded results do not establish broad long-context accuracy.
+Receipts: [quality](../tensorfold/results/csf-resident-quality-v1.json),
+[probabilities](../tensorfold/results/csf-resident-probabilities-v1.json),
+[initial screen](../tensorfold/results/csf-resident-screen-v1.json).

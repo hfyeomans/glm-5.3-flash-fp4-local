@@ -1,0 +1,37 @@
+{
+  "source_tree": "b02cfca0f02235fa8f4b87c0ae921664a73d1807",
+  "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+  "serving_binary_sha256": "420836016541b6097fde35d50669baea006b7c0aa1260c6fa859fd20fd2723c9",
+  "image_test_binary_sha256": "656d2113840ad9d0841311a03f7f3bb390ad1141a25dbda2c3f1c9b5c107bba8",
+  "logs": [
+    {
+      "path": "logs/csf-resident-v1/layout-probe-both.log",
+      "sha256": "b162791c23ddc3d359c4021cd6baaa0f54b29a7e59201e61e681690aa54b2b13"
+    },
+    {
+      "path": "logs/csf-resident-v1/native-layout-contract-v3.log",
+      "sha256": "624be54cb478a9f057c5fe5aa25139c63b9d27f4ea963fc04ce61778b4171a66"
+    },
+    {
+      "path": "logs/csf-resident-v1/csf32-contract-both.log",
+      "sha256": "60b0cb50c36d068bf58958971fa4bda113e41f572d89f65078aecf1020177c6d"
+    },
+    {
+      "path": "logs/csf-resident-v1/resident-loader-full-both.log",
+      "sha256": "4ade995b176ff8f94f50abea4fc7e375c38366a37e99bd68d692a7528b4ba9c5"
+    },
+    {
+      "path": "logs/csf-resident-v1/upstream-host-checks.log",
+      "sha256": "c404d03f1730fc40364d0dce6f05b6c9199640d5ff6ddd35f218517ec16a6655"
+    },
+    {
+      "path": "logs/csf-resident-v1/upstream-plain-build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/csf-resident-v1/docker-build.log",
+      "sha256": "7301d198bf1a5346e90a74253be79f1404263e7d3cf68bd804c27b005e59d26a"
+    }
+  ],
+  "scope": "Operator, host and loader gates. Full GPU suite, served quality, performance and runtime capacity recorded separately."
+}

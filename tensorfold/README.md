@@ -8,7 +8,7 @@ The plain 1.1.3 image built previously cannot load this checkpoint. It contains 
 
 For matched vLLM/TensorFold MTP on/off timings, see [the performance report](../docs/PERFORMANCE-CURRENT.md). Further prefill, split-K, communication and embedding experiments live in [tuning/](tuning/README.md), with a separate image and explicit source pins. Those controls do not replace the qualified default image.
 
-The [PR #1050 / SM120 discussion brief](PR1050-SM120-BRIEF.md) separates our measured settings, source patches and retained upstream choices. The [resident compressed-scale plan](COMPRESSED-SCALES-PLAN.md) documents the next loader/kernel work and its audited memory budget; it is not an implemented feature.
+The [PR #1050 / SM120 discussion brief](PR1050-SM120-BRIEF.md) separates our measured settings, source patches and retained upstream choices. The [resident compressed-scale experiment](csf-resident/README.md) implements the [loader/kernel plan](COMPRESSED-SCALES-PLAN.md) in a separate image. Its full short-context quality comparison passed; long-context and performance qualification are recorded separately. Normal storage defaults remain unchanged.
 
 ## Fixed ingredients
 

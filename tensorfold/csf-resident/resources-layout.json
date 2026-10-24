@@ -1,0 +1,356 @@
+{
+  "nvcc": "13.3",
+  "records": {
+    "tf_nvfp4_separate_prompt_down_w16": {
+      "80": {
+        "regs": 128,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 128,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 128,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 127,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 127,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_prompt_down_w8": {
+      "80": {
+        "regs": 154,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 154,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 154,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 128,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 128,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_prompt_up_w8": {
+      "80": {
+        "regs": 246,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 246,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 246,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 252,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 252,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_prompt_up_w4": {
+      "80": {
+        "regs": 251,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 251,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 251,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 254,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 254,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_prompt_relu2_w8": {
+      "80": {
+        "regs": 154,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 154,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 154,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 128,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 128,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_relu2_w4": {
+      "80": {
+        "regs": 80,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 80,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 80,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_down_bf16_w4": {
+      "80": {
+        "regs": 80,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 80,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 80,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_down_f32_w4": {
+      "80": {
+        "regs": 80,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 80,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 80,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_up_w4": {
+      "80": {
+        "regs": 118,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 118,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 120,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 126,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 126,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_relu2_w1": {
+      "80": {
+        "regs": 81,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 83,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 91,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_down_bf16_w1": {
+      "80": {
+        "regs": 81,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 83,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 91,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_down_f32_w1": {
+      "80": {
+        "regs": 81,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 83,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 91,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 94,
+        "static": 0,
+        "local": 0
+      }
+    },
+    "tf_nvfp4_separate_up_w1": {
+      "80": {
+        "regs": 118,
+        "static": 0,
+        "local": 0
+      },
+      "86": {
+        "regs": 118,
+        "static": 0,
+        "local": 0
+      },
+      "89": {
+        "regs": 122,
+        "static": 0,
+        "local": 0
+      },
+      "120": {
+        "regs": 126,
+        "static": 0,
+        "local": 0
+      },
+      "121": {
+        "regs": 126,
+        "static": 0,
+        "local": 0
+      }
+    }
+  }
+}

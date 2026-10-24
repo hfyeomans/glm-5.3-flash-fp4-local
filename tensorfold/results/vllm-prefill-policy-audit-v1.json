@@ -1,0 +1,42 @@
+{
+  "checked_date": "2026-10-24",
+  "image": "ghcr.io/local-inference-lab/vllm:release-10152026",
+  "image_digest": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+  "method": "CPU-only pinned-image source inspection; no model requests or vLLM configuration changes",
+  "findings": [
+    "B12X_W4A16_A4_PREFILL=1 enables hybrid NVFP4 activation prefill within the W4A16 family; VLLM_B12X_MOE_FP4_FORCE_A16=1 does not disable this policy.",
+    "B12X dispatcher requires prepared A4 calibration scales and scheduler-owned prefill spans; absent metadata and capture contexts can fall back to A16.",
+    "Configured V2 runner builds MoEPrefillMetadata. TP/DCP are supported by the validated policy; DP/PCP/EP and sequence parallelism are rejected.",
+    "TensorFold pinned native prefill_rows is 2048; supplied vLLM max_num_batched_tokens is 4096. These settings have different scheduler meanings."
+  ],
+  "inference": "Hybrid A4 prefill and batching are plausible contributors to the cross-engine speed gap, not quantitatively established causes. Same checkpoint and prompts do not imply the same activation arithmetic.",
+  "limits": "No GPU trace proves coverage of every dispatched prefill kernel. No A4-on/off causal ablation was run. TensorFold resident CSF32 remains BF16 activation W4A16; adding A4 would require separate quality qualification.",
+  "sources_sha256": {
+    "vllm/utils/b12x.py": "c63ed14242475468343dc950e46c8fedd5f967bd94a6ca9728851a7a2ab00322",
+    "vllm/model_executor/layers/quantization/nvfp4_csf.py": "0ae697a86efb41a1149885b88499c878636da54cafd9f2bb5710ea4626062c5c",
+    "flashinfer/experimental/b12x/moe/_shared/kernels/w4a16/prefill_a4.py": "6835259acb1ef0e49d86c9d9ce61a9e5046d9a7d470f8d1e17609a93368ae9b1",
+    "/opt/venv/lib/python3.12/site-packages/vllm/envs.py": "d05fcbe03ff55bc027c7557bc9e05ff18245907c83bd815a08ffb284441fe673",
+    "/opt/venv/lib/python3.12/site-packages/vllm/utils/b12x.py": "c63ed14242475468343dc950e46c8fedd5f967bd94a6ca9728851a7a2ab00322",
+    "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py": "74842cd4f20704768e2ac8b0ec3ccd3dcb80af6115675bf4e3fc703cec146340",
+    "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu/model_runner.py": "aeadc5177c80789112c8e4836639b97e6fbb056711a4e6c81748c7ab9ad805d0",
+    "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/b12x_blockscaled.py": "cceaacbd975e3b6288191d74fa5f3b4fa1421b5178873ebe5babf580d2fee0e8",
+    "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/nvfp4/b12x.py": "ef889ee5bd88bd4daab0265ba2dffec760f47b37fe4e062e4e5e99e43438f93f",
+    "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/quantization/nvfp4_csf.py": "0ae697a86efb41a1149885b88499c878636da54cafd9f2bb5710ea4626062c5c",
+    "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/fused_moe/b12x.py": "2aa10b8a8220dc27d2e833293d463e7ca8ca3b451ce7c83aeb0231058a26a4b6",
+    "/opt/venv/lib/python3.12/site-packages/vllm/models/glm5next/nvidia/kda.py": "58d50c694fdfcee19b042ab4d6f86202fea73ff70f39ed8fa1bbbec16fa2d0bf"
+  },
+  "logs": [
+    {
+      "path": "logs/csf-resident-v1/vllm-prefill-flags-source.log",
+      "sha256": "3b030a39d8e0acd727885c8ffcda09947f6df274dac9b5d41e4aa8a3aa7a9909"
+    },
+    {
+      "path": "logs/csf-resident-v1/vllm-precision-paths.log",
+      "sha256": "8fbdcf2628faa79fdfed46a2d49b46090a7c6845d7d638f6bc557dd4a3211495"
+    },
+    {
+      "path": "logs/csf-resident-v1/vllm-prefill-dispatch.log",
+      "sha256": "b8f15b3948224c907de6aa36691897b60c0a089f6097a0da0d819b8d1efd21d8"
+    }
+  ]
+}

@@ -127,7 +127,8 @@ class TensorFoldTests(unittest.TestCase):
 
     def test_experimental_settings_cannot_silently_use_the_baseline_image(self):
         for env in ({'TF_TUNE_PREFILL_UP': '8'}, {'TF_TUNE_SPLIT_TARGET': '384'},
-                    {'TF_TUNE_HOST_EMBED': '1'}, {'TF_GLM_OVERLAP_PIECES': '9'},
+                    {'TF_TUNE_HOST_EMBED': '1'}, {'TF_TUNE_SCALE_LAYOUT': '1'},
+                    {'TF_TUNE_SCALE_LAYOUT': '2'}, {'TF_GLM_OVERLAP_PIECES': '9'},
                     {'TF_PATCH_SHA256': 'a' * 64}):
             with self.subTest(env=env), self.assertRaises(ValueError):
                 tf.config(Path('/nonexistent'), env)
@@ -143,6 +144,30 @@ class TensorFoldTests(unittest.TestCase):
         response = subprocess.CompletedProcess([], 0, json.dumps([{'Config': {'Labels': labels}, 'Id': 'candidate'}]))
         with patch.object(tf, 'run', return_value=response), self.assertRaisesRegex(ValueError, 'patch identity'):
             tf.image(c)
+
+    def test_scale_layout_cannot_be_silently_ignored_by_an_older_experimental_image(self):
+        c = tf.config(Path('/nonexistent'), {'TF_PATCH_SHA256': 'a' * 64, 'TF_TUNED_TREE': 'b' * 40,
+                                             'TF_TUNE_SCALE_LAYOUT': '1'})
+        labels = {'org.opencontainers.image.revision': tf.COMMIT,
+                  'lab.glm53.tensorfold.recipe': 'native-fp4-tp2',
+                  'lab.glm53.tensorfold.pr1050': tf.PR_COMMIT,
+                  'lab.glm53.tensorfold.tree': 'b' * 40,
+                  'lab.glm53.tensorfold.base_tree': tf.MERGED_TREE,
+                  'lab.glm53.tensorfold.launcher': '2',
+                  'lab.glm53.tensorfold.tuning': 'a' * 64}
+        response = subprocess.CompletedProcess([], 0, json.dumps([{'Config': {'Labels': labels}, 'Id': 'candidate'}]))
+        with patch.object(tf, 'run', return_value=response), self.assertRaisesRegex(ValueError, 'scale-layout'):
+            tf.image(c)
+        labels['lab.glm53.tensorfold.scale_layout'] = '1'
+        response = subprocess.CompletedProcess([], 0, json.dumps([{'Config': {'Labels': labels}, 'Id': 'candidate'}]))
+        with patch.object(tf, 'run', return_value=response):
+            self.assertEqual(tf.image(c), 'candidate')
+
+    def test_resident_scales_refuse_untested_multiple_slots(self):
+        settings = {'TF_PATCH_SHA256': 'a' * 64, 'TF_TUNED_TREE': 'b' * 40,
+                    'TF_TUNE_SCALE_LAYOUT': '2', 'TF_PARALLEL': '2'}
+        with self.assertRaisesRegex(ValueError, 'single-slot'):
+            tf.config(Path('/nonexistent'), settings)
 
     def test_incompatible_checkpoint_blocks_launch_before_gpu_or_container_work(self):
         c = tf.config(Path('/nonexistent'), {})

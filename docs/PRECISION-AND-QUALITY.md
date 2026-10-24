@@ -249,3 +249,29 @@ vLLM already starts with a configured 1,048,576-token limit and reports roughly
 1.84 million tokens of shared KV capacity. A near-1M vLLM request has not been
 validated in this project. Configured capacity, successful near-window inference
 and broad long-context accuracy are three separate claims.
+
+
+## Pinned vLLM prefill is not necessarily W4A16 throughout
+
+Inspection of release-10152026 (image digest
+`sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29`)
+on 2026-10-24 found that `B12X_W4A16_A4_PREFILL=1` enables a hybrid policy:
+supported prompt spans can use NVFP4 activation prefill, while decode uses A16.
+`VLLM_B12X_MOE_FP4_FORCE_A16=1` selects the W4A16 family but does not disable that
+prefill policy. Dispatch additionally requires prepared calibration scales and
+scheduler metadata; source configuration alone does not prove every launch used A4.
+The V2 runner constructs that metadata, and the B12X MoE dispatcher partitions spans.
+
+Thus our same-checkpoint cross-engine benchmarks do not establish identical
+activation precision. TensorFold's current expert kernels use BF16 activations.
+Hybrid A4 prefill is a plausible contributor to vLLM's speed advantage, not a measured
+explanation of the entire gap. Native TensorFold also chunks prefill at 2,048 tokens,
+versus the supplied vLLM batch budget of 4,096. These are separate profiling/ablation
+questions. Implementing A4 would change arithmetic and require new quality gates;
+it is outside the lossless compressed-scale residency patch.
+
+Evidence: [pinned source audit](../tensorfold/results/vllm-prefill-policy-audit-v1.json),
+CPU-only source inspection in `logs/csf-resident-v1/vllm-prefill-dispatch.log`
+and `vllm-precision-paths.log`; `vllm/utils/b12x.py`,
+`vllm/model_executor/layers/fused_moe/b12x.py`, the CSF quantization adapter and
+`flashinfer`'s `w4a16/prefill_a4.py`. No vLLM configuration was changed for this audit.

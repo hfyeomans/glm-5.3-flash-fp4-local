@@ -1,0 +1,205 @@
+{
+  "scope": "Fixed-history up to the first 128 completion tokens of 8 GSM8K and 8 IFEval baseline outputs; sampled diagnostic, not full model equivalence",
+  "history_sha256": "679ddb03d76d09aa0f4c43f55cb73fb0ac68ac1853fd446c591448500439d108",
+  "positions": 1439,
+  "top1_flips": [],
+  "max_abs_target_logprob_change": 0.0,
+  "mean_abs_target_logprob_change": 0.0,
+  "reference_manifest": {
+    "history_sha256": "679ddb03d76d09aa0f4c43f55cb73fb0ac68ac1853fd446c591448500439d108",
+    "image_id": "sha256:2d9b848d07d66c6072ab7757017dd5dffbfb30453305022cbe2befc8904899ee",
+    "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+    "client_sha256": "26bb57eafd935074eb6d5f581b3efc16239f2b43a3a7b3739fe9e79f5091f04f",
+    "cases": [
+      [
+        "gsm8k_cot",
+        1
+      ],
+      [
+        "gsm8k_cot",
+        10
+      ],
+      [
+        "gsm8k_cot",
+        11
+      ],
+      [
+        "gsm8k_cot",
+        12
+      ],
+      [
+        "gsm8k_cot",
+        39
+      ],
+      [
+        "gsm8k_cot",
+        64
+      ],
+      [
+        "gsm8k_cot",
+        92
+      ],
+      [
+        "gsm8k_cot",
+        98
+      ],
+      [
+        "ifeval",
+        3
+      ],
+      [
+        "ifeval",
+        5
+      ],
+      [
+        "ifeval",
+        9
+      ],
+      [
+        "ifeval",
+        16
+      ],
+      [
+        "ifeval",
+        24
+      ],
+      [
+        "ifeval",
+        29
+      ],
+      [
+        "ifeval",
+        34
+      ],
+      [
+        "ifeval",
+        45
+      ]
+    ],
+    "settings": {
+      "TF_PORT": "8001",
+      "TF_CONTEXT": "16384",
+      "TF_PARALLEL": "1",
+      "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+      "TF_GLM_PREFILL_REDUCE": "split",
+      "TF_PROMPT_CACHE_GIB": "0",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "TF_GLM_PDL": "1",
+      "TF_GLM_PROMPT_K": "one",
+      "NCCL_CUMEM_HOST_ENABLE": "0",
+      "TF_HOST": "0.0.0.0",
+      "TF_COMM_PORT": "29600",
+      "TF_MEMORY_RESERVE_GIB": "",
+      "TF_PROFILE": "0",
+      "TF_NCCL_DEBUG": "WARN",
+      "TF_TUNE_PREFILL_DOWN": "8",
+      "TF_TUNE_SPLIT_TARGET": "192",
+      "NCCL_CUMEM_ENABLE": "0",
+      "TF_NVFP4_DECODE_WARPS": "1",
+      "TF_TUNE_PREFILL_UP": "4",
+      "TF_TUNE_HOST_EMBED": "1",
+      "TF_GLM_KDA_DECODE_WIDE": "1",
+      "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5"
+    }
+  },
+  "reference_rows_sha256": "a63ab05a8c5c7d4ab2eb7101e7dfed9a0dc22816ca9a7d921fc9f0f2a9e1e2d3",
+  "candidate_manifest": {
+    "history_sha256": "679ddb03d76d09aa0f4c43f55cb73fb0ac68ac1853fd446c591448500439d108",
+    "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+    "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+    "client_sha256": "26bb57eafd935074eb6d5f581b3efc16239f2b43a3a7b3739fe9e79f5091f04f",
+    "cases": [
+      [
+        "gsm8k_cot",
+        1
+      ],
+      [
+        "gsm8k_cot",
+        10
+      ],
+      [
+        "gsm8k_cot",
+        11
+      ],
+      [
+        "gsm8k_cot",
+        12
+      ],
+      [
+        "gsm8k_cot",
+        39
+      ],
+      [
+        "gsm8k_cot",
+        64
+      ],
+      [
+        "gsm8k_cot",
+        92
+      ],
+      [
+        "gsm8k_cot",
+        98
+      ],
+      [
+        "ifeval",
+        3
+      ],
+      [
+        "ifeval",
+        5
+      ],
+      [
+        "ifeval",
+        9
+      ],
+      [
+        "ifeval",
+        16
+      ],
+      [
+        "ifeval",
+        24
+      ],
+      [
+        "ifeval",
+        29
+      ],
+      [
+        "ifeval",
+        34
+      ],
+      [
+        "ifeval",
+        45
+      ]
+    ],
+    "settings": {
+      "TF_PARALLEL": "1",
+      "TF_PROFILE": "0",
+      "TF_TUNE_SPLIT_TARGET": "192",
+      "TF_GLM_PROMPT_K": "one",
+      "TF_GLM_PREFILL_REDUCE": "split",
+      "NCCL_CUMEM_ENABLE": "0",
+      "TF_HOST": "127.0.0.1",
+      "TF_PORT": "8001",
+      "TF_COMM_PORT": "29600",
+      "TF_NVFP4_DECODE_WARPS": "1",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "TF_GLM_PDL": "1",
+      "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "TF_CONTEXT": "16384",
+      "TF_MEMORY_RESERVE_GIB": "",
+      "TF_TUNE_PREFILL_UP": "4",
+      "TF_TUNE_HOST_EMBED": "1",
+      "TF_GLM_KDA_DECODE_WIDE": "1",
+      "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+      "TF_PROMPT_CACHE_GIB": "0",
+      "TF_NCCL_DEBUG": "WARN",
+      "TF_TUNE_PREFILL_DOWN": "8",
+      "TF_TUNE_SCALE_LAYOUT": "2",
+      "NCCL_CUMEM_HOST_ENABLE": "0"
+    }
+  },
+  "candidate_rows_sha256": "423323f80ae6ea8058b073a9cc596b2ca128122058ad9228b666e5c735c94448"
+}

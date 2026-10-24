@@ -1,0 +1,456 @@
+{
+  "launch": {
+    "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+    "profile": "resident-quality",
+    "protocol": {
+      "profiles_sha256": "54c3f4195e4a2d7efced2b3917519528d8c708203e5b5d11efefd0fbade39875",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 3,
+      "mtp": "both",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-2048",
+        "prefill-8192"
+      ],
+      "teacher_histories_sha256": "60f43af7dfa98dd7514811af4975039e12f2ebbc2e826aea0f78a4b261b7aed7",
+      "quality": true,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": false,
+      "context_targets": [
+        2048,
+        8192
+      ]
+    },
+    "settings": {
+      "TF_PARALLEL": "1",
+      "TF_PROFILE": "0",
+      "TF_TUNE_SPLIT_TARGET": "192",
+      "TF_GLM_PROMPT_K": "one",
+      "TF_GLM_PREFILL_REDUCE": "split",
+      "NCCL_CUMEM_ENABLE": "0",
+      "TF_HOST": "127.0.0.1",
+      "TF_PORT": "8001",
+      "TF_COMM_PORT": "29600",
+      "TF_NVFP4_DECODE_WARPS": "1",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "TF_GLM_PDL": "1",
+      "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "TF_CONTEXT": "16384",
+      "TF_MEMORY_RESERVE_GIB": "",
+      "TF_TUNE_PREFILL_UP": "4",
+      "TF_TUNE_HOST_EMBED": "1",
+      "TF_GLM_KDA_DECODE_WIDE": "1",
+      "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+      "TF_PROMPT_CACHE_GIB": "0",
+      "TF_NCCL_DEBUG": "WARN",
+      "TF_TUNE_PREFILL_DOWN": "8",
+      "TF_TUNE_SCALE_LAYOUT": "2",
+      "NCCL_CUMEM_HOST_ENABLE": "0"
+    }
+  },
+  "context": {
+    "base_url": "http://127.0.0.1:8001",
+    "model": "glm-5.3-flash-fp4-local",
+    "checks": [
+      {
+        "target": 2048,
+        "tokenized_count": 2046,
+        "rows": 197,
+        "needle_rows": [
+          19,
+          98,
+          177
+        ],
+        "expected": [
+          "cedar-2048-41827",
+          "orchid-2048-63951",
+          "willow-2048-82746"
+        ],
+        "request_sha256": "a811886cabfeac3f58c74e7cca67d5063cece06e4c287e604ef48865f35b7386",
+        "runs": [
+          {
+            "draft": true,
+            "seconds": 0.6197372010210529,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-d0de25e63edacb7f00c015fc839d4186",
+              "object": "chat.completion",
+              "created": 1792861024,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-2048-41827\n2. orchid-2048-63951\n3. willow-2048-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 2046,
+                "completion_tokens": 35,
+                "total_tokens": 2081,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 161.26211701017948,
+                "seconds": 0.21083687,
+                "prefill_seconds": 0.408187701,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 0.408403635,
+                "sampling": "greedy",
+                "drafts": true,
+                "token_sha": "67f0b98addad",
+                "token_sha256": "67f0b98addad66274c82e808d7786770852bcd94170e76052bc3ccee86194330",
+                "min_rows": 3
+              },
+              "speculative": {
+                "rounds": 11,
+                "drafted": 30,
+                "accepted": 23,
+                "acceptance_rate": 0.7666666666666667,
+                "tokens_per_round": 3.1818181818181817
+              }
+            }
+          },
+          {
+            "draft": false,
+            "seconds": 0.9385374309495091,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-90efc57fc6569bfdffe20f7ca50d2cd7",
+              "object": "chat.completion",
+              "created": 1792861024,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-2048-41827\n2. orchid-2048-63951\n3. willow-2048-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 2046,
+                "completion_tokens": 35,
+                "total_tokens": 2081,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 63.65950212921936,
+                "seconds": 0.534091516,
+                "prefill_seconds": 0.403504783,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 0.403724042,
+                "sampling": "greedy",
+                "drafts": false,
+                "token_sha": "67f0b98addad",
+                "token_sha256": "67f0b98addad66274c82e808d7786770852bcd94170e76052bc3ccee86194330",
+                "min_rows": 1
+              },
+              "speculative": {
+                "rounds": 34,
+                "drafted": 0,
+                "accepted": 0,
+                "acceptance_rate": 0.0,
+                "tokens_per_round": 1.0294117647058822
+              }
+            }
+          }
+        ],
+        "draft_equals_plain": true
+      },
+      {
+        "target": 8192,
+        "tokenized_count": 8182,
+        "rows": 761,
+        "needle_rows": [
+          76,
+          380,
+          684
+        ],
+        "expected": [
+          "cedar-8192-41827",
+          "orchid-8192-63951",
+          "willow-8192-82746"
+        ],
+        "request_sha256": "c609f65dfa06a7f9a68e8ecd0303a48cf940f26c6c736e70064b0c59b641413c",
+        "runs": [
+          {
+            "draft": true,
+            "seconds": 2.0583962359814905,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-deaf0a842f7dbd338eedebfdfc7a4f16",
+              "object": "chat.completion",
+              "created": 1792861025,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-8192-41827\n2. orchid-8192-63951\n3. willow-8192-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 8182,
+                "completion_tokens": 38,
+                "total_tokens": 8220,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 174.14948732179496,
+                "seconds": 0.212461148,
+                "prefill_seconds": 1.845006694,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 1.84533054,
+                "sampling": "greedy",
+                "drafts": true,
+                "token_sha": "caccbba743bc",
+                "token_sha256": "caccbba743bcbab0891be07bcb60c04762a46e1fc4e9c2ee5525f85d1b95c468",
+                "min_rows": 3
+              },
+              "speculative": {
+                "rounds": 11,
+                "drafted": 30,
+                "accepted": 26,
+                "acceptance_rate": 0.8666666666666667,
+                "tokens_per_round": 3.4545454545454546
+              }
+            }
+          },
+          {
+            "draft": false,
+            "seconds": 2.432201376010198,
+            "retrieval_passed": true,
+            "count_matches": true,
+            "cold": true,
+            "passed": true,
+            "response": {
+              "id": "chatcmpl-f605aa896ad7c847f71da97599f313ee",
+              "object": "chat.completion",
+              "created": 1792861027,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-8192-41827\n2. orchid-8192-63951\n3. willow-8192-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 8182,
+                "completion_tokens": 38,
+                "total_tokens": 8220,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 61.27969194851228,
+                "seconds": 0.603788936,
+                "prefill_seconds": 1.827256254,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 1.82769298,
+                "sampling": "greedy",
+                "drafts": false,
+                "token_sha": "caccbba743bc",
+                "token_sha256": "caccbba743bcbab0891be07bcb60c04762a46e1fc4e9c2ee5525f85d1b95c468",
+                "min_rows": 1
+              },
+              "speculative": {
+                "rounds": 37,
+                "drafted": 0,
+                "accepted": 0,
+                "acceptance_rate": 0.0,
+                "tokens_per_round": 1.027027027027027
+              }
+            }
+          }
+        ],
+        "draft_equals_plain": true
+      }
+    ],
+    "scope": "Synthetic retrieval, not a general long-context accuracy qualification",
+    "passed": true
+  },
+  "benchmark_summary": [
+    {
+      "case": "short-code",
+      "prompt_tokens": 33,
+      "mtp": true,
+      "n": 3,
+      "distinct_output_texts": 1,
+      "prefill_seconds": 0.053376427,
+      "decode_seconds": 2.146430706,
+      "server_ttft_seconds": 0.05353197,
+      "decode_tokens_per_second": 118.80187852661106,
+      "prefill_tokens_per_second": 618.2504497725186,
+      "client_ttft_seconds": 0.053958108997903764,
+      "end_to_end_tokens_per_second": 116.32414156946871
+    },
+    {
+      "case": "short-code",
+      "prompt_tokens": 33,
+      "mtp": false,
+      "n": 3,
+      "distinct_output_texts": 1,
+      "prefill_seconds": 0.051908844,
+      "decode_seconds": 3.736089889,
+      "server_ttft_seconds": 0.052068203,
+      "decode_tokens_per_second": 68.25317580039628,
+      "prefill_tokens_per_second": 635.7298189880706,
+      "client_ttft_seconds": 0.052483296021819115,
+      "end_to_end_tokens_per_second": 67.58521985311201
+    },
+    {
+      "case": "short-prose",
+      "prompt_tokens": 31,
+      "mtp": true,
+      "n": 3,
+      "distinct_output_texts": 1,
+      "prefill_seconds": 0.049956193,
+      "decode_seconds": 1.89381202,
+      "server_ttft_seconds": 0.050125447,
+      "decode_tokens_per_second": 134.64905561218268,
+      "prefill_tokens_per_second": 620.5436831425485,
+      "client_ttft_seconds": 0.050566470017656684,
+      "end_to_end_tokens_per_second": 131.65905008164316
+    },
+    {
+      "case": "short-prose",
+      "prompt_tokens": 31,
+      "mtp": false,
+      "n": 3,
+      "distinct_output_texts": 1,
+      "prefill_seconds": 0.048902582,
+      "decode_seconds": 3.73463808,
+      "server_ttft_seconds": 0.04907411,
+      "decode_tokens_per_second": 68.27970864582413,
+      "prefill_tokens_per_second": 633.9133586034374,
+      "client_ttft_seconds": 0.04949639400001615,
+      "end_to_end_tokens_per_second": 67.64887886677407
+    },
+    {
+      "case": "prefill-2048",
+      "prompt_tokens": 2048,
+      "mtp": true,
+      "n": 3,
+      "distinct_output_texts": 1,
+      "prefill_seconds": 0.424280683,
+      "decode_seconds": 2.221897164,
+      "server_ttft_seconds": 0.424491429,
+      "decode_tokens_per_second": 114.76678764958359,
+      "prefill_tokens_per_second": 4826.993266624868,
+      "client_ttft_seconds": 0.4250047199893743,
+      "end_to_end_tokens_per_second": 96.63872121112797
+    },
+    {
+      "case": "prefill-2048",
+      "prompt_tokens": 2048,
+      "mtp": false,
+      "n": 3,
+      "distinct_output_texts": 1,
+      "prefill_seconds": 0.414182017,
+      "decode_seconds": 3.968665574,
+      "server_ttft_seconds": 0.414361647,
+      "decode_tokens_per_second": 64.25333534540847,
+      "prefill_tokens_per_second": 4944.685949510937,
+      "client_ttft_seconds": 0.41484740597661585,
+      "end_to_end_tokens_per_second": 58.45269737351499
+    },
+    {
+      "case": "prefill-8192",
+      "prompt_tokens": 8192,
+      "mtp": true,
+      "n": 3,
+      "distinct_output_texts": 1,
+      "prefill_seconds": 1.896814857,
+      "decode_seconds": 2.262082684,
+      "server_ttft_seconds": 1.897035979,
+      "decode_tokens_per_second": 112.72797488953326,
+      "prefill_tokens_per_second": 4318.818976859163,
+      "client_ttft_seconds": 1.8975330149987713,
+      "end_to_end_tokens_per_second": 61.55961613044802
+    },
+    {
+      "case": "prefill-8192",
+      "prompt_tokens": 8192,
+      "mtp": false,
+      "n": 3,
+      "distinct_output_texts": 1,
+      "prefill_seconds": 1.870228196,
+      "decode_seconds": 3.990979473,
+      "server_ttft_seconds": 1.870476769,
+      "decode_tokens_per_second": 63.894089590071914,
+      "prefill_tokens_per_second": 4380.214145803628,
+      "client_ttft_seconds": 1.8709727529785596,
+      "end_to_end_tokens_per_second": 43.67095937113148
+    }
+  ],
+  "historical_reference": "logs/tuning/host-embed-quality-v1/00-host-embed-overlap4-quality/bench/requests.jsonl",
+  "reference_rows_sha256": "0241fc5264769dc80d9df4c1806351ed848aa29a00c5a715e1b03bf59e576da1",
+  "candidate_rows_sha256": "54270e7398a0d3d6609053c43553ff24914aec9a47299549a8e4963da136e52c",
+  "requests_including_warmups": 32,
+  "changed_output_hashes": [],
+  "scope": "First served screen at 16K context; historical matched-output check. Not bracketed causal performance evidence. CPU-only diagnostic compilation overlapped this initial screen."
+}

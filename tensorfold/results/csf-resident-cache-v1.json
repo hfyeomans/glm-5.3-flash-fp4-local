@@ -1,0 +1,624 @@
+{
+  "launch": {
+    "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+    "profile": "resident-cache",
+    "protocol": {
+      "profiles_sha256": "54c3f4195e4a2d7efced2b3917519528d8c708203e5b5d11efefd0fbade39875",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 2,
+      "mtp": "on",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-8192",
+        "prefill-32768"
+      ],
+      "teacher_histories_sha256": null,
+      "quality": false,
+      "cache_check": true,
+      "baseline_image": false,
+      "skip_benchmark": true,
+      "context_targets": [
+        2048,
+        8192
+      ]
+    },
+    "settings": {
+      "TF_GLM_PROMPT_K": "one",
+      "TF_GLM_PREFILL_REDUCE": "split",
+      "TF_CONTEXT": "8192",
+      "TF_NCCL_DEBUG": "WARN",
+      "TF_GLM_OVERLAP_PIECES": "4",
+      "TF_GLM_KDA_DECODE_WIDE": "1",
+      "NCCL_CUMEM_HOST_ENABLE": "0",
+      "TF_HOST": "127.0.0.1",
+      "TF_PORT": "8001",
+      "TF_COMM_PORT": "29600",
+      "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+      "TF_TUNE_PREFILL_UP": "4",
+      "TF_GLM_PDL": "1",
+      "NCCL_CUMEM_ENABLE": "0",
+      "TF_PROMPT_CACHE_GIB": "1",
+      "TF_MEMORY_RESERVE_GIB": "",
+      "TF_PROFILE": "0",
+      "TF_TUNE_HOST_EMBED": "1",
+      "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "TF_PARALLEL": "1",
+      "TF_NVFP4_DECODE_WARPS": "1",
+      "TF_TUNE_PREFILL_DOWN": "8",
+      "TF_TUNE_SPLIT_TARGET": "192",
+      "TF_TUNE_SCALE_LAYOUT": "2"
+    }
+  },
+  "report": {
+    "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+    "settings": {
+      "TF_CONTEXT": "8192",
+      "TF_PARALLEL": "1",
+      "TF_PROMPT_CACHE_GIB": "1",
+      "TF_MEMORY_RESERVE_GIB": "",
+      "TF_PROFILE": "0",
+      "TF_NVFP4_DECODE_WARPS": "1"
+    },
+    "model_path": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+    "client_sha256": "b00aaf898492f1a3d5c9a9550d4d2d686849a40e5409c73be524fcc85591a232",
+    "checks": [
+      {
+        "target": 3648,
+        "count": 3648,
+        "expected": [
+          "cedar-3648-41827",
+          "orchid-3648-63951",
+          "willow-3648-82746"
+        ],
+        "needle_rows": [
+          34,
+          173,
+          312
+        ],
+        "records": 347,
+        "body": {
+          "model": "glm-5.3-flash-fp4-local",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Read the archive and find its three ARCHIVE SECRET values.\nRecord 0: the archive entry is blue.\nRecord 1: the archive entry is blue.\nRecord 2: the archive entry is blue.\nRecord 3: the archive entry is blue.\nRecord 4: the archive entry is blue.\nRecord 5: the archive entry is blue.\nRecord 6: the archive entry is blue.\nRecord 7: the archive entry is blue.\nRecord 8: the archive entry is blue.\nRecord 9: the archive entry is blue.\nRecord 10: the archive entry is blue.\nRecord 11: the archive entry is blue.\nRecord 12: the archive entry is blue.\nRecord 13: the archive entry is blue.\nRecord 14: the archive entry is blue.\nRecord 15: the archive entry is blue.\nRecord 16: the archive entry is blue.\nRecord 17: the archive entry is blue.\nRecord 18: the archive entry is blue.\nRecord 19: the archive entry is blue.\nRecord 20: the archive entry is blue.\nRecord 21: the archive entry is blue.\nRecord 22: the archive entry is blue.\nRecord 23: the archive entry is blue.\nRecord 24: the archive entry is blue.\nRecord 25: the archive entry is blue.\nRecord 26: the archive entry is blue.\nRecord 27: the archive entry is blue.\nRecord 28: the archive entry is blue.\nRecord 29: the archive entry is blue.\nRecord 30: the archive entry is blue.\nRecord 31: the archive entry is blue.\nRecord 32: the archive entry is blue.\nRecord 33: the archive entry is blue.\nRecord 34: ARCHIVE SECRET 1 is cedar-3648-41827.\nRecord 35: the archive entry is blue.\nRecord 36: the archive entry is blue.\nRecord 37: the archive entry is blue.\nRecord 38: the archive entry is blue.\nRecord 39: the archive entry is blue.\nRecord 40: the archive entry is blue.\nRecord 41: the archive entry is blue.\nRecord 42: the archive entry is blue.\nRecord 43: the archive entry is blue.\nRecord 44: the archive entry is blue.\nRecord 45: the archive entry is blue.\nRecord 46: the archive entry is blue.\nRecord 47: the archive entry is blue.\nRecord 48: the archive entry is blue.\nRecord 49: the archive entry is blue.\nRecord 50: the archive entry is blue.\nRecord 51: the archive entry is blue.\nRecord 52: the archive entry is blue.\nRecord 53: the archive entry is blue.\nRecord 54: the archive entry is blue.\nRecord 55: the archive entry is blue.\nRecord 56: the archive entry is blue.\nRecord 57: the archive entry is blue.\nRecord 58: the archive entry is blue.\nRecord 59: the archive entry is blue.\nRecord 60: the archive entry is blue.\nRecord 61: the archive entry is blue.\nRecord 62: the archive entry is blue.\nRecord 63: the archive entry is blue.\nRecord 64: the archive entry is blue.\nRecord 65: the archive entry is blue.\nRecord 66: the archive entry is blue.\nRecord 67: the archive entry is blue.\nRecord 68: the archive entry is blue.\nRecord 69: the archive entry is blue.\nRecord 70: the archive entry is blue.\nRecord 71: the archive entry is blue.\nRecord 72: the archive entry is blue.\nRecord 73: the archive entry is blue.\nRecord 74: the archive entry is blue.\nRecord 75: the archive entry is blue.\nRecord 76: the archive entry is blue.\nRecord 77: the archive entry is blue.\nRecord 78: the archive entry is blue.\nRecord 79: the archive entry is blue.\nRecord 80: the archive entry is blue.\nRecord 81: the archive entry is blue.\nRecord 82: the archive entry is blue.\nRecord 83: the archive entry is blue.\nRecord 84: the archive entry is blue.\nRecord 85: the archive entry is blue.\nRecord 86: the archive entry is blue.\nRecord 87: the archive entry is blue.\nRecord 88: the archive entry is blue.\nRecord 89: the archive entry is blue.\nRecord 90: the archive entry is blue.\nRecord 91: the archive entry is blue.\nRecord 92: the archive entry is blue.\nRecord 93: the archive entry is blue.\nRecord 94: the archive entry is blue.\nRecord 95: the archive entry is blue.\nRecord 96: the archive entry is blue.\nRecord 97: the archive entry is blue.\nRecord 98: the archive entry is blue.\nRecord 99: the archive entry is blue.\nRecord 100: the archive entry is blue.\nRecord 101: the archive entry is blue.\nRecord 102: the archive entry is blue.\nRecord 103: the archive entry is blue.\nRecord 104: the archive entry is blue.\nRecord 105: the archive entry is blue.\nRecord 106: the archive entry is blue.\nRecord 107: the archive entry is blue.\nRecord 108: the archive entry is blue.\nRecord 109: the archive entry is blue.\nRecord 110: the archive entry is blue.\nRecord 111: the archive entry is blue.\nRecord 112: the archive entry is blue.\nRecord 113: the archive entry is blue.\nRecord 114: the archive entry is blue.\nRecord 115: the archive entry is blue.\nRecord 116: the archive entry is blue.\nRecord 117: the archive entry is blue.\nRecord 118: the archive entry is blue.\nRecord 119: the archive entry is blue.\nRecord 120: the archive entry is blue.\nRecord 121: the archive entry is blue.\nRecord 122: the archive entry is blue.\nRecord 123: the archive entry is blue.\nRecord 124: the archive entry is blue.\nRecord 125: the archive entry is blue.\nRecord 126: the archive entry is blue.\nRecord 127: the archive entry is blue.\nRecord 128: the archive entry is blue.\nRecord 129: the archive entry is blue.\nRecord 130: the archive entry is blue.\nRecord 131: the archive entry is blue.\nRecord 132: the archive entry is blue.\nRecord 133: the archive entry is blue.\nRecord 134: the archive entry is blue.\nRecord 135: the archive entry is blue.\nRecord 136: the archive entry is blue.\nRecord 137: the archive entry is blue.\nRecord 138: the archive entry is blue.\nRecord 139: the archive entry is blue.\nRecord 140: the archive entry is blue.\nRecord 141: the archive entry is blue.\nRecord 142: the archive entry is blue.\nRecord 143: the archive entry is blue.\nRecord 144: the archive entry is blue.\nRecord 145: the archive entry is blue.\nRecord 146: the archive entry is blue.\nRecord 147: the archive entry is blue.\nRecord 148: the archive entry is blue.\nRecord 149: the archive entry is blue.\nRecord 150: the archive entry is blue.\nRecord 151: the archive entry is blue.\nRecord 152: the archive entry is blue.\nRecord 153: the archive entry is blue.\nRecord 154: the archive entry is blue.\nRecord 155: the archive entry is blue.\nRecord 156: the archive entry is blue.\nRecord 157: the archive entry is blue.\nRecord 158: the archive entry is blue.\nRecord 159: the archive entry is blue.\nRecord 160: the archive entry is blue.\nRecord 161: the archive entry is blue.\nRecord 162: the archive entry is blue.\nRecord 163: the archive entry is blue.\nRecord 164: the archive entry is blue.\nRecord 165: the archive entry is blue.\nRecord 166: the archive entry is blue.\nRecord 167: the archive entry is blue.\nRecord 168: the archive entry is blue.\nRecord 169: the archive entry is blue.\nRecord 170: the archive entry is blue.\nRecord 171: the archive entry is blue.\nRecord 172: the archive entry is blue.\nRecord 173: ARCHIVE SECRET 2 is orchid-3648-63951.\nRecord 174: the archive entry is blue.\nRecord 175: the archive entry is blue.\nRecord 176: the archive entry is blue.\nRecord 177: the archive entry is blue.\nRecord 178: the archive entry is blue.\nRecord 179: the archive entry is blue.\nRecord 180: the archive entry is blue.\nRecord 181: the archive entry is blue.\nRecord 182: the archive entry is blue.\nRecord 183: the archive entry is blue.\nRecord 184: the archive entry is blue.\nRecord 185: the archive entry is blue.\nRecord 186: the archive entry is blue.\nRecord 187: the archive entry is blue.\nRecord 188: the archive entry is blue.\nRecord 189: the archive entry is blue.\nRecord 190: the archive entry is blue.\nRecord 191: the archive entry is blue.\nRecord 192: the archive entry is blue.\nRecord 193: the archive entry is blue.\nRecord 194: the archive entry is blue.\nRecord 195: the archive entry is blue.\nRecord 196: the archive entry is blue.\nRecord 197: the archive entry is blue.\nRecord 198: the archive entry is blue.\nRecord 199: the archive entry is blue.\nRecord 200: the archive entry is blue.\nRecord 201: the archive entry is blue.\nRecord 202: the archive entry is blue.\nRecord 203: the archive entry is blue.\nRecord 204: the archive entry is blue.\nRecord 205: the archive entry is blue.\nRecord 206: the archive entry is blue.\nRecord 207: the archive entry is blue.\nRecord 208: the archive entry is blue.\nRecord 209: the archive entry is blue.\nRecord 210: the archive entry is blue.\nRecord 211: the archive entry is blue.\nRecord 212: the archive entry is blue.\nRecord 213: the archive entry is blue.\nRecord 214: the archive entry is blue.\nRecord 215: the archive entry is blue.\nRecord 216: the archive entry is blue.\nRecord 217: the archive entry is blue.\nRecord 218: the archive entry is blue.\nRecord 219: the archive entry is blue.\nRecord 220: the archive entry is blue.\nRecord 221: the archive entry is blue.\nRecord 222: the archive entry is blue.\nRecord 223: the archive entry is blue.\nRecord 224: the archive entry is blue.\nRecord 225: the archive entry is blue.\nRecord 226: the archive entry is blue.\nRecord 227: the archive entry is blue.\nRecord 228: the archive entry is blue.\nRecord 229: the archive entry is blue.\nRecord 230: the archive entry is blue.\nRecord 231: the archive entry is blue.\nRecord 232: the archive entry is blue.\nRecord 233: the archive entry is blue.\nRecord 234: the archive entry is blue.\nRecord 235: the archive entry is blue.\nRecord 236: the archive entry is blue.\nRecord 237: the archive entry is blue.\nRecord 238: the archive entry is blue.\nRecord 239: the archive entry is blue.\nRecord 240: the archive entry is blue.\nRecord 241: the archive entry is blue.\nRecord 242: the archive entry is blue.\nRecord 243: the archive entry is blue.\nRecord 244: the archive entry is blue.\nRecord 245: the archive entry is blue.\nRecord 246: the archive entry is blue.\nRecord 247: the archive entry is blue.\nRecord 248: the archive entry is blue.\nRecord 249: the archive entry is blue.\nRecord 250: the archive entry is blue.\nRecord 251: the archive entry is blue.\nRecord 252: the archive entry is blue.\nRecord 253: the archive entry is blue.\nRecord 254: the archive entry is blue.\nRecord 255: the archive entry is blue.\nRecord 256: the archive entry is blue.\nRecord 257: the archive entry is blue.\nRecord 258: the archive entry is blue.\nRecord 259: the archive entry is blue.\nRecord 260: the archive entry is blue.\nRecord 261: the archive entry is blue.\nRecord 262: the archive entry is blue.\nRecord 263: the archive entry is blue.\nRecord 264: the archive entry is blue.\nRecord 265: the archive entry is blue.\nRecord 266: the archive entry is blue.\nRecord 267: the archive entry is blue.\nRecord 268: the archive entry is blue.\nRecord 269: the archive entry is blue.\nRecord 270: the archive entry is blue.\nRecord 271: the archive entry is blue.\nRecord 272: the archive entry is blue.\nRecord 273: the archive entry is blue.\nRecord 274: the archive entry is blue.\nRecord 275: the archive entry is blue.\nRecord 276: the archive entry is blue.\nRecord 277: the archive entry is blue.\nRecord 278: the archive entry is blue.\nRecord 279: the archive entry is blue.\nRecord 280: the archive entry is blue.\nRecord 281: the archive entry is blue.\nRecord 282: the archive entry is blue.\nRecord 283: the archive entry is blue.\nRecord 284: the archive entry is blue.\nRecord 285: the archive entry is blue.\nRecord 286: the archive entry is blue.\nRecord 287: the archive entry is blue.\nRecord 288: the archive entry is blue.\nRecord 289: the archive entry is blue.\nRecord 290: the archive entry is blue.\nRecord 291: the archive entry is blue.\nRecord 292: the archive entry is blue.\nRecord 293: the archive entry is blue.\nRecord 294: the archive entry is blue.\nRecord 295: the archive entry is blue.\nRecord 296: the archive entry is blue.\nRecord 297: the archive entry is blue.\nRecord 298: the archive entry is blue.\nRecord 299: the archive entry is blue.\nRecord 300: the archive entry is blue.\nRecord 301: the archive entry is blue.\nRecord 302: the archive entry is blue.\nRecord 303: the archive entry is blue.\nRecord 304: the archive entry is blue.\nRecord 305: the archive entry is blue.\nRecord 306: the archive entry is blue.\nRecord 307: the archive entry is blue.\nRecord 308: the archive entry is blue.\nRecord 309: the archive entry is blue.\nRecord 310: the archive entry is blue.\nRecord 311: the archive entry is blue.\nRecord 312: ARCHIVE SECRET 3 is willow-3648-82746.\nRecord 313: the archive entry is blue.\nRecord 314: the archive entry is blue.\nRecord 315: the archive entry is blue.\nRecord 316: the archive entry is blue.\nRecord 317: the archive entry is blue.\nRecord 318: the archive entry is blue.\nRecord 319: the archive entry is blue.\nRecord 320: the archive entry is blue.\nRecord 321: the archive entry is blue.\nRecord 322: the archive entry is blue.\nRecord 323: the archive entry is blue.\nRecord 324: the archive entry is blue.\nRecord 325: the archive entry is blue.\nRecord 326: the archive entry is blue.\nRecord 327: the archive entry is blue.\nRecord 328: the archive entry is blue.\nRecord 329: the archive entry is blue.\nRecord 330: the archive entry is blue.\nRecord 331: the archive entry is blue.\nRecord 332: the archive entry is blue.\nRecord 333: the archive entry is blue.\nRecord 334: the archive entry is blue.\nRecord 335: the archive entry is blue.\nRecord 336: the archive entry is blue.\nRecord 337: the archive entry is blue.\nRecord 338: the archive entry is blue.\nRecord 339: the archive entry is blue.\nRecord 340: the archive entry is blue.\nRecord 341: the archive entry is blue.\nRecord 342: the archive entry is blue.\nRecord 343: the archive entry is blue.\nRecord 344: the archive entry is blue.\nRecord 345: the archive entry is blue.\nRecord 346: the archive entry is blue.\nReturn the three ARCHIVE SECRET values in numbered order, one per line. No other text."
+            }
+          ],
+          "temperature": 0,
+          "top_p": 1,
+          "max_tokens": 128,
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        "runs": [
+          {
+            "draft": true,
+            "seconds": 1.0485706300241873,
+            "passed": true,
+            "cached_tokens": 0,
+            "response": {
+              "id": "chatcmpl-38bd810a05f1878e0b3dfceebfe26c80",
+              "object": "chat.completion",
+              "created": 1792861941,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-3648-41827\n2. orchid-3648-63951\n3. willow-3648-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 3648,
+                "completion_tokens": 38,
+                "total_tokens": 3686,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 179.0899726967656,
+                "seconds": 0.206600065,
+                "prefill_seconds": 0.841223934,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 0.841515992,
+                "sampling": "greedy",
+                "drafts": true,
+                "token_sha": "cc7df0460471",
+                "token_sha256": "cc7df0460471660dc4f8ca2aa44386723fb5110386f8dea5ed80429b91c61bf8",
+                "min_rows": 3
+              },
+              "speculative": {
+                "rounds": 11,
+                "drafted": 30,
+                "accepted": 26,
+                "acceptance_rate": 0.8666666666666667,
+                "tokens_per_round": 3.4545454545454546
+              }
+            }
+          },
+          {
+            "draft": true,
+            "seconds": 0.63590978999855,
+            "passed": true,
+            "cached_tokens": 2048,
+            "response": {
+              "id": "chatcmpl-cdebc1947c9f0c6896f7461e52e355eb",
+              "object": "chat.completion",
+              "created": 1792861942,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-3648-41827\n2. orchid-3648-63951\n3. willow-3648-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 3648,
+                "completion_tokens": 38,
+                "total_tokens": 3686,
+                "prompt_tokens_details": {
+                  "cached_tokens": 2048
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 173.1969856759165,
+                "seconds": 0.213629584,
+                "prefill_seconds": 0.421302619,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 0.421655298,
+                "sampling": "greedy",
+                "drafts": true,
+                "token_sha": "cc7df0460471",
+                "token_sha256": "cc7df0460471660dc4f8ca2aa44386723fb5110386f8dea5ed80429b91c61bf8",
+                "min_rows": 3
+              },
+              "speculative": {
+                "rounds": 11,
+                "drafted": 30,
+                "accepted": 26,
+                "acceptance_rate": 0.8666666666666667,
+                "tokens_per_round": 3.4545454545454546
+              }
+            }
+          },
+          {
+            "draft": false,
+            "seconds": 0.9997920150053687,
+            "passed": true,
+            "cached_tokens": 2048,
+            "response": {
+              "id": "chatcmpl-2fcd3a80de3b3e823b944af31dbaf0db",
+              "object": "chat.completion",
+              "created": 1792861943,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-3648-41827\n2. orchid-3648-63951\n3. willow-3648-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 3648,
+                "completion_tokens": 38,
+                "total_tokens": 3686,
+                "prompt_tokens_details": {
+                  "cached_tokens": 2048
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 61.87607686427548,
+                "seconds": 0.597969391,
+                "prefill_seconds": 0.40078076,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 0.401103245,
+                "sampling": "greedy",
+                "drafts": false,
+                "token_sha": "cc7df0460471",
+                "token_sha256": "cc7df0460471660dc4f8ca2aa44386723fb5110386f8dea5ed80429b91c61bf8",
+                "min_rows": 1
+              },
+              "speculative": {
+                "rounds": 37,
+                "drafted": 0,
+                "accepted": 0,
+                "acceptance_rate": 0.0,
+                "tokens_per_round": 1.027027027027027
+              }
+            }
+          },
+          {
+            "draft": false,
+            "seconds": 0.9983107519801706,
+            "passed": true,
+            "cached_tokens": 2048,
+            "response": {
+              "id": "chatcmpl-598c8d524cb59a2cdb1e880373502f7d",
+              "object": "chat.completion",
+              "created": 1792861944,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-3648-41827\n2. orchid-3648-63951\n3. willow-3648-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 3648,
+                "completion_tokens": 38,
+                "total_tokens": 3686,
+                "prompt_tokens_details": {
+                  "cached_tokens": 2048
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 62.02459904985824,
+                "seconds": 0.596537512,
+                "prefill_seconds": 0.400742693,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 0.40108055,
+                "sampling": "greedy",
+                "drafts": false,
+                "token_sha": "cc7df0460471",
+                "token_sha256": "cc7df0460471660dc4f8ca2aa44386723fb5110386f8dea5ed80429b91c61bf8",
+                "min_rows": 1
+              },
+              "speculative": {
+                "rounds": 37,
+                "drafted": 0,
+                "accepted": 0,
+                "acceptance_rate": 0.0,
+                "tokens_per_round": 1.027027027027027
+              }
+            }
+          }
+        ],
+        "all_output_hashes_match": true
+      },
+      {
+        "target": 8000,
+        "count": 7993,
+        "expected": [
+          "cedar-8000-41827",
+          "orchid-8000-63951",
+          "willow-8000-82746"
+        ],
+        "needle_rows": [
+          74,
+          372,
+          669
+        ],
+        "records": 744,
+        "body": {
+          "model": "glm-5.3-flash-fp4-local",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Read the archive and find its three ARCHIVE SECRET values.\nRecord 0: the archive entry is blue.\nRecord 1: the archive entry is blue.\nRecord 2: the archive entry is blue.\nRecord 3: the archive entry is blue.\nRecord 4: the archive entry is blue.\nRecord 5: the archive entry is blue.\nRecord 6: the archive entry is blue.\nRecord 7: the archive entry is blue.\nRecord 8: the archive entry is blue.\nRecord 9: the archive entry is blue.\nRecord 10: the archive entry is blue.\nRecord 11: the archive entry is blue.\nRecord 12: the archive entry is blue.\nRecord 13: the archive entry is blue.\nRecord 14: the archive entry is blue.\nRecord 15: the archive entry is blue.\nRecord 16: the archive entry is blue.\nRecord 17: the archive entry is blue.\nRecord 18: the archive entry is blue.\nRecord 19: the archive entry is blue.\nRecord 20: the archive entry is blue.\nRecord 21: the archive entry is blue.\nRecord 22: the archive entry is blue.\nRecord 23: the archive entry is blue.\nRecord 24: the archive entry is blue.\nRecord 25: the archive entry is blue.\nRecord 26: the archive entry is blue.\nRecord 27: the archive entry is blue.\nRecord 28: the archive entry is blue.\nRecord 29: the archive entry is blue.\nRecord 30: the archive entry is blue.\nRecord 31: the archive entry is blue.\nRecord 32: the archive entry is blue.\nRecord 33: the archive entry is blue.\nRecord 34: the archive entry is blue.\nRecord 35: the archive entry is blue.\nRecord 36: the archive entry is blue.\nRecord 37: the archive entry is blue.\nRecord 38: the archive entry is blue.\nRecord 39: the archive entry is blue.\nRecord 40: the archive entry is blue.\nRecord 41: the archive entry is blue.\nRecord 42: the archive entry is blue.\nRecord 43: the archive entry is blue.\nRecord 44: the archive entry is blue.\nRecord 45: the archive entry is blue.\nRecord 46: the archive entry is blue.\nRecord 47: the archive entry is blue.\nRecord 48: the archive entry is blue.\nRecord 49: the archive entry is blue.\nRecord 50: the archive entry is blue.\nRecord 51: the archive entry is blue.\nRecord 52: the archive entry is blue.\nRecord 53: the archive entry is blue.\nRecord 54: the archive entry is blue.\nRecord 55: the archive entry is blue.\nRecord 56: the archive entry is blue.\nRecord 57: the archive entry is blue.\nRecord 58: the archive entry is blue.\nRecord 59: the archive entry is blue.\nRecord 60: the archive entry is blue.\nRecord 61: the archive entry is blue.\nRecord 62: the archive entry is blue.\nRecord 63: the archive entry is blue.\nRecord 64: the archive entry is blue.\nRecord 65: the archive entry is blue.\nRecord 66: the archive entry is blue.\nRecord 67: the archive entry is blue.\nRecord 68: the archive entry is blue.\nRecord 69: the archive entry is blue.\nRecord 70: the archive entry is blue.\nRecord 71: the archive entry is blue.\nRecord 72: the archive entry is blue.\nRecord 73: the archive entry is blue.\nRecord 74: ARCHIVE SECRET 1 is cedar-8000-41827.\nRecord 75: the archive entry is blue.\nRecord 76: the archive entry is blue.\nRecord 77: the archive entry is blue.\nRecord 78: the archive entry is blue.\nRecord 79: the archive entry is blue.\nRecord 80: the archive entry is blue.\nRecord 81: the archive entry is blue.\nRecord 82: the archive entry is blue.\nRecord 83: the archive entry is blue.\nRecord 84: the archive entry is blue.\nRecord 85: the archive entry is blue.\nRecord 86: the archive entry is blue.\nRecord 87: the archive entry is blue.\nRecord 88: the archive entry is blue.\nRecord 89: the archive entry is blue.\nRecord 90: the archive entry is blue.\nRecord 91: the archive entry is blue.\nRecord 92: the archive entry is blue.\nRecord 93: the archive entry is blue.\nRecord 94: the archive entry is blue.\nRecord 95: the archive entry is blue.\nRecord 96: the archive entry is blue.\nRecord 97: the archive entry is blue.\nRecord 98: the archive entry is blue.\nRecord 99: the archive entry is blue.\nRecord 100: the archive entry is blue.\nRecord 101: the archive entry is blue.\nRecord 102: the archive entry is blue.\nRecord 103: the archive entry is blue.\nRecord 104: the archive entry is blue.\nRecord 105: the archive entry is blue.\nRecord 106: the archive entry is blue.\nRecord 107: the archive entry is blue.\nRecord 108: the archive entry is blue.\nRecord 109: the archive entry is blue.\nRecord 110: the archive entry is blue.\nRecord 111: the archive entry is blue.\nRecord 112: the archive entry is blue.\nRecord 113: the archive entry is blue.\nRecord 114: the archive entry is blue.\nRecord 115: the archive entry is blue.\nRecord 116: the archive entry is blue.\nRecord 117: the archive entry is blue.\nRecord 118: the archive entry is blue.\nRecord 119: the archive entry is blue.\nRecord 120: the archive entry is blue.\nRecord 121: the archive entry is blue.\nRecord 122: the archive entry is blue.\nRecord 123: the archive entry is blue.\nRecord 124: the archive entry is blue.\nRecord 125: the archive entry is blue.\nRecord 126: the archive entry is blue.\nRecord 127: the archive entry is blue.\nRecord 128: the archive entry is blue.\nRecord 129: the archive entry is blue.\nRecord 130: the archive entry is blue.\nRecord 131: the archive entry is blue.\nRecord 132: the archive entry is blue.\nRecord 133: the archive entry is blue.\nRecord 134: the archive entry is blue.\nRecord 135: the archive entry is blue.\nRecord 136: the archive entry is blue.\nRecord 137: the archive entry is blue.\nRecord 138: the archive entry is blue.\nRecord 139: the archive entry is blue.\nRecord 140: the archive entry is blue.\nRecord 141: the archive entry is blue.\nRecord 142: the archive entry is blue.\nRecord 143: the archive entry is blue.\nRecord 144: the archive entry is blue.\nRecord 145: the archive entry is blue.\nRecord 146: the archive entry is blue.\nRecord 147: the archive entry is blue.\nRecord 148: the archive entry is blue.\nRecord 149: the archive entry is blue.\nRecord 150: the archive entry is blue.\nRecord 151: the archive entry is blue.\nRecord 152: the archive entry is blue.\nRecord 153: the archive entry is blue.\nRecord 154: the archive entry is blue.\nRecord 155: the archive entry is blue.\nRecord 156: the archive entry is blue.\nRecord 157: the archive entry is blue.\nRecord 158: the archive entry is blue.\nRecord 159: the archive entry is blue.\nRecord 160: the archive entry is blue.\nRecord 161: the archive entry is blue.\nRecord 162: the archive entry is blue.\nRecord 163: the archive entry is blue.\nRecord 164: the archive entry is blue.\nRecord 165: the archive entry is blue.\nRecord 166: the archive entry is blue.\nRecord 167: the archive entry is blue.\nRecord 168: the archive entry is blue.\nRecord 169: the archive entry is blue.\nRecord 170: the archive entry is blue.\nRecord 171: the archive entry is blue.\nRecord 172: the archive entry is blue.\nRecord 173: the archive entry is blue.\nRecord 174: the archive entry is blue.\nRecord 175: the archive entry is blue.\nRecord 176: the archive entry is blue.\nRecord 177: the archive entry is blue.\nRecord 178: the archive entry is blue.\nRecord 179: the archive entry is blue.\nRecord 180: the archive entry is blue.\nRecord 181: the archive entry is blue.\nRecord 182: the archive entry is blue.\nRecord 183: the archive entry is blue.\nRecord 184: the archive entry is blue.\nRecord 185: the archive entry is blue.\nRecord 186: the archive entry is blue.\nRecord 187: the archive entry is blue.\nRecord 188: the archive entry is blue.\nRecord 189: the archive entry is blue.\nRecord 190: the archive entry is blue.\nRecord 191: the archive entry is blue.\nRecord 192: the archive entry is blue.\nRecord 193: the archive entry is blue.\nRecord 194: the archive entry is blue.\nRecord 195: the archive entry is blue.\nRecord 196: the archive entry is blue.\nRecord 197: the archive entry is blue.\nRecord 198: the archive entry is blue.\nRecord 199: the archive entry is blue.\nRecord 200: the archive entry is blue.\nRecord 201: the archive entry is blue.\nRecord 202: the archive entry is blue.\nRecord 203: the archive entry is blue.\nRecord 204: the archive entry is blue.\nRecord 205: the archive entry is blue.\nRecord 206: the archive entry is blue.\nRecord 207: the archive entry is blue.\nRecord 208: the archive entry is blue.\nRecord 209: the archive entry is blue.\nRecord 210: the archive entry is blue.\nRecord 211: the archive entry is blue.\nRecord 212: the archive entry is blue.\nRecord 213: the archive entry is blue.\nRecord 214: the archive entry is blue.\nRecord 215: the archive entry is blue.\nRecord 216: the archive entry is blue.\nRecord 217: the archive entry is blue.\nRecord 218: the archive entry is blue.\nRecord 219: the archive entry is blue.\nRecord 220: the archive entry is blue.\nRecord 221: the archive entry is blue.\nRecord 222: the archive entry is blue.\nRecord 223: the archive entry is blue.\nRecord 224: the archive entry is blue.\nRecord 225: the archive entry is blue.\nRecord 226: the archive entry is blue.\nRecord 227: the archive entry is blue.\nRecord 228: the archive entry is blue.\nRecord 229: the archive entry is blue.\nRecord 230: the archive entry is blue.\nRecord 231: the archive entry is blue.\nRecord 232: the archive entry is blue.\nRecord 233: the archive entry is blue.\nRecord 234: the archive entry is blue.\nRecord 235: the archive entry is blue.\nRecord 236: the archive entry is blue.\nRecord 237: the archive entry is blue.\nRecord 238: the archive entry is blue.\nRecord 239: the archive entry is blue.\nRecord 240: the archive entry is blue.\nRecord 241: the archive entry is blue.\nRecord 242: the archive entry is blue.\nRecord 243: the archive entry is blue.\nRecord 244: the archive entry is blue.\nRecord 245: the archive entry is blue.\nRecord 246: the archive entry is blue.\nRecord 247: the archive entry is blue.\nRecord 248: the archive entry is blue.\nRecord 249: the archive entry is blue.\nRecord 250: the archive entry is blue.\nRecord 251: the archive entry is blue.\nRecord 252: the archive entry is blue.\nRecord 253: the archive entry is blue.\nRecord 254: the archive entry is blue.\nRecord 255: the archive entry is blue.\nRecord 256: the archive entry is blue.\nRecord 257: the archive entry is blue.\nRecord 258: the archive entry is blue.\nRecord 259: the archive entry is blue.\nRecord 260: the archive entry is blue.\nRecord 261: the archive entry is blue.\nRecord 262: the archive entry is blue.\nRecord 263: the archive entry is blue.\nRecord 264: the archive entry is blue.\nRecord 265: the archive entry is blue.\nRecord 266: the archive entry is blue.\nRecord 267: the archive entry is blue.\nRecord 268: the archive entry is blue.\nRecord 269: the archive entry is blue.\nRecord 270: the archive entry is blue.\nRecord 271: the archive entry is blue.\nRecord 272: the archive entry is blue.\nRecord 273: the archive entry is blue.\nRecord 274: the archive entry is blue.\nRecord 275: the archive entry is blue.\nRecord 276: the archive entry is blue.\nRecord 277: the archive entry is blue.\nRecord 278: the archive entry is blue.\nRecord 279: the archive entry is blue.\nRecord 280: the archive entry is blue.\nRecord 281: the archive entry is blue.\nRecord 282: the archive entry is blue.\nRecord 283: the archive entry is blue.\nRecord 284: the archive entry is blue.\nRecord 285: the archive entry is blue.\nRecord 286: the archive entry is blue.\nRecord 287: the archive entry is blue.\nRecord 288: the archive entry is blue.\nRecord 289: the archive entry is blue.\nRecord 290: the archive entry is blue.\nRecord 291: the archive entry is blue.\nRecord 292: the archive entry is blue.\nRecord 293: the archive entry is blue.\nRecord 294: the archive entry is blue.\nRecord 295: the archive entry is blue.\nRecord 296: the archive entry is blue.\nRecord 297: the archive entry is blue.\nRecord 298: the archive entry is blue.\nRecord 299: the archive entry is blue.\nRecord 300: the archive entry is blue.\nRecord 301: the archive entry is blue.\nRecord 302: the archive entry is blue.\nRecord 303: the archive entry is blue.\nRecord 304: the archive entry is blue.\nRecord 305: the archive entry is blue.\nRecord 306: the archive entry is blue.\nRecord 307: the archive entry is blue.\nRecord 308: the archive entry is blue.\nRecord 309: the archive entry is blue.\nRecord 310: the archive entry is blue.\nRecord 311: the archive entry is blue.\nRecord 312: the archive entry is blue.\nRecord 313: the archive entry is blue.\nRecord 314: the archive entry is blue.\nRecord 315: the archive entry is blue.\nRecord 316: the archive entry is blue.\nRecord 317: the archive entry is blue.\nRecord 318: the archive entry is blue.\nRecord 319: the archive entry is blue.\nRecord 320: the archive entry is blue.\nRecord 321: the archive entry is blue.\nRecord 322: the archive entry is blue.\nRecord 323: the archive entry is blue.\nRecord 324: the archive entry is blue.\nRecord 325: the archive entry is blue.\nRecord 326: the archive entry is blue.\nRecord 327: the archive entry is blue.\nRecord 328: the archive entry is blue.\nRecord 329: the archive entry is blue.\nRecord 330: the archive entry is blue.\nRecord 331: the archive entry is blue.\nRecord 332: the archive entry is blue.\nRecord 333: the archive entry is blue.\nRecord 334: the archive entry is blue.\nRecord 335: the archive entry is blue.\nRecord 336: the archive entry is blue.\nRecord 337: the archive entry is blue.\nRecord 338: the archive entry is blue.\nRecord 339: the archive entry is blue.\nRecord 340: the archive entry is blue.\nRecord 341: the archive entry is blue.\nRecord 342: the archive entry is blue.\nRecord 343: the archive entry is blue.\nRecord 344: the archive entry is blue.\nRecord 345: the archive entry is blue.\nRecord 346: the archive entry is blue.\nRecord 347: the archive entry is blue.\nRecord 348: the archive entry is blue.\nRecord 349: the archive entry is blue.\nRecord 350: the archive entry is blue.\nRecord 351: the archive entry is blue.\nRecord 352: the archive entry is blue.\nRecord 353: the archive entry is blue.\nRecord 354: the archive entry is blue.\nRecord 355: the archive entry is blue.\nRecord 356: the archive entry is blue.\nRecord 357: the archive entry is blue.\nRecord 358: the archive entry is blue.\nRecord 359: the archive entry is blue.\nRecord 360: the archive entry is blue.\nRecord 361: the archive entry is blue.\nRecord 362: the archive entry is blue.\nRecord 363: the archive entry is blue.\nRecord 364: the archive entry is blue.\nRecord 365: the archive entry is blue.\nRecord 366: the archive entry is blue.\nRecord 367: the archive entry is blue.\nRecord 368: the archive entry is blue.\nRecord 369: the archive entry is blue.\nRecord 370: the archive entry is blue.\nRecord 371: the archive entry is blue.\nRecord 372: ARCHIVE SECRET 2 is orchid-8000-63951.\nRecord 373: the archive entry is blue.\nRecord 374: the archive entry is blue.\nRecord 375: the archive entry is blue.\nRecord 376: the archive entry is blue.\nRecord 377: the archive entry is blue.\nRecord 378: the archive entry is blue.\nRecord 379: the archive entry is blue.\nRecord 380: the archive entry is blue.\nRecord 381: the archive entry is blue.\nRecord 382: the archive entry is blue.\nRecord 383: the archive entry is blue.\nRecord 384: the archive entry is blue.\nRecord 385: the archive entry is blue.\nRecord 386: the archive entry is blue.\nRecord 387: the archive entry is blue.\nRecord 388: the archive entry is blue.\nRecord 389: the archive entry is blue.\nRecord 390: the archive entry is blue.\nRecord 391: the archive entry is blue.\nRecord 392: the archive entry is blue.\nRecord 393: the archive entry is blue.\nRecord 394: the archive entry is blue.\nRecord 395: the archive entry is blue.\nRecord 396: the archive entry is blue.\nRecord 397: the archive entry is blue.\nRecord 398: the archive entry is blue.\nRecord 399: the archive entry is blue.\nRecord 400: the archive entry is blue.\nRecord 401: the archive entry is blue.\nRecord 402: the archive entry is blue.\nRecord 403: the archive entry is blue.\nRecord 404: the archive entry is blue.\nRecord 405: the archive entry is blue.\nRecord 406: the archive entry is blue.\nRecord 407: the archive entry is blue.\nRecord 408: the archive entry is blue.\nRecord 409: the archive entry is blue.\nRecord 410: the archive entry is blue.\nRecord 411: the archive entry is blue.\nRecord 412: the archive entry is blue.\nRecord 413: the archive entry is blue.\nRecord 414: the archive entry is blue.\nRecord 415: the archive entry is blue.\nRecord 416: the archive entry is blue.\nRecord 417: the archive entry is blue.\nRecord 418: the archive entry is blue.\nRecord 419: the archive entry is blue.\nRecord 420: the archive entry is blue.\nRecord 421: the archive entry is blue.\nRecord 422: the archive entry is blue.\nRecord 423: the archive entry is blue.\nRecord 424: the archive entry is blue.\nRecord 425: the archive entry is blue.\nRecord 426: the archive entry is blue.\nRecord 427: the archive entry is blue.\nRecord 428: the archive entry is blue.\nRecord 429: the archive entry is blue.\nRecord 430: the archive entry is blue.\nRecord 431: the archive entry is blue.\nRecord 432: the archive entry is blue.\nRecord 433: the archive entry is blue.\nRecord 434: the archive entry is blue.\nRecord 435: the archive entry is blue.\nRecord 436: the archive entry is blue.\nRecord 437: the archive entry is blue.\nRecord 438: the archive entry is blue.\nRecord 439: the archive entry is blue.\nRecord 440: the archive entry is blue.\nRecord 441: the archive entry is blue.\nRecord 442: the archive entry is blue.\nRecord 443: the archive entry is blue.\nRecord 444: the archive entry is blue.\nRecord 445: the archive entry is blue.\nRecord 446: the archive entry is blue.\nRecord 447: the archive entry is blue.\nRecord 448: the archive entry is blue.\nRecord 449: the archive entry is blue.\nRecord 450: the archive entry is blue.\nRecord 451: the archive entry is blue.\nRecord 452: the archive entry is blue.\nRecord 453: the archive entry is blue.\nRecord 454: the archive entry is blue.\nRecord 455: the archive entry is blue.\nRecord 456: the archive entry is blue.\nRecord 457: the archive entry is blue.\nRecord 458: the archive entry is blue.\nRecord 459: the archive entry is blue.\nRecord 460: the archive entry is blue.\nRecord 461: the archive entry is blue.\nRecord 462: the archive entry is blue.\nRecord 463: the archive entry is blue.\nRecord 464: the archive entry is blue.\nRecord 465: the archive entry is blue.\nRecord 466: the archive entry is blue.\nRecord 467: the archive entry is blue.\nRecord 468: the archive entry is blue.\nRecord 469: the archive entry is blue.\nRecord 470: the archive entry is blue.\nRecord 471: the archive entry is blue.\nRecord 472: the archive entry is blue.\nRecord 473: the archive entry is blue.\nRecord 474: the archive entry is blue.\nRecord 475: the archive entry is blue.\nRecord 476: the archive entry is blue.\nRecord 477: the archive entry is blue.\nRecord 478: the archive entry is blue.\nRecord 479: the archive entry is blue.\nRecord 480: the archive entry is blue.\nRecord 481: the archive entry is blue.\nRecord 482: the archive entry is blue.\nRecord 483: the archive entry is blue.\nRecord 484: the archive entry is blue.\nRecord 485: the archive entry is blue.\nRecord 486: the archive entry is blue.\nRecord 487: the archive entry is blue.\nRecord 488: the archive entry is blue.\nRecord 489: the archive entry is blue.\nRecord 490: the archive entry is blue.\nRecord 491: the archive entry is blue.\nRecord 492: the archive entry is blue.\nRecord 493: the archive entry is blue.\nRecord 494: the archive entry is blue.\nRecord 495: the archive entry is blue.\nRecord 496: the archive entry is blue.\nRecord 497: the archive entry is blue.\nRecord 498: the archive entry is blue.\nRecord 499: the archive entry is blue.\nRecord 500: the archive entry is blue.\nRecord 501: the archive entry is blue.\nRecord 502: the archive entry is blue.\nRecord 503: the archive entry is blue.\nRecord 504: the archive entry is blue.\nRecord 505: the archive entry is blue.\nRecord 506: the archive entry is blue.\nRecord 507: the archive entry is blue.\nRecord 508: the archive entry is blue.\nRecord 509: the archive entry is blue.\nRecord 510: the archive entry is blue.\nRecord 511: the archive entry is blue.\nRecord 512: the archive entry is blue.\nRecord 513: the archive entry is blue.\nRecord 514: the archive entry is blue.\nRecord 515: the archive entry is blue.\nRecord 516: the archive entry is blue.\nRecord 517: the archive entry is blue.\nRecord 518: the archive entry is blue.\nRecord 519: the archive entry is blue.\nRecord 520: the archive entry is blue.\nRecord 521: the archive entry is blue.\nRecord 522: the archive entry is blue.\nRecord 523: the archive entry is blue.\nRecord 524: the archive entry is blue.\nRecord 525: the archive entry is blue.\nRecord 526: the archive entry is blue.\nRecord 527: the archive entry is blue.\nRecord 528: the archive entry is blue.\nRecord 529: the archive entry is blue.\nRecord 530: the archive entry is blue.\nRecord 531: the archive entry is blue.\nRecord 532: the archive entry is blue.\nRecord 533: the archive entry is blue.\nRecord 534: the archive entry is blue.\nRecord 535: the archive entry is blue.\nRecord 536: the archive entry is blue.\nRecord 537: the archive entry is blue.\nRecord 538: the archive entry is blue.\nRecord 539: the archive entry is blue.\nRecord 540: the archive entry is blue.\nRecord 541: the archive entry is blue.\nRecord 542: the archive entry is blue.\nRecord 543: the archive entry is blue.\nRecord 544: the archive entry is blue.\nRecord 545: the archive entry is blue.\nRecord 546: the archive entry is blue.\nRecord 547: the archive entry is blue.\nRecord 548: the archive entry is blue.\nRecord 549: the archive entry is blue.\nRecord 550: the archive entry is blue.\nRecord 551: the archive entry is blue.\nRecord 552: the archive entry is blue.\nRecord 553: the archive entry is blue.\nRecord 554: the archive entry is blue.\nRecord 555: the archive entry is blue.\nRecord 556: the archive entry is blue.\nRecord 557: the archive entry is blue.\nRecord 558: the archive entry is blue.\nRecord 559: the archive entry is blue.\nRecord 560: the archive entry is blue.\nRecord 561: the archive entry is blue.\nRecord 562: the archive entry is blue.\nRecord 563: the archive entry is blue.\nRecord 564: the archive entry is blue.\nRecord 565: the archive entry is blue.\nRecord 566: the archive entry is blue.\nRecord 567: the archive entry is blue.\nRecord 568: the archive entry is blue.\nRecord 569: the archive entry is blue.\nRecord 570: the archive entry is blue.\nRecord 571: the archive entry is blue.\nRecord 572: the archive entry is blue.\nRecord 573: the archive entry is blue.\nRecord 574: the archive entry is blue.\nRecord 575: the archive entry is blue.\nRecord 576: the archive entry is blue.\nRecord 577: the archive entry is blue.\nRecord 578: the archive entry is blue.\nRecord 579: the archive entry is blue.\nRecord 580: the archive entry is blue.\nRecord 581: the archive entry is blue.\nRecord 582: the archive entry is blue.\nRecord 583: the archive entry is blue.\nRecord 584: the archive entry is blue.\nRecord 585: the archive entry is blue.\nRecord 586: the archive entry is blue.\nRecord 587: the archive entry is blue.\nRecord 588: the archive entry is blue.\nRecord 589: the archive entry is blue.\nRecord 590: the archive entry is blue.\nRecord 591: the archive entry is blue.\nRecord 592: the archive entry is blue.\nRecord 593: the archive entry is blue.\nRecord 594: the archive entry is blue.\nRecord 595: the archive entry is blue.\nRecord 596: the archive entry is blue.\nRecord 597: the archive entry is blue.\nRecord 598: the archive entry is blue.\nRecord 599: the archive entry is blue.\nRecord 600: the archive entry is blue.\nRecord 601: the archive entry is blue.\nRecord 602: the archive entry is blue.\nRecord 603: the archive entry is blue.\nRecord 604: the archive entry is blue.\nRecord 605: the archive entry is blue.\nRecord 606: the archive entry is blue.\nRecord 607: the archive entry is blue.\nRecord 608: the archive entry is blue.\nRecord 609: the archive entry is blue.\nRecord 610: the archive entry is blue.\nRecord 611: the archive entry is blue.\nRecord 612: the archive entry is blue.\nRecord 613: the archive entry is blue.\nRecord 614: the archive entry is blue.\nRecord 615: the archive entry is blue.\nRecord 616: the archive entry is blue.\nRecord 617: the archive entry is blue.\nRecord 618: the archive entry is blue.\nRecord 619: the archive entry is blue.\nRecord 620: the archive entry is blue.\nRecord 621: the archive entry is blue.\nRecord 622: the archive entry is blue.\nRecord 623: the archive entry is blue.\nRecord 624: the archive entry is blue.\nRecord 625: the archive entry is blue.\nRecord 626: the archive entry is blue.\nRecord 627: the archive entry is blue.\nRecord 628: the archive entry is blue.\nRecord 629: the archive entry is blue.\nRecord 630: the archive entry is blue.\nRecord 631: the archive entry is blue.\nRecord 632: the archive entry is blue.\nRecord 633: the archive entry is blue.\nRecord 634: the archive entry is blue.\nRecord 635: the archive entry is blue.\nRecord 636: the archive entry is blue.\nRecord 637: the archive entry is blue.\nRecord 638: the archive entry is blue.\nRecord 639: the archive entry is blue.\nRecord 640: the archive entry is blue.\nRecord 641: the archive entry is blue.\nRecord 642: the archive entry is blue.\nRecord 643: the archive entry is blue.\nRecord 644: the archive entry is blue.\nRecord 645: the archive entry is blue.\nRecord 646: the archive entry is blue.\nRecord 647: the archive entry is blue.\nRecord 648: the archive entry is blue.\nRecord 649: the archive entry is blue.\nRecord 650: the archive entry is blue.\nRecord 651: the archive entry is blue.\nRecord 652: the archive entry is blue.\nRecord 653: the archive entry is blue.\nRecord 654: the archive entry is blue.\nRecord 655: the archive entry is blue.\nRecord 656: the archive entry is blue.\nRecord 657: the archive entry is blue.\nRecord 658: the archive entry is blue.\nRecord 659: the archive entry is blue.\nRecord 660: the archive entry is blue.\nRecord 661: the archive entry is blue.\nRecord 662: the archive entry is blue.\nRecord 663: the archive entry is blue.\nRecord 664: the archive entry is blue.\nRecord 665: the archive entry is blue.\nRecord 666: the archive entry is blue.\nRecord 667: the archive entry is blue.\nRecord 668: the archive entry is blue.\nRecord 669: ARCHIVE SECRET 3 is willow-8000-82746.\nRecord 670: the archive entry is blue.\nRecord 671: the archive entry is blue.\nRecord 672: the archive entry is blue.\nRecord 673: the archive entry is blue.\nRecord 674: the archive entry is blue.\nRecord 675: the archive entry is blue.\nRecord 676: the archive entry is blue.\nRecord 677: the archive entry is blue.\nRecord 678: the archive entry is blue.\nRecord 679: the archive entry is blue.\nRecord 680: the archive entry is blue.\nRecord 681: the archive entry is blue.\nRecord 682: the archive entry is blue.\nRecord 683: the archive entry is blue.\nRecord 684: the archive entry is blue.\nRecord 685: the archive entry is blue.\nRecord 686: the archive entry is blue.\nRecord 687: the archive entry is blue.\nRecord 688: the archive entry is blue.\nRecord 689: the archive entry is blue.\nRecord 690: the archive entry is blue.\nRecord 691: the archive entry is blue.\nRecord 692: the archive entry is blue.\nRecord 693: the archive entry is blue.\nRecord 694: the archive entry is blue.\nRecord 695: the archive entry is blue.\nRecord 696: the archive entry is blue.\nRecord 697: the archive entry is blue.\nRecord 698: the archive entry is blue.\nRecord 699: the archive entry is blue.\nRecord 700: the archive entry is blue.\nRecord 701: the archive entry is blue.\nRecord 702: the archive entry is blue.\nRecord 703: the archive entry is blue.\nRecord 704: the archive entry is blue.\nRecord 705: the archive entry is blue.\nRecord 706: the archive entry is blue.\nRecord 707: the archive entry is blue.\nRecord 708: the archive entry is blue.\nRecord 709: the archive entry is blue.\nRecord 710: the archive entry is blue.\nRecord 711: the archive entry is blue.\nRecord 712: the archive entry is blue.\nRecord 713: the archive entry is blue.\nRecord 714: the archive entry is blue.\nRecord 715: the archive entry is blue.\nRecord 716: the archive entry is blue.\nRecord 717: the archive entry is blue.\nRecord 718: the archive entry is blue.\nRecord 719: the archive entry is blue.\nRecord 720: the archive entry is blue.\nRecord 721: the archive entry is blue.\nRecord 722: the archive entry is blue.\nRecord 723: the archive entry is blue.\nRecord 724: the archive entry is blue.\nRecord 725: the archive entry is blue.\nRecord 726: the archive entry is blue.\nRecord 727: the archive entry is blue.\nRecord 728: the archive entry is blue.\nRecord 729: the archive entry is blue.\nRecord 730: the archive entry is blue.\nRecord 731: the archive entry is blue.\nRecord 732: the archive entry is blue.\nRecord 733: the archive entry is blue.\nRecord 734: the archive entry is blue.\nRecord 735: the archive entry is blue.\nRecord 736: the archive entry is blue.\nRecord 737: the archive entry is blue.\nRecord 738: the archive entry is blue.\nRecord 739: the archive entry is blue.\nRecord 740: the archive entry is blue.\nRecord 741: the archive entry is blue.\nRecord 742: the archive entry is blue.\nRecord 743: the archive entry is blue.\nReturn the three ARCHIVE SECRET values in numbered order, one per line. No other text."
+            }
+          ],
+          "temperature": 0,
+          "top_p": 1,
+          "max_tokens": 128,
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        "runs": [
+          {
+            "draft": true,
+            "seconds": 2.013277170015499,
+            "passed": true,
+            "cached_tokens": 0,
+            "response": {
+              "id": "chatcmpl-b3c8318b8b3cd173d45b0bdefd4cb78c",
+              "object": "chat.completion",
+              "created": 1792861945,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-8000-41827\n2. orchid-8000-63951\n3. willow-8000-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 7993,
+                "completion_tokens": 35,
+                "total_tokens": 8028,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 173.6061965239301,
+                "seconds": 0.195845544,
+                "prefill_seconds": 1.81651494,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 1.816881471,
+                "sampling": "greedy",
+                "drafts": true,
+                "token_sha": "9f7675c7773a",
+                "token_sha256": "9f7675c7773a221e2b2dae0dcca9e154bfa0d8a8ed57e40eff3536e3642b498c",
+                "min_rows": 3
+              },
+              "speculative": {
+                "rounds": 10,
+                "drafted": 27,
+                "accepted": 24,
+                "acceptance_rate": 0.8888888888888888,
+                "tokens_per_round": 3.5
+              }
+            }
+          },
+          {
+            "draft": true,
+            "seconds": 0.603684457950294,
+            "passed": true,
+            "cached_tokens": 6144,
+            "response": {
+              "id": "chatcmpl-2e2c8561188ec6a263534db7ac740ddc",
+              "object": "chat.completion",
+              "created": 1792861947,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-8000-41827\n2. orchid-8000-63951\n3. willow-8000-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 7993,
+                "completion_tokens": 35,
+                "total_tokens": 8028,
+                "prompt_tokens_details": {
+                  "cached_tokens": 6144
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 181.22552782441346,
+                "seconds": 0.187611538,
+                "prefill_seconds": 0.414898198,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 0.41537269,
+                "sampling": "greedy",
+                "drafts": true,
+                "token_sha": "9f7675c7773a",
+                "token_sha256": "9f7675c7773a221e2b2dae0dcca9e154bfa0d8a8ed57e40eff3536e3642b498c",
+                "min_rows": 3
+              },
+              "speculative": {
+                "rounds": 10,
+                "drafted": 27,
+                "accepted": 24,
+                "acceptance_rate": 0.8888888888888888,
+                "tokens_per_round": 3.5
+              }
+            }
+          },
+          {
+            "draft": false,
+            "seconds": 0.9431789329973981,
+            "passed": true,
+            "cached_tokens": 6144,
+            "response": {
+              "id": "chatcmpl-885051a414c6b5e46211856c63167069",
+              "object": "chat.completion",
+              "created": 1792861947,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-8000-41827\n2. orchid-8000-63951\n3. willow-8000-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 7993,
+                "completion_tokens": 35,
+                "total_tokens": 8028,
+                "prompt_tokens_details": {
+                  "cached_tokens": 6144
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 62.91733146923344,
+                "seconds": 0.540391641,
+                "prefill_seconds": 0.401674903,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 0.402097938,
+                "sampling": "greedy",
+                "drafts": false,
+                "token_sha": "9f7675c7773a",
+                "token_sha256": "9f7675c7773a221e2b2dae0dcca9e154bfa0d8a8ed57e40eff3536e3642b498c",
+                "min_rows": 1
+              },
+              "speculative": {
+                "rounds": 34,
+                "drafted": 0,
+                "accepted": 0,
+                "acceptance_rate": 0.0,
+                "tokens_per_round": 1.0294117647058822
+              }
+            }
+          },
+          {
+            "draft": false,
+            "seconds": 0.9501662900438532,
+            "passed": true,
+            "cached_tokens": 6144,
+            "response": {
+              "id": "chatcmpl-d41fa11a2cc95e91f3ed9ab96f7b8d59",
+              "object": "chat.completion",
+              "created": 1792861948,
+              "model": "glm-5.3-flash-fp4-local",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "1. cedar-8000-41827\n2. orchid-8000-63951\n3. willow-8000-82746"
+                  },
+                  "finish_reason": "stop"
+                }
+              ],
+              "usage": {
+                "prompt_tokens": 7993,
+                "completion_tokens": 35,
+                "total_tokens": 8028,
+                "prompt_tokens_details": {
+                  "cached_tokens": 6144
+                },
+                "completion_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "exact_mode": "exact",
+              "tensorfold": {
+                "enable_thinking": false,
+                "reasoning_effort": "none",
+                "engine": "lanes",
+                "tokens_per_second": 62.421517219857684,
+                "seconds": 0.544683973,
+                "prefill_seconds": 0.404349327,
+                "prefill_widths": [],
+                "prefill_raised": [],
+                "time_to_first_token": 0.404770308,
+                "sampling": "greedy",
+                "drafts": false,
+                "token_sha": "9f7675c7773a",
+                "token_sha256": "9f7675c7773a221e2b2dae0dcca9e154bfa0d8a8ed57e40eff3536e3642b498c",
+                "min_rows": 1
+              },
+              "speculative": {
+                "rounds": 34,
+                "drafted": 0,
+                "accepted": 0,
+                "acceptance_rate": 0.0,
+                "tokens_per_round": 1.0294117647058822
+              }
+            }
+          }
+        ],
+        "all_output_hashes_match": true
+      }
+    ],
+    "passed": true,
+    "scope": "Synthetic retrieval and cached/drafted consistency, not broad task accuracy"
+  },
+  "complete": {
+    "profile": "resident-cache",
+    "protocol": {
+      "profiles_sha256": "54c3f4195e4a2d7efced2b3917519528d8c708203e5b5d11efefd0fbade39875",
+      "client_sha256": "6c180b416482e483dbd8cc847ae5ab46db58ac0ab3735bce19a5987b9993a7ec",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 2,
+      "mtp": "on",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-8192",
+        "prefill-32768"
+      ],
+      "teacher_histories_sha256": null,
+      "quality": false,
+      "cache_check": true,
+      "baseline_image": false,
+      "skip_benchmark": true,
+      "context_targets": [
+        2048,
+        8192
+      ]
+    },
+    "started_unix": 1792861736.3240802,
+    "token_hashes": {},
+    "repeat_and_mtp_identical": null,
+    "status": "pass",
+    "elapsed_seconds": 213.87831163406372
+  },
+  "server_log_sha256": "4edd5cf1992ac92f90caf39faf37830b1526007b4a3f55a1c86f90f13131c213"
+}

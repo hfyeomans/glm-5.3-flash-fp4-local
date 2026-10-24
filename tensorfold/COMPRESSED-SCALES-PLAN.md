@@ -1,6 +1,6 @@
 # Resident CSF32 scales on SM120: scope and validation plan
 
-Status, 2026-10-24: **research and CPU storage accounting only**. No resident-CSF32 GPU loader/kernel has been implemented or qualified. This work targets TensorFold; the running vLLM service, image, loader, B12X settings and memory budget remain unchanged. The engine is TensorFold, not TensorFlow.
+Status, 2026-10-24: **isolated loader/kernel implementation complete; served qualification in progress**. The [resident-scale experiment](csf-resident/README.md) preserves the plan below as its design and acceptance record. Full checkpoint scale-byte audits passed on both GPUs; requested net saving is 3.81765 GiB/rank after scratch and metadata. Runtime headroom and 1M success remain to be measured. The user authorized stopping this recipe’s vLLM service for GPU testing; its image, loader, B12X settings and memory budget are unchanged. The engine is TensorFold, not TensorFlow.
 
 ## Decision and motivation
 
@@ -95,3 +95,14 @@ Use TensorFold's existing profiling spans (`TF_GLM_PROF`) and GPU tracing to sep
 Compare like-for-like MTP settings and cache state; a matched vLLM trace is observational evidence, not an isolated kernel comparison. Cross-engine implementation differences must be isolated with same-input operator tests or controlled ablations before attributing causality. Do not import another engine's FP4 activation quantization or nondeterministic reduction into a storage-preserving patch. Attention/cache sharding, external drafting, precision changes and clock/power tuning are separate workstreams.
 
 The next implementation deliverable is a small, reviewable storage-layout patch with byte-exact tests and an allocation ledger. Resident CSF32 expansion follows only after that gate. This document authorizes no public posting or service switch by itself.
+
+
+## Execution adjustment: context ladder allocation
+
+After the measured 512K rung, the implementation harness can allocate the final 1M
+pool once, then test 640K, 768K, 896K and near-1M prompts serially. This avoids three
+extra checkpoint reloads and tests each request against the tighter final memory
+budget. It is a prompt-length ladder in a single allocation configuration, not a
+claim that all intermediate configured profiles were separately qualified. The
+harness checks the 1.5 GiB sampled-free floor after smoke and each request pair and
+stops on failure. 512K and 1M provide separate allocation measurements.

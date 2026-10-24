@@ -3,12 +3,12 @@
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 export PYTHONDONTWRITEBYTECODE=1
-for script in ./*.sh scripts/*.sh tensorfold/*.sh tensorfold/scripts/*.sh quality/*.sh; do bash -n "$script"; done
-shellcheck -S warning ./*.sh scripts/*.sh tensorfold/*.sh tensorfold/scripts/*.sh quality/*.sh
+for script in ./*.sh scripts/*.sh tensorfold/*.sh tensorfold/scripts/*.sh tensorfold/csf-resident/*.sh quality/*.sh; do bash -n "$script"; done
+shellcheck -S warning ./*.sh scripts/*.sh tensorfold/*.sh tensorfold/scripts/*.sh tensorfold/csf-resident/*.sh quality/*.sh
 python3 - <<'PYSYNTAX'
 import ast
 from pathlib import Path
-for root in ['scripts', 'tests', 'tensorfold/scripts', 'tensorfold/tuning', 'quality', 'benchmarks']:
+for root in ['scripts', 'tests', 'tensorfold/scripts', 'tensorfold/tuning', 'tensorfold/csf-resident', 'quality', 'benchmarks']:
     for path in Path(root).glob('*.py'):
         ast.parse(path.read_text(), filename=str(path))
 print('PASS shell lint and Python syntax')
