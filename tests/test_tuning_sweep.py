@@ -70,12 +70,15 @@ class SweepTests(unittest.TestCase):
         argv = ['sweep', '--profile-file', str(self.profile_file), '--profiles',
                 *([profile] if isinstance(profile, str) else profile),
                 '--output', str(self.output), '--skip-benchmark', *extra]
+        stdout = io.StringIO()
         with patch.object(sys, 'argv', argv), patch.object(sweep, 'ROOT', self.root), \
                 patch.object(sweep, 'environment', return_value={'TF_CONTAINER': 'owned', 'TF_IMAGE': 'test:image'}), \
                 patch.object(sweep.subprocess, 'run', side_effect=run), \
                 patch.object(sweep.subprocess, 'check_output', side_effect=output), \
-                contextlib.redirect_stdout(io.StringIO()):
-            return sweep.main()
+                contextlib.redirect_stdout(stdout):
+            result = sweep.main()
+        self.stdout = stdout.getvalue()
+        return result
 
     def receipt(self, profile='control'):
         return self.output / f'00-{profile}/complete.json'
@@ -150,6 +153,8 @@ class SweepTests(unittest.TestCase):
     def test_cleanup_timeouts_still_stop_and_join_telemetry(self):
         self.cleanup_failure = True
         self.assertEqual(self.run_sweep(), 1)
+        self.assertIn('check stop.log before assuming TensorFold stopped', self.stdout)
+        self.assertNotIn('Sweep finished; TensorFold stopped.', self.stdout)
         receipt = json.loads(self.receipt().read_text())
         self.assertEqual(receipt['status'], 'failed')
         self.assertIn('server.log:', receipt['error'])

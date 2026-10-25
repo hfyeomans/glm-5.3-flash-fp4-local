@@ -271,7 +271,10 @@ def execute_sweep(args, profiles):
         print(f'END {profile}: {status["status"]} {status["elapsed_seconds"]:.1f}s', flush=True)
         if telemetry_pending:
             return 1
-    print('Sweep finished; TensorFold stopped. Restore the vLLM recipe when qualification is complete.', flush=True)
+    if had_failure:
+        print('Sweep finished with failures; check stop.log before assuming TensorFold stopped.', flush=True)
+    else:
+        print('Sweep finished; TensorFold stopped. Restore the vLLM recipe when qualification is complete.', flush=True)
     return 1 if had_failure else 0
 
 
