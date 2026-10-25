@@ -52,6 +52,8 @@ This checkpoint stores many scale tensors with lossless **CSF32
 (`csf_32x2_v1`)** encoding. Quantization approximates values; CSF32 compresses the
 chosen scale bytes and reconstructs them exactly.
 
+Background and research context: [compression and CSF scales](COMPRESSION-AND-EXPERTS.md).
+
 [PR #1050](https://github.com/ashhart/TensorFold/pull/1050) connects the checkpoint's
 mixed formats and compressed scales to TensorFold's GLM loader. Its baseline
 expands scales for the GPU layout. Header accounting found 8.11 GiB more bytes in
