@@ -203,6 +203,8 @@ def summarize(rows, samples, before, after, sustained, output_tokens):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base-url', default='http://127.0.0.1:8000')
+    parser.add_argument('--drafter', choices=('mtp', 'dflash2'), default='mtp')
+    parser.add_argument('--container', default='glm53-fp4-tp2')
     parser.add_argument('--window', type=int, required=True)
     parser.add_argument('--clients', type=int, choices=(1, 2, 4, 8), required=True)
     parser.add_argument('--output-tokens', type=int, default=256)
@@ -216,7 +218,7 @@ def main():
         parser.error('Local endpoints only')
     if not 8192 <= args.window <= 1048576 or not 1 <= args.output_tokens < args.window // 2:
         parser.error('Invalid token budget')
-    state = json.loads(subprocess.check_output(['docker', 'inspect', 'glm53-fp4-tp2'], text=True))[0]
+    state = json.loads(subprocess.check_output(['docker', 'inspect', args.container], text=True))[0]
     command = state['Config']['Cmd']
     if not state['State']['Running'] or state['Config']['Labels'].get('local.glm53.recipe') != 'glm53-fp4-local-v1':
         raise ValueError('Expected owned running recipe')
@@ -225,10 +227,25 @@ def main():
         raise ValueError('Expected exactly two GPU device ids on the serving container')
     if REVISION not in ' '.join(command) or '--speculative-config' not in command:
         raise ValueError('Expected pinned checkpoint and MTP-on baseline')
-    for key, expected in {'--max-model-len': '1048576', '--max-num-seqs': '8',
-                          '--gpu-memory-utilization': '0.985', '--kv-cache-memory-bytes': '7650410496'}.items():
-        if command[command.index(key) + 1] != expected:
-            raise ValueError('Unexpected baseline setting: ' + key)
+    draft_lock = None
+    if args.drafter == 'mtp':
+        if json.loads(command[command.index('--speculative-config') + 1]).get('method') != 'mtp':
+            raise ValueError('This MTP baseline harness refuses DFlash2/other drafters')
+        for key, expected in {'--max-model-len': '1048576', '--max-num-seqs': '8',
+                              '--gpu-memory-utilization': '0.985', '--kv-cache-memory-bytes': '7650410496'}.items():
+            if command[command.index(key) + 1] != expected:
+                raise ValueError('Unexpected baseline setting: ' + key)
+    else:
+        import importlib.util
+        module_spec = importlib.util.spec_from_file_location('draft_bench', ROOT / 'experiments/dflash2/bench.py')
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        module.validate_server(state, 'dflash2', base)
+        draft_lock = module.LOCK
+        if int(command[command.index('--max-model-len') + 1]) < args.window:
+            raise ValueError('Requested window exceeds the launched model limit')
+    if str(urlparse(base).port or 80) != command[command.index('--port') + 1]:
+        raise ValueError('Endpoint differs from inspected serving port')
     before = metrics(base)
     if before['vllm:num_requests_running'] or before['vllm:num_requests_waiting']:
         raise ValueError('Other traffic active; refuse mixed measurement')
@@ -248,6 +265,7 @@ def main():
         cases.append((path, {k: v for k, v in case.items() if k != 'request'}))
         print(f'Prepared client {i}: {case["prompt_tokens"]} exact input tokens, {args.output_tokens} output budget', flush=True)
     manifest = {'protocol': 'independent-context-v1', 'image_id': state['Image'], 'command': command,
+        'drafter': args.drafter, 'draft_lock': draft_lock, 'container_id': state['Id'],
         'model_revision': REVISION, 'client_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'tokenizer_sha256': hashlib.sha256((Path(model['path']) / 'tokenizer.json').read_bytes()).hexdigest(),
         'template_sha256': hashlib.sha256((Path(model['path']) / 'chat_template.jinja').read_bytes()).hexdigest(),

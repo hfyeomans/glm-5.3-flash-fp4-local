@@ -13,7 +13,7 @@ case "${1:-}" in
 esac
 (( $# <= 1 )) || fail 'Too many arguments.'
 validate_config
-log "GLM-5.3-Flash FP4 | 2 GPUs ($GPUS) | MTP enabled=$MTP_ENABLED | port $PORT"
+log "GLM-5.3-Flash FP4 | 2 GPUs ($GPUS) | drafter=$DRAFTER | port $PORT"
 RUN_IMAGE=$IMAGE
 if [[ "${DRY_RUN:-0}" == 1 ]]; then
   if [[ -n "$MODEL_DIR" ]]; then
@@ -22,6 +22,7 @@ if [[ "${DRY_RUN:-0}" == 1 ]]; then
     MODEL_CONTAINER_PATH=/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/$MODEL_REVISION
     MODEL_MOUNT_SOURCE=$HF_HUB_CACHE; MODEL_MOUNT_TARGET=/root/.cache/huggingface/hub
   fi
+  resolve_drafter --plan
   build_serve_args
   build_docker_args
   log 'Plan only; no Docker calls, file changes, downloads or GPU work.'
@@ -30,6 +31,8 @@ if [[ "${DRY_RUN:-0}" == 1 ]]; then
   log "Would wait up to $WAIT_TIMEOUT seconds for /health, check /v1/models, then send a smoke completion."
   exit 0
 fi
+# Refuse a missing/wrong external draft before stopping an existing service.
+resolve_drafter
 lock_recipe
 docker info >/dev/null 2>&1 || fail 'Docker daemon is unavailable.'
 if docker container inspect "$CONTAINER_NAME" >/dev/null 2>&1; then
@@ -65,6 +68,10 @@ RUN_DIR=$LOG_DIR/run-$(date -u +%Y%m%dT%H%M%SZ)-$$
 mkdir -p "$RUN_DIR"
 ln -sfn "${RUN_DIR##*/}" "$LOG_DIR/latest"
 printf '%s\n' "$MODEL_METADATA" > "$RUN_DIR/model.json"
+if [[ "$DRAFTER" == dflash2 ]]; then
+  printf '%s\n' "$DRAFT_METADATA" > "$RUN_DIR/drafter.json"
+fi
+printf '{"drafter":"%s"}\n' "$DRAFTER" > "$RUN_DIR/speculation.json"
 plan "${DOCKER_ARGS[@]}" > "$RUN_DIR/launch-command.txt"
 cp "$REPO_ROOT/config/b12x.env" "$RUN_DIR/runtime.env"
 docker image inspect "$RUN_IMAGE" --format '{"id":{{json .Id}},"repo_digests":{{json .RepoDigests}}}' > "$RUN_DIR/image.json"

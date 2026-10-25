@@ -863,3 +863,81 @@ sampling from the container, `mtp=off` prefill controls, strict
 `prompt_tokens_details.cached_tokens` and the pinned `squad.json` hash — are enforced
 by code but not yet exercised against live servers; they take effect on the next
 qualification run and its receipts are the confirmation.
+
+## DFlash2 feasibility and selector (2026-10-25)
+
+Isolated branch `research/dflash2-feasibility`, based on `4153ef5`: added
+`DRAFTER=mtp|dflash2|none`, retaining the MTP default and legacy switch. The pinned
+Inco AI GLM-5.3-Flash-DFlash2 weights were already cached; the full 2,342,169,800-byte
+file passed SHA256 verification. No weights were downloaded.
+
+`./scripts/check.sh` passed **78 CPU tests**, including offline draft identity,
+symlink containment, selector precedence, unchanged target budgets and refusal
+before container stop when the draft is missing. Both MTP timing/capacity
+harnesses reject external drafts. Initial checks exposed a duplicate dry-run Hub
+mount through a host path alias and missing `sys`/`ROOT` definitions in the
+existing benchmark startup; both were fixed. All three launch previews passed.
+
+Read-only inspection of the pinned image found dedicated DFlash2 execution,
+GLM mHC auxiliary capture and DCP-replicated draft-cache grouping. TensorFold's
+resident-CSF path explicitly rejects an external drafter. No GPU inference,
+service restart or TensorFold modification was performed. The 128K/one-sequence,
+3 GiB-KV probe profile remains untested on GPUs.
+
+[Review and qualification gates](DFLASH2-FEASIBILITY.md) ·
+[Source hashes, pins and check receipt](../experiments/dflash2/results/feasibility-v1.json).
+
+## vLLM DFlash2 GPU qualification (2026-10-25)
+
+Research branch only. The original idle MTP container was stopped temporarily,
+then restored with its exact ID, image and 262,144-context/four-sequence command.
+Readiness and text/JSON/tools/streaming checks passed after restoration. The
+experimental container is stopped. TensorFold changes are documentation only.
+
+The first DFlash2 launch failed because regular B12X attention rejects 256-token
+pages and replicated DCP KV. Draft-only `TRITON_ATTN` fixed startup; target B12X,
+image bootstrap, NVIDIA checkpoint/revision and compressed scales were retained.
+The cached draft remained pinned, with BF16 weights. No engine image was patched.
+
+A matched 128K/one-slot/3 GiB-KV comparison ran 32 requests: eight excluded warmups
+and 24 measured requests across MTP/DFlash2, 8K/32K inputs and 256/1,024 outputs.
+MTP was faster: DFlash2 end-to-end medians were about 7–10% longer. Prefill and TTFT
+were similar. Both modes produced varying greedy output hashes across repeats;
+broader task accuracy and probability comparisons remain pending.
+
+DFlash2 passed API checks and retrieval at 128K, 512K and near-1M. The 1M profile
+processed 1,048,320 input tokens, retrieved all three markers and stopped normally,
+with zero cached input/preemption and 1,591/1,744 MiB minimum free memory. It uses
+BF16 draft KV, 7.125 GiB explicit KV/card and 98.5%. A 99% attempt failed the CUDA
+startup free-memory gate before loading weights; retrying at 98.5% retained the
+same explicit KV allocation.
+
+At 262K/four slots, BF16 draft KV planned only 2.70 full windows. Changing only
+draft KV to FP8 increased that to 4.35. Four independent clients then each
+completed 245,760 input + 16,384 output tokens. Input IDs and output counts matched,
+all twelve markers were retrieved, isolation passed, cached input/preemptions were
+zero, and all four token-stream intervals overlapped for 40.122 seconds. Minimum
+free memory was 1,387/1,540 MiB, passing the recorded 1,024 MiB probe floor. GPU 0
+was below the earlier 1,536 MiB working headroom target.
+
+`./scripts/check.sh` passed **84 CPU tests**. Added mode/endpoint/window attribution
+checks, an explicit draft-KV precision switch and a labelled DFlash2 capacity mode.
+The legacy timing reader now retains the scheduler gauges required by its existing
+guard; this fix was CPU-tested. The GPU timing client used its own metric reader.
+
+[Measurements and profiles](../experiments/dflash2/RESULTS.md) ·
+[Immutable GPU receipt](../experiments/dflash2/results/gpu-v1.json) ·
+[TensorFold implementation plan](../tensorfold/DFLASH2-PLAN.md).
+
+## DFlash2 PR review fixes (2026-10-25)
+
+PR #3 review found a timing-client race: scheduler gauges can remain nonzero
+briefly after the response stream ends. The client now waits for one completed
+request and idle gauges, rejects extra completions and times out after 30 seconds.
+Busy start boundaries still fail. Three regression tests cover delayed gauges,
+missing gauges, overlapping traffic and timeout behavior.
+
+`./scripts/check.sh` passed **87 CPU tests**. README profile instructions now copy
+only the three profile-specific settings, preserving the existing container, port
+and bind address. The 128K example identifies its measured timing profile.
+Historical GPU receipts are unchanged; this follow-up made no serving changes.

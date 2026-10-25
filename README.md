@@ -40,7 +40,7 @@ their blobs together. Serving local weights requires no `HF_TOKEN`.
 | Weight format | Original NVIDIA mixed ModelOpt / CSF32 compressed scales |
 | GPU execution | TP2 / DCP2; supplied B12X kernels and bootstrap |
 | Loader | `safetensors`; InstantTensor failed at MTP loading on this host |
-| Speculation | Built-in MTP, three draft tokens; no separate draft model |
+| Default speculation | Built-in MTP, three draft tokens; optional DFlash2 below |
 | Client endpoint | `http://127.0.0.1:8000/v1` |
 | API model name | `glm-5.3-flash-fp4-local` |
 
@@ -62,11 +62,12 @@ container's configuration unchanged.
 | `MAX_NUM_BATCHED_TOKENS` | `4096` | Scheduler token budget per iteration |
 | `GPU_MEMORY_UTILIZATION` | `0.985` | Preserve the measured baseline fraction |
 | `KV_CACHE_MEMORY_BYTES` | `7650410496` | Fixed FP8 KV allocation **per GPU** |
-| `MTP_ENABLED` | `1` | Use `0` for a controlled plain-decoding comparison |
+| `DRAFTER` | `mtp` | `mtp`, experimental `dflash2`, or `none`; explicit value overrides `MTP_ENABLED` |
+| `MTP_ENABLED` | `1` | Legacy switch: `0` selects plain decoding when `DRAFTER` is unset |
 | `LOAD_FORMAT` | `safetensors` | Qualified loader; InstantTensor remains experimental here |
 | `RESTART_POLICY` | `no` | Inspect failures; optional `on-failure:3` after acceptance |
 
-For **262,144 tokens per request and four active sequences**, change only these
+For **MTP with 262,144 tokens per request and four active sequences**, change these
 lines in `.env`, retaining the baseline memory and kernel settings:
 
 ```dotenv
@@ -77,7 +78,7 @@ MAX_NUM_SEQS=4
 Then run `./start.sh restart`. Leaving the defaults also permits four 262K
 requests, but permits larger requests and up to eight active sequences too.
 The recipe allows one parallel prefill (`--max-parallel-prefills 1`).
-Four-full-context capacity testing is pending.
+MTP four-full-window capacity testing is pending; DFlash2's tested profile is below.
 
 The MTP-on baseline reported **1,844,162 shared KV tokens**, or 1.76 full 1M
 windows. [Concurrent testing](docs/VLLM-CONCURRENCY.md) completed two full 1M
@@ -96,6 +97,61 @@ Startup can spend minutes loading/compiling. Logs and launch receipts go to
 `logs/run-<UTC>-<pid>/`, linked by `logs/latest`. Failed startup retains evidence.
 Lifecycle commands control only this recipe's container.
 [Detailed operations](docs/VLLM-OPERATIONS.md) · [Troubleshooting](docs/TROUBLESHOOTING.md).
+
+## DFlash2 settings and profiles
+
+**MTP remains the default:** DFlash2 took about 7–10% longer end-to-end in the
+matched 8K/32K benchmark. DFlash2 passed near-1M retrieval and four concurrent
+262K windows. Broad task-accuracy comparisons remain pending.
+[Measured results](experiments/dflash2/RESULTS.md).
+
+| Setting | Default | Options |
+|---|---|---|
+| `DRAFTER` | `mtp` | `mtp`, `dflash2`, `none`; overrides `MTP_ENABLED` |
+| `DFLASH2_NUM_SPECULATIVE_TOKENS` | `7` | 1–7; measurements used 7 |
+| `DFLASH2_KV_CACHE_DTYPE` | `auto` | `auto` keeps BF16 draft KV; `fp8` enables the tested four-stream profile |
+| `DFLASH2_MODEL_DIR` | Pinned snapshot in `HF_CACHE_ROOT/hub` | Optional absolute path to a complete copy of the same draft |
+
+The separate draft is [Inco AI's GLM-5.3-Flash-DFlash2](https://huggingface.co/incoai/GLM-5.3-Flash-DFlash2),
+pinned by [the draft lock](config/dflash2-lock.json), under **CC BY-NC-ND 4.0**.
+Our use is non-commercial research/evaluation. MTP uses the target checkpoint's
+built-in head. The NVIDIA target's terms apply in either mode.
+
+Edit the existing root `.env`; keep its container name, port and bind address so `restart`
+replaces the current service. Set these common values:
+
+```dotenv
+DRAFTER=dflash2
+DFLASH2_NUM_SPECULATIVE_TOKENS=7
+GPU_MEMORY_UTILIZATION=0.985
+KV_CACHE_MEMORY_BYTES=7650410496
+```
+
+Copy only `MAX_MODEL_LEN`, `MAX_NUM_SEQS` and `DFLASH2_KV_CACHE_DTYPE` from the
+chosen profile below. The linked files also contain separate probe-service settings.
+Context includes **input plus output**:
+
+| Profile | `MAX_MODEL_LEN` | `MAX_NUM_SEQS` | `DFLASH2_KV_CACHE_DTYPE` | Minimum free MiB, GPU 0 / 1 |
+|---|---:|---:|---|---:|
+| [1M × one](experiments/dflash2/vllm-1m.env.example) | `1048576` | `1` | `auto` | 1,591 / 1,744 |
+| [262K × four](experiments/dflash2/vllm-262k-x4.env.example) | `262144` | `4` | `fp8` | 1,387 / 1,540 |
+
+```bash
+./start.sh --dry-run
+./start.sh restart
+./smoke.sh --suite
+```
+
+The launcher selects Triton draft attention and retains B12X target attention.
+Draft weights stay BF16; the four-stream change affects draft KV storage only.
+Both profiles use 7.125 GiB KV per GPU. The 99% attempt failed CUDA's startup
+free-memory check. Four-stream testing used a 1,024 MiB stop floor; GPU 0's minimum
+was below the earlier 1,536 MiB working headroom target.
+
+To return to MTP, set `DRAFTER=mtp` in `.env` and restart. Set `DRAFTER=none` for
+plain decoding. Context and sequence limits stay as configured.
+[Experiment commands](experiments/dflash2/README.md) ·
+[TensorFold DFlash2 work plan](tensorfold/DFLASH2-PLAN.md).
 
 ## API example
 

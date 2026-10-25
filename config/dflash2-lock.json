@@ -1,0 +1,14 @@
+{
+  "model_id": "incoai/GLM-5.3-Flash-DFlash2",
+  "revision": "bf582e4eacc1810f76656d1811693ff6c6737d2a",
+  "license": "CC-BY-NC-ND-4.0",
+  "model_card_url": "https://huggingface.co/incoai/GLM-5.3-Flash-DFlash2/blob/bf582e4eacc1810f76656d1811693ff6c6737d2a/README.md",
+  "config_sha256": "c4aeac0101196a6e26705b34c45230bcd0c7c68ee2d2d1efdb242087f3712573",
+  "readme_sha256": "2014434d3e3639147d35d61259690d585e7820993180e7d579e3b796dddf5a31",
+  "weights_file": "model.safetensors",
+  "weights_bytes": 2342169800,
+  "weights_sha256": "b038e1d9d1e7833fa3880c2c0135ba9b673013f03da1b29fb831931584759dac",
+  "safetensors_header_sha256": "6fa6c59f4d8e07bf4e97d0945abbadf4cfe10903227dc18534a476743b943035",
+  "weight_parameters": 1171080448,
+  "dtype": "BF16"
+}

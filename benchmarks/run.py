@@ -9,12 +9,15 @@ import random
 import re
 import statistics
 import subprocess
+import sys
 import time
 import urllib.request
 import uuid
 from urllib.parse import urlparse
 
 from prepare import digest
+
+ROOT = Path(__file__).resolve().parents[1]
 
 METRICS = ('vllm:request_prefill_time_seconds', 'vllm:request_decode_time_seconds',
            'vllm:time_to_first_token_seconds', 'vllm:request_prompt_tokens', 'vllm:request_generation_tokens')
@@ -39,12 +42,13 @@ def metrics(base):
     totals = {}
     for line in raw.splitlines():
         match = re.match(r'([^\s{]+)(?:\{[^}]*\})?\s+([^\s]+)', line)
-        if match and match[1].endswith(('_sum', '_count')):
+        if match:
             key = match[1]
-            if any(key == name + suffix for name in METRICS for suffix in ('_sum', '_count')):
+            if (key in ('vllm:num_requests_running', 'vllm:num_requests_waiting') or
+                    any(key == name + suffix for name in METRICS for suffix in ('_sum', '_count'))):
                 totals[key] = totals.get(key, 0.0) + float(match[2])
-    if len(totals) != 2 * len(METRICS):
-        raise ValueError('Missing required vLLM metrics')
+    if len(totals) != 2 * len(METRICS) + 2:
+        raise ValueError('Missing required vLLM metrics or scheduler gauges')
     return totals
 
 
@@ -130,6 +134,8 @@ def main():
     model = json.loads(subprocess.check_output([sys.executable, str(ROOT / 'scripts/model.py')], text=True))
     if args.backend == 'vllm':
         enabled = '--speculative-config' in command
+        if enabled and json.loads(command[command.index('--speculative-config') + 1]).get('method') != 'mtp':
+            raise ValueError('This MTP comparison refuses other drafters; DFlash2 needs a separately labelled benchmark mode')
         if enabled != (args.mtp == 'on'):
             raise ValueError('Requested MTP mode does not match vLLM launch')
         settings = {'command': command}

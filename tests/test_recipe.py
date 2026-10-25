@@ -4,6 +4,7 @@ import io
 import json
 import os
 import shutil
+import shlex
 import socket
 import subprocess
 import sys
@@ -93,7 +94,7 @@ class LifecycleTests(unittest.TestCase):
         shutil.copytree(ROOT/'config',self.root/'config')
         self.bin = Path(self.tmp.name)/'bin';self.bin.mkdir()
         self.calls = Path(self.tmp.name)/'docker-calls.jsonl'
-        names = ['HF_CACHE_ROOT','HF_HOME','HF_HUB_CACHE','MODEL_DIR','MODEL_REVISION','LOAD_FORMAT','MTP_ENABLED','IMAGE','CONTAINER_NAME',
+        names = ['HF_CACHE_ROOT','HF_HOME','HF_HUB_CACHE','MODEL_DIR','MODEL_REVISION','LOAD_FORMAT','MTP_ENABLED','DRAFTER','DFLASH2_MODEL_DIR','DFLASH2_NUM_SPECULATIVE_TOKENS', 'DFLASH2_KV_CACHE_DTYPE','IMAGE','CONTAINER_NAME',
                  'GPUS','HOST','PORT','SERVED_MODEL_NAME','RUNTIME_VOLUME','MAX_MODEL_LEN','MAX_NUM_SEQS',
                  'MAX_NUM_BATCHED_TOKENS','GPU_MEMORY_UTILIZATION','KV_CACHE_MEMORY_BYTES',
                  'MIN_GPU_FREE_MIB','WAIT_TIMEOUT','SMOKE_TIMEOUT','RESTART_POLICY','DRY_RUN','BASE_URL']
@@ -151,6 +152,74 @@ sys.exit(70)
         invalid = self.run_script('start.sh', '--dry-run')
         self.assertNotEqual(invalid.returncode, 0)
         self.assertFalse(self.calls.exists())
+
+    def dry_command(self):
+        result = self.run_script('start.sh', '--dry-run')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        line = next(x for x in result.stdout.splitlines() if x.strip().startswith('docker run '))
+        return shlex.split(line)
+
+    def test_explicit_drafter_overrides_legacy_switch(self):
+        self.env.update(DRAFTER='none', MTP_ENABLED='1')
+        self.assertNotIn('--speculative-config', self.dry_command())
+        self.env.update(DRAFTER='mtp', MTP_ENABLED='0')
+        args = self.dry_command()
+        self.assertEqual(json.loads(args[args.index('--speculative-config')+1])['method'], 'mtp')
+        self.assertFalse(self.calls.exists())
+
+    def test_dflash2_dry_run_pins_external_draft_without_changing_target_budget(self):
+        self.env.update(DRAFTER='dflash2', MTP_ENABLED='0')
+        args = self.dry_command()
+        spec = json.loads(args[args.index('--speculative-config')+1])
+        self.assertEqual(spec['method'], 'dflash')
+        self.assertIn('models--incoai--GLM-5.3-Flash-DFlash2/snapshots/bf582e4eacc1810f76656d1811693ff6c6737d2a', spec['model'])
+        self.assertEqual(spec['num_speculative_tokens'], 7)
+        self.assertEqual(spec['draft_tensor_parallel_size'], 2)
+        self.assertEqual(spec['attention_backend'], 'TRITON_ATTN')
+        self.assertEqual(args[args.index('--attention-backend')+1], 'B12X')
+        self.assertIsNone(spec['quantization'])
+        self.assertEqual(spec['rejection_sample_method'], 'standard')
+        self.assertEqual(args[args.index('--kv-cache-memory-bytes')+1], '7650410496')
+        self.assertEqual(args[args.index('--decode-context-parallel-size')+1], '2')
+        mounts = [args[i+1] for i,x in enumerate(args) if x=='--mount']
+        self.assertEqual(sum('dst=/root/.cache/huggingface/hub' in m for m in mounts), 1)
+        self.assertFalse(self.calls.exists())
+
+    def test_draft_kv_precision_is_explicit_and_leaves_target_unchanged(self):
+        self.env.update(DRAFTER='dflash2', DFLASH2_KV_CACHE_DTYPE='fp8')
+        args = self.dry_command()
+        spec = json.loads(args[args.index('--speculative-config')+1])
+        self.assertEqual(spec['kv_cache_dtype'], 'fp8')
+        self.assertIsNone(spec['quantization'])
+        self.assertEqual(args[args.index('--quantization')+1], 'modelopt_mixed')
+        self.assertEqual(args[args.index('--kv-cache-dtype')+1], 'fp8')
+        self.env['DFLASH2_KV_CACHE_DTYPE']='int4'
+        self.assertNotEqual(self.run_script('start.sh', '--dry-run').returncode, 0)
+        self.assertFalse(self.calls.exists())
+
+    def test_external_draft_mount_is_readonly_and_keeps_target_mount(self):
+        self.env.update(DRAFTER='dflash2', DFLASH2_MODEL_DIR='/tmp/draft with spaces')
+        args = self.dry_command()
+        self.assertIn('type=bind,src=/tmp/draft with spaces,dst=/draft,readonly', args)
+        self.assertTrue(any('dst=/root/.cache/huggingface/hub,readonly' in x for x in args))
+        spec=json.loads(args[args.index('--speculative-config')+1])
+        self.assertEqual(spec['model'],'/draft')
+
+    def test_missing_external_draft_cannot_stop_existing_service(self):
+        self.env.update(DRAFTER='dflash2', DFLASH2_MODEL_DIR=str(Path(self.tmp.name)/'absent'), OWNER='glm53-fp4-local-v1')
+        result=self.run_script('start.sh','restart')
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('DFlash2 file missing',result.stderr)
+        self.assertEqual(self.commands(),[])
+
+    def test_invalid_draft_mode_and_depth_fail_before_docker(self):
+        self.env['DRAFTER']='dflash'
+        self.assertNotEqual(self.run_script('start.sh','--dry-run').returncode,0)
+        self.env['DRAFTER']='dflash2'
+        for value in ('0','8','garbage'):
+            self.env['DFLASH2_NUM_SPECULATIVE_TOKENS']=value
+            self.assertNotEqual(self.run_script('start.sh','--dry-run').returncode,0)
+        self.assertEqual(self.commands(),[])
 
     def test_foreign_container_is_never_stopped_or_removed(self):
         r = self.run_script('start.sh','restart')

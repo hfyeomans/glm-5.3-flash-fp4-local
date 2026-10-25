@@ -11,6 +11,7 @@ import socket
 import subprocess
 import sys
 from model import inspect_model
+from draft_model import inspect_draft
 
 
 def main():
@@ -53,6 +54,13 @@ def main():
         print(f'     {m["shards"]} shards; {m["bytes"]/2**30:.2f} GiB; revision {m["revision"]}')
     except (ValueError, OSError, KeyError) as exc:
         check(False, str(exc))
+    if os.environ.get('DRAFTER') == 'dflash2':
+        try:
+            d = inspect_draft(os.environ['HF_HUB_CACHE'], os.environ.get('DFLASH2_MODEL_DIR') or None)
+            check(True, f'Offline DFlash2 draft: {d["path"]}; {d["license"]}; revision {d["revision"]}')
+            print('     Experimental mode; runtime fit/accuracy must be measured. Target memory budget is unchanged.')
+        except (ValueError, OSError, KeyError) as exc:
+            check(False, str(exc))
     host, port = os.environ['HOST'], int(os.environ['PORT'])
     try:
         family = socket.AF_INET6 if ':' in host else socket.AF_INET

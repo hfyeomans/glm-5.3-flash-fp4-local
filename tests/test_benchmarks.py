@@ -1,5 +1,9 @@
 """Protect timing isolation against concurrent traffic and token-count mismatches."""
 import importlib.util
+import json
+import io
+import tempfile
+from unittest import mock
 from pathlib import Path
 import sys
 import unittest
@@ -12,6 +16,38 @@ spec.loader.exec_module(bench)
 
 
 class TimingIsolationTests(unittest.TestCase):
+    def test_external_drafter_cannot_be_recorded_as_mtp(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            workload = {'cases': [{'name': 'probe'}]}
+            workload['workloads_sha256'] = bench.digest(workload)
+            source = root / 'workloads.json'
+            source.write_text(json.dumps(workload))
+            output = root / 'result'
+            state = {'State': {'Running': True}, 'Config': {
+                'Env': [], 'Labels': {'local.glm53.recipe': 'glm53-fp4-local-v1'},
+                'Cmd': ['vllm', 'serve', '/target', '--speculative-config', '{"method":"dflash"}']}}
+            argv = ['run.py', '--backend', 'vllm', '--mtp', 'on',
+                    '--workloads', str(source), '--output', str(output)]
+            with mock.patch.object(sys, 'argv', argv), mock.patch.object(
+                    bench.subprocess, 'check_output', side_effect=[json.dumps([state]), '{}']), mock.patch.object(
+                    bench, 'call') as request:
+                with self.assertRaisesRegex(ValueError, 'refuses other drafters'):
+                    bench.main()
+                request.assert_not_called()
+            self.assertFalse(output.exists())
+
+    def test_metric_reader_preserves_required_scheduler_gauges(self):
+        lines = [f'{name}{suffix} 1' for name in bench.METRICS for suffix in ('_sum', '_count')]
+        gauges = ['vllm:num_requests_running{engine="0"} 2', 'vllm:num_requests_waiting 3']
+        with mock.patch.object(bench.urllib.request, 'urlopen', return_value=io.BytesIO(('\n'.join(lines+gauges)).encode())):
+            metrics = bench.metrics('http://127.0.0.1:8000')
+        self.assertEqual(metrics['vllm:num_requests_running'], 2)
+        self.assertEqual(metrics['vllm:num_requests_waiting'], 3)
+        with mock.patch.object(bench.urllib.request, 'urlopen', return_value=io.BytesIO(('\n'.join(lines)).encode())):
+            with self.assertRaisesRegex(ValueError, 'scheduler gauges'):
+                bench.metrics('http://127.0.0.1:8000')
+
     def sample(self):
         before = {name + suffix: 100.0 for name in bench.METRICS for suffix in ('_sum', '_count')}
         after = before.copy()

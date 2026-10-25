@@ -15,7 +15,7 @@ if [[ -f "$REPO_ROOT/.env" ]]; then
     [[ "$line" == *=* ]] || fail '.env requires literal KEY=value lines.'
     key=${line%%=*}; value=${line#*=}
     case "$key" in
-      HF_CACHE_ROOT|MODEL_DIR|MODEL_REVISION|LOAD_FORMAT|MTP_ENABLED|IMAGE|CONTAINER_NAME|GPUS|HOST|PORT|SERVED_MODEL_NAME|RUNTIME_VOLUME|MAX_MODEL_LEN|MAX_NUM_SEQS|MAX_NUM_BATCHED_TOKENS|GPU_MEMORY_UTILIZATION|KV_CACHE_MEMORY_BYTES|MIN_GPU_FREE_MIB|WAIT_TIMEOUT|SMOKE_TIMEOUT|RESTART_POLICY) ;;
+      HF_CACHE_ROOT|MODEL_DIR|MODEL_REVISION|LOAD_FORMAT|MTP_ENABLED|DRAFTER|DFLASH2_MODEL_DIR|DFLASH2_NUM_SPECULATIVE_TOKENS|DFLASH2_KV_CACHE_DTYPE|IMAGE|CONTAINER_NAME|GPUS|HOST|PORT|SERVED_MODEL_NAME|RUNTIME_VOLUME|MAX_MODEL_LEN|MAX_NUM_SEQS|MAX_NUM_BATCHED_TOKENS|GPU_MEMORY_UTILIZATION|KV_CACHE_MEMORY_BYTES|MIN_GPU_FREE_MIB|WAIT_TIMEOUT|SMOKE_TIMEOUT|RESTART_POLICY) ;;
       *) fail "Unsupported .env key: $key (credentials belong in exported environment variables)." ;;
     esac
     if [[ ! -v "$key" ]]; then export "$key=$value"; fi
@@ -28,6 +28,15 @@ export HF_HUB_CACHE=$HF_CACHE_ROOT/hub
 export MODEL_DIR=${MODEL_DIR:-}
 export LOAD_FORMAT=${LOAD_FORMAT:-safetensors}
 export MTP_ENABLED=${MTP_ENABLED:-1}
+# Explicit DRAFTER wins; old MTP_ENABLED=0/1 remains supported when it is unset.
+if [[ -z "${DRAFTER:-}" ]]; then
+  DRAFTER=mtp
+  [[ "$MTP_ENABLED" != 0 ]] || DRAFTER=none
+fi
+export DRAFTER
+export DFLASH2_MODEL_DIR=${DFLASH2_MODEL_DIR:-}
+export DFLASH2_NUM_SPECULATIVE_TOKENS=${DFLASH2_NUM_SPECULATIVE_TOKENS:-7}
+export DFLASH2_KV_CACHE_DTYPE=${DFLASH2_KV_CACHE_DTYPE:-auto}
 export MODEL_REVISION=${MODEL_REVISION:-76348ddb2be2e35e39ecfc00e75dc07703f4f3d5}
 export IMAGE=${IMAGE:-ghcr.io/local-inference-lab/vllm:release-10152026@sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29}
 export CONTAINER_NAME=${CONTAINER_NAME:-glm53-fp4-tp2}
@@ -70,9 +79,12 @@ for key in ['CONTAINER_NAME','RUNTIME_VOLUME']:
     require(re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_.-]*',e[key]), key+' must be a Docker name')
 require(re.fullmatch(r'[0-9a-f]{40}',e['MODEL_REVISION']), 'MODEL_REVISION must be a full commit SHA')
 require(e['MTP_ENABLED'] in ['0','1'], 'MTP_ENABLED must be 0 or 1')
+require(e['DRAFTER'] in ['mtp','dflash2','none'], 'DRAFTER must be mtp, dflash2 or none')
+require(e['DFLASH2_KV_CACHE_DTYPE'] in ['auto','fp8'], 'DFLASH2_KV_CACHE_DTYPE must be auto or fp8')
+require(e['DFLASH2_NUM_SPECULATIVE_TOKENS'].isdigit() and 1 <= int(e['DFLASH2_NUM_SPECULATIVE_TOKENS']) <= 7, 'DFLASH2_NUM_SPECULATIVE_TOKENS must be 1..7')
 require(e['LOAD_FORMAT'] in ['instanttensor','safetensors'], 'LOAD_FORMAT must be instanttensor or safetensors')
 require(e['RESTART_POLICY'] in ['no','unless-stopped','on-failure','on-failure:3'], 'Unsupported RESTART_POLICY')
-for key in ['HF_HOME','HF_HUB_CACHE','MODEL_DIR']:
+for key in ['HF_HOME','HF_HUB_CACHE','MODEL_DIR','DFLASH2_MODEL_DIR']:
     require(not e[key] or (Path(e[key]).is_absolute() and not any(x in e[key] for x in [',','\n','\r'])),key+' must be an absolute path without commas or newlines')
 require(bool(e['IMAGE']) and bool(e['HOST']) and bool(e['SERVED_MODEL_NAME']), 'IMAGE, HOST and SERVED_MODEL_NAME cannot be empty')
 PYCFG
@@ -93,6 +105,13 @@ resolve_model() {
   MODEL_CONTAINER_PATH=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["container_path"])' <<< "$MODEL_METADATA")
   MODEL_MOUNT_SOURCE=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["mount_source"])' <<< "$MODEL_METADATA")
   MODEL_MOUNT_TARGET=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["mount_target"])' <<< "$MODEL_METADATA")
+}
+resolve_drafter() {
+  [[ "$DRAFTER" == dflash2 ]] || return 0
+  DRAFT_METADATA=$(python3 "$REPO_ROOT/scripts/draft_model.py" "$@") || return
+  DRAFT_CONTAINER_PATH=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["container_path"])' <<< "$DRAFT_METADATA")
+  DRAFT_MOUNT_SOURCE=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["mount_source"])' <<< "$DRAFT_METADATA")
+  DRAFT_MOUNT_TARGET=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["mount_target"])' <<< "$DRAFT_METADATA")
 }
 build_serve_args() {
   SERVE_ARGS=(vllm serve "$MODEL_CONTAINER_PATH"
@@ -117,8 +136,19 @@ build_serve_args() {
     --prefill-compute-share 0.4 --prefill-schedule-interval 1
     --quantization modelopt_mixed --reasoning-parser glm45
     --recurrent-checkpoint-policy request_boundaries)
-  if [[ "$MTP_ENABLED" == 1 ]]; then
+  if [[ "$DRAFTER" == mtp ]]; then
     SERVE_ARGS+=(--speculative-config '{"method":"mtp","draft_sample_method":"probabilistic","rejection_sample_method":"standard","moe_backend":"b12x","attention_backend":"B12X","num_speculative_tokens":3}')
+  elif [[ "$DRAFTER" == dflash2 ]]; then
+    local spec
+    spec=$(python3 - "$DRAFT_CONTAINER_PATH" "$DFLASH2_NUM_SPECULATIVE_TOKENS" "$DFLASH2_KV_CACHE_DTYPE" <<'PYSPEC'
+import json, sys
+print(json.dumps({'method':'dflash', 'model':sys.argv[1], 'num_speculative_tokens':int(sys.argv[2]),
+                  'draft_tensor_parallel_size':2, 'quantization':None, 'kv_cache_dtype':sys.argv[3],
+                  'attention_backend':'TRITON_ATTN', 'draft_sample_method':'probabilistic',
+                  'rejection_sample_method':'standard'}, separators=(',',':')))
+PYSPEC
+)
+    SERVE_ARGS+=(--speculative-config "$spec")
   fi
   SERVE_ARGS+=(--tensor-parallel-size 2 --tool-call-parser glm47)
 }
@@ -130,6 +160,10 @@ build_docker_args() {
     --mount "type=bind,src=$MODEL_MOUNT_SOURCE,dst=$MODEL_MOUNT_TARGET,readonly"
     --mount "type=volume,src=$RUNTIME_VOLUME,dst=/cache"
     --env-file "$REPO_ROOT/config/b12x.env")
+  # Hub paths may have different host aliases but share one container mount.
+  if [[ "$DRAFTER" == dflash2 && "$DRAFT_MOUNT_TARGET" != "$MODEL_MOUNT_TARGET" ]]; then
+    DOCKER_ARGS+=(--mount "type=bind,src=$DRAFT_MOUNT_SOURCE,dst=$DRAFT_MOUNT_TARGET,readonly")
+  fi
   [[ -z "${VLLM_API_KEY:-}" ]] || DOCKER_ARGS+=(-e VLLM_API_KEY)
   DOCKER_ARGS+=("${RUN_IMAGE:-$IMAGE}" "${SERVE_ARGS[@]}")
 }
