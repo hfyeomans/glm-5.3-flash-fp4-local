@@ -39,7 +39,8 @@ probe stopped at the default 1,536 MiB floor; vLLM workspace growth left
 
 For a separately launched MTP service with limits matching the test, opt in with
 `--mtp-profile capacity`. This requires the pinned image and NVIDIA Hub snapshot,
-loopback serving host/endpoint, the recipe's MTP3/B12X configuration, the same
+loopback serving host/endpoint, MTP3 and target B12X kernels, TP2/DCP2, FP8 KV,
+BF16 compute, ModelOpt mixed quantization, 256-token blocks, the same
 0.985/7,650,410,496-byte memory budget, and launch limits exactly equal to
 `--window` and `--clients`. The selected profile is recorded in `manifest.json`.
 

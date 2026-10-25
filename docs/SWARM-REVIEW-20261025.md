@@ -71,3 +71,11 @@ ZIG=/path/to/zig-0.17.0/zig ./scripts/check.sh
 Without `ZIG` or a compiler on PATH, the numerical test is explicitly skipped.
 The full CUDA numerical probe remains pending.
 [TensorFold maintainer note](../tensorfold/FP64-AGREEMENT-FIX.md).
+
+## PR review follow-up
+
+Devin identified a failed-stop continuation that stranded the next sweep folder
+and an unchecked target attention backend in the new MTP capacity guard.
+Separate Sol agents reproduced and fixed both. **140 CPU tests passed** after
+integration, and the stricter guard accepted all recorded MTP launches while
+rejecting a substituted target backend. See the validation record above.

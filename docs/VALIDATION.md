@@ -1009,3 +1009,17 @@ unchanged.
 The original MTP container was restored with identical container ID, image and
 launch command, and passed the full API suite. MTP remains the recipe default;
 the restored service keeps its previous 262,144-token/four-sequence settings.
+
+### PR #4 follow-up checks
+
+Devin review found two additional cases, reproduced before correction: a failed
+TensorFold stop could strand the next profile's folder, and the MTP capacity
+guard accepted a changed target attention backend. Cleanup now halts before the
+next profile after a stop failure and checks container absence before creating
+an attempt folder. Capacity validation now checks target B12X kernels, TP2/DCP2,
+FP8 KV, BF16 compute, ModelOpt mixed quantization and 256-token blocks.
+
+**140 CPU tests passed**, including compiled Zig checks. Replaying all three
+recorded MTP launch manifests passed the stricter guard; substituting target
+TRITON_ATTN was rejected. These follow-ups changed validation/cleanup only;
+the GPU receipts and serving configuration are unchanged.

@@ -22,6 +22,10 @@ class MtpProfileTests(unittest.TestCase):
                             '--host', '127.0.0.1', '--port', '8002',
                             '--max-model-len', str(window), '--max-num-seqs', str(clients),
                             '--gpu-memory-utilization', '0.985', '--kv-cache-memory-bytes', '7650410496',
+                            '--attention-backend', 'B12X', '--linear-backend', 'b12x', '--moe-backend', 'b12x',
+                            '--tensor-parallel-size', '2', '--decode-context-parallel-size', '2',
+                            '--kv-cache-dtype', 'fp8', '--dtype', 'bfloat16',
+                            '--quantization', 'modelopt_mixed', '--block-size', '256',
                             '--speculative-config', json.dumps({'method': 'mtp', 'num_speculative_tokens': 3,
                                 'draft_sample_method': 'probabilistic', 'rejection_sample_method': 'standard',
                                 'moe_backend': 'b12x', 'attention_backend': 'B12X'})]},
@@ -46,6 +50,31 @@ class MtpProfileTests(unittest.TestCase):
             with self.subTest(key=key), self.assertRaisesRegex(ValueError, 'Unexpected capacity setting: ' + key):
                 bench.validate_mtp_profile(state, 'http://127.0.0.1:8002', 'capacity', 262144, 4)
 
+    def test_capacity_refuses_changed_target_attention_backend(self):
+        state = self.fixture()
+        command = state['Config']['Cmd']
+        command[command.index('--attention-backend') + 1] = 'TRITON_ATTN'
+        with self.assertRaisesRegex(ValueError, 'Unexpected capacity setting: --attention-backend'):
+            bench.validate_mtp_profile(state, 'http://127.0.0.1:8002', 'capacity', 262144, 4)
+
+    def test_capacity_requires_target_kernel_distribution_and_precision_settings(self):
+        replacements = {'--attention-backend': 'TRITON_ATTN', '--linear-backend': 'triton',
+                        '--moe-backend': 'triton', '--tensor-parallel-size': '1',
+                        '--decode-context-parallel-size': '1', '--kv-cache-dtype': 'auto',
+                        '--dtype': 'float16', '--quantization': 'fp8', '--block-size': '128'}
+        for key, replacement in replacements.items():
+            for mode in ('changed', 'missing'):
+                state = self.fixture()
+                command = state['Config']['Cmd']
+                index = command.index(key)
+                if mode == 'changed':
+                    command[index + 1] = replacement
+                else:
+                    del command[index:index + 2]
+                with self.subTest(key=key, mode=mode), self.assertRaisesRegex(
+                        ValueError, 'Unexpected capacity setting: ' + key):
+                    bench.validate_mtp_profile(state, 'http://127.0.0.1:8002', 'capacity', 262144, 4)
+
     def test_capacity_refuses_wrong_image_checkpoint_spec_and_endpoint(self):
         variants = []
         state = self.fixture(); state['Image'] = 'sha256:other'; variants.append((state, 'pinned image'))
@@ -68,15 +97,19 @@ class MtpProfileTests(unittest.TestCase):
     def test_invalid_capacity_is_refused_before_requests_or_output(self):
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp) / 'out'
-            state = self.fixture(1048576, 8)
-            argv = ['concurrent', '--mtp-profile', 'capacity', '--base-url', 'http://127.0.0.1:8002',
-                    '--window', '262144', '--clients', '4', '--output', str(output)]
-            with mock.patch.object(sys, 'argv', argv), mock.patch.object(
-                    bench.subprocess, 'check_output', return_value=json.dumps([state])), mock.patch.object(bench, 'metrics') as metrics:
-                with self.assertRaisesRegex(ValueError, 'Unexpected capacity setting'):
-                    bench.main()
-                metrics.assert_not_called()
-            self.assertFalse(output.exists())
+            for invalid_setting in ('launch_limits', 'target_attention'):
+                state = self.fixture(1048576, 8) if invalid_setting == 'launch_limits' else self.fixture()
+                if invalid_setting == 'target_attention':
+                    command = state['Config']['Cmd']
+                    command[command.index('--attention-backend') + 1] = 'TRITON_ATTN'
+                argv = ['concurrent', '--mtp-profile', 'capacity', '--base-url', 'http://127.0.0.1:8002',
+                        '--window', '262144', '--clients', '4', '--output', str(output)]
+                with self.subTest(invalid_setting=invalid_setting), mock.patch.object(sys, 'argv', argv), mock.patch.object(
+                        bench.subprocess, 'check_output', return_value=json.dumps([state])), mock.patch.object(bench, 'metrics') as metrics:
+                    with self.assertRaisesRegex(ValueError, 'Unexpected capacity setting'):
+                        bench.main()
+                    metrics.assert_not_called()
+                self.assertFalse(output.exists())
 
     def test_selected_profile_is_recorded_in_manifest(self):
         for profile, window, clients in (('capacity', 262144, 4), ('baseline', 1048576, 8)):

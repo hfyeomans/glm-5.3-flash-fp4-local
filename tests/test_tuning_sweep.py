@@ -46,7 +46,8 @@ class SweepTests(unittest.TestCase):
         self.image = 'sha256:original'
         self.query = lambda: subprocess.CompletedProcess([], 0, '0,1,2,3,4,5,6,7,none\n', '')
         self.on_stop = lambda: None
-        self.cleanup_failure = None
+        self.cleanup_failures = set()
+        self.containers = []
 
     def run_sweep(self, profile='control', extra=()):
         def run(cmd, **kwargs):
@@ -55,14 +56,15 @@ class SweepTests(unittest.TestCase):
                 return self.query()
             if cmd[-1] == 'stop':
                 self.on_stop()
-            if self.cleanup_failure and (cmd[1] == 'logs' or cmd[-1] == 'stop'):
+            cleanup_log = 'server.log' if cmd[1] == 'logs' else 'stop.log' if cmd[-1] == 'stop' else None
+            if cleanup_log in self.cleanup_failures:
                 raise subprocess.TimeoutExpired(cmd, kwargs['timeout'])
             return subprocess.CompletedProcess(cmd, 0)
 
         def output(cmd, **kwargs):
             self.calls.append(cmd)
             if cmd[1] == 'ps':
-                return ''
+                return '\n'.join(self.containers)
             if cmd[1:3] == ['image', 'inspect']:
                 return self.image + '\n'
             return json.dumps([{'Image': self.image, 'Config': {'Env': []}}])
@@ -151,7 +153,7 @@ class SweepTests(unittest.TestCase):
             self.assertTrue(finished.wait(1))
 
     def test_cleanup_timeouts_still_stop_and_join_telemetry(self):
-        self.cleanup_failure = True
+        self.cleanup_failures = {'server.log', 'stop.log'}
         self.assertEqual(self.run_sweep(), 1)
         self.assertIn('check stop.log before assuming TensorFold stopped', self.stdout)
         self.assertNotIn('Sweep finished; TensorFold stopped.', self.stdout)
@@ -160,6 +162,24 @@ class SweepTests(unittest.TestCase):
         self.assertIn('server.log:', receipt['error'])
         self.assertIn('stop.log:', receipt['error'])
         self.assertTrue(any(cmd[-1] == 'stop' for cmd in self.calls))
+
+    def test_failed_stop_records_failure_and_halts_before_next_profile(self):
+        self.cleanup_failures = {'stop.log'}
+        self.on_stop = lambda: self.containers.append('owned')
+        self.assertEqual(self.run_sweep(['control', 'next']), 1)
+        receipt = json.loads(self.receipt().read_text())
+        self.assertEqual(receipt['status'], 'failed')
+        self.assertIn('stop.log:', receipt['error'])
+        self.assertFalse((self.output / '01-next').exists())
+        self.assertEqual(sum(cmd[-1] == 'start' for cmd in self.calls), 1)
+        self.assertIn('check stop.log before assuming TensorFold stopped', self.stdout)
+
+    def test_existing_owned_container_leaves_no_incomplete_attempt(self):
+        self.containers = ['owned']
+        with self.assertRaisesRegex(ValueError, 'container already exists'):
+            self.run_sweep()
+        self.assertFalse((self.output / '00-control').exists())
+        self.assertFalse(any(cmd[-1] in ('start', 'stop') for cmd in self.calls))
 
     def test_report_rejects_missing_passing_image_manifest(self):
         self.assertEqual(self.run_sweep(), 0)

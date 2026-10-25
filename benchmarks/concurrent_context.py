@@ -227,7 +227,11 @@ def validate_mtp_profile(state, base, profile, window, clients):
                          'attention_backend': 'B12X', 'num_speculative_tokens': 3}
         if spec != expected_spec:
             raise ValueError('Expected the recipe MTP3/B12X speculative configuration')
-        settings.update({'--max-model-len': str(window), '--max-num-seqs': str(clients)})
+        settings.update({'--max-model-len': str(window), '--max-num-seqs': str(clients),
+                         '--attention-backend': 'B12X', '--linear-backend': 'b12x', '--moe-backend': 'b12x',
+                         '--tensor-parallel-size': '2', '--decode-context-parallel-size': '2',
+                         '--kv-cache-dtype': 'fp8', '--dtype': 'bfloat16',
+                         '--quantization': 'modelopt_mixed', '--block-size': '256'})
     for key, expected in settings.items():
         if key not in command or command[command.index(key) + 1] != expected:
             raise ValueError('Unexpected ' + profile + ' setting: ' + key)

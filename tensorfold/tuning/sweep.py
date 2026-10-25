@@ -139,11 +139,11 @@ def execute_sweep(args, profiles):
         if not expected_image or (comparison_image is not None and expected_image != comparison_image):
             raise ValueError('Completed run image differs from the selected image; use a new output directory')
         comparison_image = expected_image
-        folder.mkdir()
         recipe = [sys.executable, str(ROOT / 'tensorfold/scripts/recipe.py')]
         before = subprocess.check_output(['docker', 'ps', '-a', '--format', '{{.Names}}'], text=True).splitlines()
         if env['TF_CONTAINER'] in before:
             raise ValueError('Owned TensorFold container already exists; inspect before replacing')
+        folder.mkdir()
         stop = threading.Event()
         telemetry_error = []
         def telemetry():
@@ -243,6 +243,7 @@ def execute_sweep(args, profiles):
             status.update(status='failed', error=str(exc))
         finally:
             cleanup_errors = []
+            stop_failed = False
             try:
                 for filename, command, timeout in [
                     ('server.log', ['docker', 'logs', env['TF_CONTAINER']], 30),
@@ -254,6 +255,8 @@ def execute_sweep(args, profiles):
                                            stderr=subprocess.STDOUT, check=True, timeout=timeout)
                     except (OSError, subprocess.SubprocessError) as exc:
                         cleanup_errors.append(f'{filename}: {exc}')
+                        if filename == 'stop.log':
+                            stop_failed = True
             finally:
                 stop.set()
                 thread.join(timeout=TELEMETRY_JOIN_TIMEOUT)
@@ -271,6 +274,8 @@ def execute_sweep(args, profiles):
         print(f'END {profile}: {status["status"]} {status["elapsed_seconds"]:.1f}s', flush=True)
         if telemetry_pending:
             return 1
+        if stop_failed:
+            break
     if had_failure:
         print('Sweep finished with failures; check stop.log before assuming TensorFold stopped.', flush=True)
     else:
