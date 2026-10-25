@@ -329,6 +329,9 @@ def main(argv):
         print('Built:', image(c))
         return
     if command in ('smoke', 'bench'):
+        state = json.loads(subprocess.check_output(['docker', 'inspect', c['TF_CONTAINER']], text=True))[0]
+        if not state['State']['Running']:
+            raise ValueError('Owned running TensorFold container required for smoke/bench; start it first')
         env = dict(os.environ, BASE_URL=f'http://127.0.0.1:{c["TF_PORT"]}',
                    SERVED_MODEL_NAME=c['TF_MODEL_NAME'], CONTAINER_NAME=c['TF_CONTAINER'])
         env.pop('VLLM_API_KEY', None)

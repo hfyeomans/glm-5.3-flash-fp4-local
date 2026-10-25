@@ -24,7 +24,7 @@ class ContextTests(unittest.TestCase):
             with self.subTest(content=content, count=count, cached=cached), tempfile.TemporaryDirectory() as d:
                 with patch.object(context, 'fit', return_value=({}, ['one', 'two', 'three'], [10, 50, 90], 1024, 100)), \
                      patch.object(context, 'call', return_value=response), \
-                     patch('sys.argv', ['context_check', '--targets', '1024', '--output', d]), \
+                     patch('sys.argv', ['context_check', '--targets', '1024', '--output', str(Path(d) / 'out')]), \
                      contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(context.main(), expected_code)
-                self.assertEqual(json.loads((Path(d) / 'report.json').read_text())['passed'], expected_code == 0)
+                self.assertEqual(json.loads((Path(d) / 'out' / 'report.json').read_text())['passed'], expected_code == 0)

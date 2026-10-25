@@ -42,6 +42,8 @@ def main():
         controls.append([json.loads(s) for s in (folder/'bench/requests.jsonl').read_text().splitlines()])
     manifests=[load(folder/'bench/manifest.json') for folder in a.controls]
     dm=load(a.diagnostic/'manifest.json')
+    if any(m.get('mtp') not in (None, 'off') for m in manifests):
+        raise ValueError('Prefill comparison requires mtp=off controls')
     for manifest in manifests:
         assert manifest['image_id']==dm['image_id'] and manifest['workloads_sha256']==dm['workloads_sha256']
         assert {k:v for k,v in manifest['settings'].items() if k!='TF_PROFILE'}=={k:v for k,v in dm['settings'].items() if k!='TF_PROFILE'}
@@ -57,8 +59,8 @@ def main():
             stage_totals.append({'case':row['case'],'repeat':row['repeat'],'rank':rank,'chunks':len(chunks),'wall_ms':sum(c['wall_ms'] for c in chunks),'stages':[{'stream':k[0],'site':k[1],'stage':k[2],'ms':v} for k,v in sorted(sums.items())]})
     cells=[]
     for case in dm['cases']:
-        cr=[[r for r in rows if r['case']==case and not r['warmup']] for rows in controls]
-        dr=[r for r in diag if r['case']==case and not r['warmup']]
+        cr=[[r for r in rows if r['case']==case and not r['warmup'] and r.get('draft', False) is False] for rows in controls]
+        dr=[r for r in diag if r['case']==case and not r['warmup'] and r.get('draft', False) is False]
         hashes={r['response']['runtime']['token_sha256'] for rows in [*controls,diag] for r in rows if r['case']==case}
         assert len(hashes)==1,'Instrumentation changed output hashes'
         summary={'case':case,'control_client_ttft_medians':[statistics.median(r['response']['client_ttft_seconds'] for r in rows) for rows in cr],'diagnostic_client_ttft_median':statistics.median(r['response']['client_ttft_seconds'] for r in dr),'control_prefill_medians':[statistics.median(r['response']['runtime']['prefill_seconds'] for r in rows) for rows in cr],'control_decode_tps_medians':[statistics.median(r['response']['runtime']['tokens_per_second'] for r in rows) for rows in cr],'all_output_hashes_identical':True,'output_sha256':next(iter(hashes)),'ranks':[]}
@@ -73,6 +75,8 @@ def main():
         cells.append(summary)
     files=[a.diagnostic/'manifest.json',a.diagnostic/'requests.jsonl',a.diagnostic/'rank-0.log',a.diagnostic/'rank-1.log',*[f/'bench/requests.jsonl' for f in a.controls]]
     result={'cells':cells,'diagnostic_manifest':dm,'validated_requests':len(diag),'validated_rank_requests':len(stage_totals),'scope':'Instrumented CUDA-event spans are inclusive and may overlap across streams. Do not add FFN to its router/experts children, output_projection to shared_expert children, or side waits to main wall time. No causal attribution of the entire vLLM gap. Controls bracket the preserved failed profiling-client attempt; the successful separate-log diagnostic follows those controls.','evidence':[{'path':str(f),'sha256':sha(f)} for f in files]}
+    if a.output.exists():
+        raise SystemExit(f'Refusing to overwrite existing report: {a.output}')
     a.output.write_text(json.dumps(result,indent=2)+'\n')
 
 

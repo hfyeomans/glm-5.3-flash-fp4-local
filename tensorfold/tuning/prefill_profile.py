@@ -74,7 +74,8 @@ def main():
                     out.write(json.dumps(row)+'\n');out.flush();rows.append(row)
                     assert response['usage']['prompt_tokens']==len(case['tokens'])
                     assert response['usage']['completion_tokens']==workload['max_tokens']
-                    assert response['usage'].get('prompt_tokens_details',{}).get('cached_tokens',0)==0
+                    profile_details=response['usage'].get('prompt_tokens_details') or {}
+                    assert 'cached_tokens' in profile_details and profile_details['cached_tokens']==0
                     assert response['runtime']['drafts'] is False and response['runtime']['enable_thinking'] is False
                     print(case['name'],repeat,response['client_ttft_seconds'],flush=True)
         result['status']='pass';result['requests']=len(rows)

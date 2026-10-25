@@ -39,6 +39,9 @@ def prepare(source, output):
             original = tok.encode(prompt, add_special_tokens=False)
             if ids[:len(original)] != original:
                 raise ValueError('Prompt/answer boundary retokenizes; fixed history not preserved')
+            tail = answer_ids[:128]
+            if tok.encode(tok.decode(tail, skip_special_tokens=False, clean_up_tokenization_spaces=False), add_special_tokens=False) != tail:
+                raise ValueError(f'{task}/{r["doc_id"]}: first-128 completion ids are not a canonical encoding; the fixed history would not preserve token identity')
             cases.append({'task': task, 'doc_id': r['doc_id'], 'prompt': text, 'ids': ids, 'score_from': len(original)})
     value = {'source_sha256': hashlib.sha256(source.read_bytes()).hexdigest(), 'cases': cases}
     value['sha256'] = digest(value)
@@ -52,9 +55,10 @@ def run(source, output):
     data = json.loads(source.read_text())
     if data['sha256'] != digest({k: v for k, v in data.items() if k != 'sha256'}):
         raise ValueError('History digest mismatch')
+    model = json.loads(subprocess.check_output([sys.executable, str(ROOT / 'scripts/model.py')], text=True))
     state = json.loads(subprocess.check_output(['docker', 'inspect', 'glm53-fp4-tensorfold'], text=True))[0]
     env = dict(x.split('=', 1) for x in state['Config']['Env'])
-    if not state['State']['Running'] or env.get('TF_PROMPT_CACHE_GIB') != '0' or REVISION not in env.get('MODEL_PATH', ''):
+    if not state['State']['Running'] or env.get('TF_PROMPT_CACHE_GIB') != '0' or env.get('MODEL_PATH') != model['container_path']:
         raise ValueError('Require running pinned TensorFold checkpoint with retained cache disabled')
     output.mkdir(parents=True, exist_ok=False)
     manifest = {'history_sha256': data['sha256'], 'image_id': state['Image'], 'model_revision': REVISION,
@@ -72,7 +76,10 @@ def run(source, output):
             lp = response['choices'][0].get('prompt_logprobs')
             if lp is None or len(lp) != len(ids) or lp[0] is not None or response['usage']['prompt_tokens'] != len(ids):
                 raise ValueError('Missing/alignment-invalid prompt logprobs')
-            if response['usage'].get('prompt_tokens_details', {}).get('cached_tokens', 0) != 0:
+            details = response['usage'].get('prompt_tokens_details') or {}
+            if 'cached_tokens' not in details:
+                raise ValueError('Response is missing prompt_tokens_details.cached_tokens')
+            if details['cached_tokens'] != 0:
                 raise ValueError('Expected cold fixed-history request')
             for index in range(c['score_from'], len(ids)):
                 if str(ids[index]) not in lp[index] or len(lp[index]) < 2:
@@ -103,9 +110,11 @@ def compare(left, right, output):
                 flips.append({'task': x['task'], 'doc_id': x['doc_id'], 'position': index,
                               'left_top': tops[0][0], 'right_top': tops[1][0],
                               'left_margin': lx[tops[0][0]]['logprob'] - lx[tops[0][1]]['logprob']})
-    result = {'scope': 'Fixed-history up to the first 128 completion tokens of 8 GSM8K and 8 IFEval baseline outputs; sampled diagnostic, not full model equivalence',
+    result = {'scope': 'Fixed histories built by canonically retokenizing the decoded first 128 completion tokens of 8 GSM8K and 8 IFEval baseline outputs; not guaranteed to equal the original token ids. Sampled diagnostic, not full model equivalence',
               'history_sha256': lm['history_sha256'], 'positions': len(deltas), 'top1_flips': flips,
               'max_abs_target_logprob_change': max(deltas), 'mean_abs_target_logprob_change': sum(deltas) / len(deltas)}
+    if output.exists():
+        raise SystemExit(f'Refusing to overwrite existing comparison: {output}')
     output.write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result, indent=2))
 

@@ -92,7 +92,7 @@ def main():
             'unclosed_reasoning': sum(not x['reasoning_closed'] for x in calls.values()),
             'total_completion_tokens': sum(x['response']['usage']['completion_tokens'] for x in calls.values()),
             'request_seconds': sum(x['seconds'] for x in calls.values()),
-            'cached_prompt_tokens': sum((x['response']['usage'].get('prompt_tokens_details') or {}).get('cached_tokens', 0) for x in calls.values())}
+            'cached_prompt_tokens': sum(x['response']['usage']['prompt_tokens_details']['cached_tokens'] for x in calls.values())}
     for task, filt, metric, title in METRICS:
         ids = a['selected_ids'][task]
         scores_a = [int(sa[(task, i, filt)][metric]) for i in ids]

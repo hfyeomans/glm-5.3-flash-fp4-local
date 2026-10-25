@@ -21,9 +21,11 @@ def main():
     from transformers import AutoTokenizer
     model=json.loads(subprocess.check_output([sys.executable,str(ROOT/'scripts/model.py')],text=True))
     tok=AutoTokenizer.from_pretrained(model['path'],local_files_only=True,trust_remote_code=False)
+    template_sha=sha(Path(model['path'])/'chat_template.jinja')
+    assert template_sha!=parent['protocol']['template_sha256']
     assert sha(Path(model['path'])/'tokenizer.json')==parent['protocol']['tokenizer_sha256']
     protocol=dict(parent['protocol'],name='local-ruler-13-v2',client_sha256=sha(ROOT/'quality/ruler_bank.py'),
-        parent_manifest_sha256=sha(a.source/'manifest.json'),rewrapper_sha256=sha(Path(__file__)),
+        parent_manifest_sha256=sha(a.source/'manifest.json'),rewrapper_sha256=sha(Path(__file__)),template_sha256=template_sha,
         construction='All v1 task bodies, golds, seeds and selected questions preserved. Only render low-effort header and explicitly close think prefix, then retokenize; no task selection or inference outputs read.',
         adaptations=[x for x in parent['protocol']['adaptations'] if not x.startswith('Shared NVIDIA')]+['NVIDIA low-effort template; explicitly closed think prefix and unchanged assistant answer prefix. The wrapper adds a few tokens to the original roughly-4K margin.'])
     start='[gMASK]<sop><|system|>Reasoning Effort: Max<|user|>';sep='<|assistant|><think>'

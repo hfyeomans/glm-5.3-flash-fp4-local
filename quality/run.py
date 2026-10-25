@@ -80,6 +80,9 @@ def main():
     for option in ('--max-model-len', '--max-num-seqs', '--kv-cache-dtype', '--gpu-memory-utilization', '--kv-cache-memory-bytes', '--tensor-parallel-size', '--decode-context-parallel-size', '--load-format', '--speculative-config'):
         if option in command:
             settings[option] = command[command.index(option) + 1]
+    expected_port = environment.get('PORT' if args.backend == 'vllm' else 'TF_PORT')
+    if str(urlparse(base).port or (443 if urlparse(base).scheme == 'https' else 80)) != expected_port:
+        raise RuntimeError('Benchmark endpoint port does not match the recorded container')
     manager = TaskManager()
     tasks, selected, task_docs = [], {}, {}
     for name, config in PROFILE['tasks'].items():

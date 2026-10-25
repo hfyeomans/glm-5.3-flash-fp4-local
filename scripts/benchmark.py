@@ -37,6 +37,8 @@ def main():
               'median_request_seconds': statistics.median(r['elapsed_seconds'] for r in rows),
               'note': 'Includes reasoning tokens, prompt processing and network time. TTFT is first visible content; this is not isolated decode throughput.',
               'samples': rows}
+    if args.output.exists():
+        raise SystemExit(f'Refusing to overwrite existing receipt: {args.output}')
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2)+'\n')
     print(json.dumps({k:v for k,v in report.items() if k!='samples'}, indent=2))

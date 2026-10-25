@@ -61,10 +61,13 @@ def main():
     args = parser.parse_args()
     if any(t < 1024 or t > 1048448 for t in args.targets):
         parser.error('Targets must be between 1024 and 1048448')
-    args.output.mkdir(parents=True, exist_ok=True)
+    if args.output.exists():
+        raise SystemExit(f'Refusing to reuse existing output directory: {args.output}')
+    args.output.mkdir(parents=True, exist_ok=False)
     report = {'base_url': args.base_url, 'model': args.model, 'checks': [],
               'scope': 'Synthetic retrieval, not a general long-context accuracy qualification'}
     ok = True
+    completed = 0
     for target in args.targets:
         body, expected, positions, count, rows = fit(args.base_url, target, args.model, args.timeout)
         raw = json.dumps(body, sort_keys=True).encode()
@@ -82,7 +85,8 @@ def main():
             usage = response['usage']
             retrieved = all(secret in content for secret in expected)
             same_count = usage['prompt_tokens'] == count
-            cold = usage.get('prompt_tokens_details', {}).get('cached_tokens', 0) == 0
+            details = usage.get('prompt_tokens_details') or {}
+            cold = 'cached_tokens' in details and details['cached_tokens'] == 0
             passed = retrieved and same_count and cold and response['choices'][0]['finish_reason'] == 'stop'
             result['runs'].append({'draft': draft, 'seconds': seconds, 'retrieval_passed': retrieved,
                                    'count_matches': same_count, 'cold': cold, 'passed': passed,
@@ -94,7 +98,8 @@ def main():
             result['draft_equals_plain'] = bool(hashes[0]) and hashes[0] == hashes[1]
             ok = ok and result['draft_equals_plain']
         report['checks'].append(result)
-        report['passed'] = ok
+        completed += 1
+        report['passed'] = ok and completed == len(args.targets)
         (args.output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
         if not ok:
             break

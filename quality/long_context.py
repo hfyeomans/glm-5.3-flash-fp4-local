@@ -146,7 +146,8 @@ def main():
         assert response['tensorfold']['sampling'] == 'greedy'
         assert response['choices'][0]['finish_reason'] in ('stop','length')
         usage=response['usage'];assert usage['prompt_tokens']==doc['prompt_tokens']
-        assert usage.get('prompt_tokens_details',{}).get('cached_tokens',0)==0
+        usage_details=usage.get('prompt_tokens_details') or {}
+        assert 'cached_tokens' in usage_details and usage_details['cached_tokens']==0
         assert usage['total_tokens']<=int(env['TF_CONTEXT'])
         choice=response['choices'][0];text=choice['text'];metric=score(text,doc['answers'],doc['task'].startswith('qa_'))
         official_fn=official.string_match_part if doc['task'].startswith('qa_') else official.string_match_all

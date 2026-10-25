@@ -125,19 +125,25 @@ def main():
     command = state['Config']['Cmd'] or []
     if not state['State']['Running']:
         raise ValueError('Expected running recipe container')
+    if args.backend == 'vllm' and state['Config']['Labels'].get('local.glm53.recipe') != 'glm53-fp4-local-v1':
+        raise ValueError('vLLM container is not owned by this recipe')
+    model = json.loads(subprocess.check_output([sys.executable, str(ROOT / 'scripts/model.py')], text=True))
     if args.backend == 'vllm':
         enabled = '--speculative-config' in command
         if enabled != (args.mtp == 'on'):
             raise ValueError('Requested MTP mode does not match vLLM launch')
         settings = {'command': command}
-        if workload['model_revision'] not in command[2]:
-            raise ValueError('vLLM checkpoint revision differs')
+        if command[2] != model['container_path']:
+            raise ValueError('vLLM container does not serve the locked checkpoint path')
     else:
         settings = {k: v for k, v in env.items() if k.startswith(('TF_', 'NCCL_')) or k == 'MODEL_PATH'}
         if env.get('TF_PROMPT_CACHE_GIB') != '0' or env.get('TF_PROFILE') != '0':
             raise ValueError('TensorFold needs retained cache off and profiling off')
-        if workload['model_revision'] not in env.get('MODEL_PATH', ''):
-            raise ValueError('TensorFold checkpoint revision differs')
+        if env.get('MODEL_PATH') != model['container_path']:
+            raise ValueError('TensorFold container does not serve the locked checkpoint path')
+    endpoint = urlparse(base)
+    if str(endpoint.port or (443 if endpoint.scheme == 'https' else 80)) != env.get('PORT' if args.backend == 'vllm' else 'TF_PORT'):
+        raise ValueError('Benchmark endpoint port does not match the recorded container')
     args.output.mkdir(parents=True, exist_ok=False)
     manifest = {'protocol': workload['protocol'], 'backend': args.backend, 'mtp': args.mtp,
                 'workloads_sha256': workload['workloads_sha256'], 'model_revision': workload['model_revision'],
@@ -165,6 +171,8 @@ def main():
                 else:
                     body['cache_salt'] = str(uuid.uuid4())
                     before = metrics(base)
+                    if before['vllm:num_requests_running'] or before['vllm:num_requests_waiting']:
+                        raise ValueError('Other traffic active at timing start')
                 response = stream(base, body)
                 usage = response['usage']
                 row = {'case': case['name'], 'draft': draft, 'repeat': repeat, 'warmup': repeat < 0,
@@ -180,6 +188,8 @@ def main():
                         if time.monotonic() > deadline:
                             raise ValueError('vLLM metrics did not report the completed request')
                         time.sleep(.2)
+                    if after['vllm:num_requests_running'] or after['vllm:num_requests_waiting']:
+                        raise ValueError('Other traffic active at timing end')
                     timing = metric_delta(before, after, case['prompt_tokens'], workload['max_tokens'])
                     row['metrics_before'], row['metrics_after'] = before, after
                 else:
@@ -190,8 +200,11 @@ def main():
                               'server_ttft_seconds': tf['time_to_first_token'], 'decode_tokens_per_second': tf['tokens_per_second']}
                 row['timing'] = timing
                 evidence.write(json.dumps(row) + '\n'); evidence.flush()
+                details = usage.get('prompt_tokens_details') or {}
+                if 'cached_tokens' not in details:
+                    raise ValueError('Response is missing prompt_tokens_details.cached_tokens')
                 if (usage['prompt_tokens'] != case['prompt_tokens'] or usage['completion_tokens'] != workload['max_tokens']
-                    or usage.get('prompt_tokens_details', {}).get('cached_tokens', 0) != 0 or response['finish_reason'] != 'length'):
+                    or details['cached_tokens'] != 0 or response['finish_reason'] != 'length'):
                     raise ValueError('Token counts, cold cache or output length contract failed')
                 if repeat >= 0:
                     rows.append(row)

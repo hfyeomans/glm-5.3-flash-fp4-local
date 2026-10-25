@@ -130,16 +130,22 @@ def main():
         if env['TF_CONTAINER'] in before:
             raise ValueError('Owned TensorFold container already exists; inspect before replacing')
         stop = threading.Event()
+        telemetry_error = []
         def telemetry():
-            with (folder / 'gpu.csv').open('w') as out:
-                out.write('utc,index,memory_used_MiB,memory_free_MiB,utilization_pct,temperature_C,power_W,sm_clock_MHz,memory_clock_MHz,clock_event_reasons\n')
-                while not stop.is_set():
-                    r = subprocess.run(['nvidia-smi', '--query-gpu=index,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw,clocks.sm,clocks.mem,clocks_event_reasons.active', '--format=csv,noheader,nounits'], capture_output=True, text=True)
-                    now = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
-                    for line in r.stdout.splitlines():
-                        out.write(now + ',' + line + '\n')
-                    out.flush()
-                    stop.wait(1)
+            try:
+                with (folder / 'gpu.csv').open('w') as out:
+                    out.write('utc,index,memory_used_MiB,memory_free_MiB,utilization_pct,temperature_C,power_W,sm_clock_MHz,memory_clock_MHz,clock_event_reasons\n')
+                    while not stop.is_set():
+                        r = subprocess.run(['nvidia-smi', '--query-gpu=index,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw,clocks.sm,clocks.mem,clocks_event_reasons.active', '--format=csv,noheader,nounits'], capture_output=True, text=True, timeout=30)
+                        if r.returncode != 0 or not r.stdout.strip():
+                            raise RuntimeError(f'nvidia-smi failed: rc={r.returncode} {r.stderr.strip()[:200]}')
+                        now = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+                        for line in r.stdout.splitlines():
+                            out.write(now + ',' + line + '\n')
+                        out.flush()
+                        stop.wait(1)
+            except Exception as exc:
+                telemetry_error.append(str(exc))
         thread = threading.Thread(target=telemetry, daemon=True)
         thread.start()
         started = time.time()
@@ -224,6 +230,8 @@ def main():
             with (folder / 'stop.log').open('w') as out:
                 subprocess.run([*recipe, 'stop'], env=env, cwd=ROOT, stdout=out, stderr=subprocess.STDOUT, check=True, timeout=120)
             stop.set(); thread.join(timeout=10)
+            if telemetry_error and status.get('status') == 'pass':
+                status.update(status='failed', error='GPU telemetry failed: ' + telemetry_error[0])
         had_failure = had_failure or status['status'] != 'pass'
         status['elapsed_seconds'] = time.time() - started
         done.write_text(json.dumps(status, indent=2) + '\n')

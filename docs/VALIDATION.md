@@ -849,3 +849,17 @@ remained and free memory returned to 97,187/97,340 MiB. CPU checks passed 62 tes
 [Results](VLLM-CONCURRENCY.md) · [Protocol](../benchmarks/CONCURRENCY.md) ·
 [Portable receipt](../benchmarks/results/vllm-concurrent-context-v1.json).
 The TensorFold engine and serving profiles were unchanged.
+
+## Code-hardening review pass (2026-10-25)
+
+A four-stream adversarial code review (serving/benchmark path, measurement/quality path,
+shell/security) produced 16 jev-supported findings; all are fixed on the
+`fix/code-review-hardening` branch. CPU-side verification: `./scripts/check.sh` green
+with 65 tests, including three new offline guard tests; receipt writers refuse existing
+outputs and `context_check` refuses reused directories, exercised by direct invocation.
+The measurement-facing guards — endpoint port binding to the recorded container,
+zero running/waiting timing boundaries, telemetry-failure propagation, GPU device-id
+sampling from the container, `mtp=off` prefill controls, strict
+`prompt_tokens_details.cached_tokens` and the pinned `squad.json` hash — are enforced
+by code but not yet exercised against live servers; they take effect on the next
+qualification run and its receipts are the confirmation.

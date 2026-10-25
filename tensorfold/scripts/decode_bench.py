@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+from urllib.parse import urlparse
 from pathlib import Path
 import random
 import statistics
@@ -47,6 +48,8 @@ def main():
         raise ValueError('Expected fixed 16K, one-slot, cold-cache, default-reserve unprofiled server')
     if env.get('TF_NVFP4_DECODE_WARPS') not in ('1', '4'):
         raise ValueError('Missing explicit decode warp setting')
+    if str(urlparse(args.base_url.rstrip('/')).port or 80) != env.get('TF_PORT'):
+        raise ValueError('Benchmark endpoint port does not match the recorded container')
     manifest = {'image_id': state['Image'], 'settings': {k: v for k, v in env.items() if k.startswith('TF_') or k == 'MODEL_PATH'},
                 'rounds': args.rounds, 'workload_sha256': digest(cases),
                 'client_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -71,7 +74,8 @@ def main():
                 seconds = time.monotonic() - start
                 usage, tf = response['usage'], response['tensorfold']
                 if (usage['prompt_tokens'] != counts[name] or usage['completion_tokens'] != 256
-                    or usage.get('prompt_tokens_details', {}).get('cached_tokens', 0) != 0
+                    or (usage.get('prompt_tokens_details') or {}).get('cached_tokens') is None
+                    or usage['prompt_tokens_details']['cached_tokens'] != 0
                     or response['choices'][0]['finish_reason'] != 'length'
                     or not tf.get('token_sha256') or tf['drafts'] != body['draft']):
                     raise ValueError('Incomplete, cached, mismatched or unidentifiable benchmark response')

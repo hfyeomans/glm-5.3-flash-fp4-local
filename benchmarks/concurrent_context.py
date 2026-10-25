@@ -51,15 +51,15 @@ def metrics(base):
         return parse_metrics(response.read().decode())
 
 
-def gpu_sample():
-    raw = subprocess.check_output(['nvidia-smi', '--id=0,1',
+def gpu_sample(devices):
+    raw = subprocess.check_output(['nvidia-smi', '--id=' + ','.join(map(str, devices)),
         '--query-gpu=index,memory.free,memory.used,utilization.gpu,temperature.gpu',
         '--format=csv,noheader,nounits'], text=True, timeout=10)
     rows = []
     for line in raw.strip().splitlines():
         vals = [int(x.strip()) for x in line.split(',')]
         rows.append(dict(zip(('index', 'free_mib', 'used_mib', 'util_percent', 'temperature_c'), vals)))
-    if {r['index'] for r in rows} != {0, 1}:
+    if {r['index'] for r in rows} != set(devices):
         raise ValueError('Expected both GPU samples')
     return rows
 
@@ -220,6 +220,9 @@ def main():
     command = state['Config']['Cmd']
     if not state['State']['Running'] or state['Config']['Labels'].get('local.glm53.recipe') != 'glm53-fp4-local-v1':
         raise ValueError('Expected owned running recipe')
+    devices = sorted({int(i) for req in (state['HostConfig'].get('DeviceRequests') or []) for i in (req.get('DeviceIDs') or [])})
+    if len(devices) != 2:
+        raise ValueError('Expected exactly two GPU device ids on the serving container')
     if REVISION not in ' '.join(command) or '--speculative-config' not in command:
         raise ValueError('Expected pinned checkpoint and MTP-on baseline')
     for key, expected in {'--max-model-len': '1048576', '--max-num-seqs': '8',
@@ -270,7 +273,7 @@ def main():
         barrier.wait(timeout=60)
         with (args.output / 'telemetry.jsonl').open('w') as trace:
             while True:
-                sample = {'monotonic': time.monotonic(), 'metrics': metrics(base), 'gpus': gpu_sample()}
+                sample = {'monotonic': time.monotonic(), 'metrics': metrics(base), 'gpus': gpu_sample(devices)}
                 samples.append(sample)
                 trace.write(json.dumps(sample) + '\n'); trace.flush()
                 if min(g['free_mib'] for g in sample['gpus']) < args.min_free_mib:

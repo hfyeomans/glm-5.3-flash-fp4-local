@@ -85,6 +85,7 @@ def main():
     def count(text,prefix):
         return len(tok.encode(render(text,prefix),add_special_tokens=False))
     data_dir = cache/'benchmarks/ruler-local-v1';data_dir.mkdir(parents=True,exist_ok=True)
+    resources = json.loads((ROOT/'quality/resources.json').read_text())
     def download(url):
         path = data_dir/('hotpot.json' if 'hotpot' in url else 'squad.json')
         if not path.exists():
@@ -92,7 +93,10 @@ def main():
                 src=cache/'hub/datasets--namlh2004--hotpotqa/snapshots/7e54db4656209750ff487f6fdf8e39a66dba136b/hotpot_dev_distractor_v1.json'
                 path.write_bytes(src.read_bytes())
             else:
-                with urllib.request.urlopen(url,timeout=120) as response:path.write_bytes(response.read())
+                with urllib.request.urlopen(url,timeout=120) as response:payload=response.read()
+                if hashlib.sha256(payload).hexdigest() != resources['squad_json_sha256']:
+                    raise ValueError('Downloaded squad.json does not match the pinned hash in quality/resources.json')
+                path.write_bytes(payload)
         return json.loads(path.read_text())
     qa.download_json = download
     essays = re.sub(r'\s+',' ',' '.join(load_dataset('baber/paul_graham_essays',revision=ESSAYS,split='train')['text'])).split()

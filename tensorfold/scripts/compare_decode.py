@@ -68,7 +68,7 @@ def compare(folders):
     return {'runs': [str(x) for x in folders], 'manifests': [x[0] for x in runs],
             'output_disagreements': disagreements, 'draft_plain_disagreements': plain_disagreements,
             'measurements_per_run': len(runs[0][1]), 'summary': summaries,
-            'scope': 'Three synthetic prompts, 256 generated tokens, one slot, 16K context. Four repeats per case. Bracketed runs expose drift; they do not establish a universal speedup.'}
+            'scope': f'Three synthetic prompts, 256 generated tokens, one slot, 16K context. {runs[0][0]["rounds"]} repeats per case. Bracketed runs expose drift; they do not establish a universal speedup.'}
 
 
 def main():

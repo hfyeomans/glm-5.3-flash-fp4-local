@@ -86,6 +86,8 @@ def main():
         'evidence': [{'path': str(path), 'sha256': sha(path)} for path in files],
         'reporter_sha256': sha(Path(__file__)),
         'limits': 'User reduced long examples mid-run by fixed sample index, independent of scores. All shorter controls retained. Small local RULER-derived screen, not a leaderboard or universal qualification. No matched vLLM or older-TensorFold long scores exist for this bank. Substring scores and clean completion are separate.'}
+    if args.receipt.exists():
+        raise SystemExit(f'Refusing to overwrite existing receipt: {args.receipt}')
     args.receipt.write_text(json.dumps(receipt, indent=2) + '\n')
     short, long = receipt['short_controls'], receipt['near_1m']
     lines = ['# Long-context accuracy screen', '',

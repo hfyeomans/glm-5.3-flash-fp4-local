@@ -99,7 +99,10 @@ def run_checks(suite=False, output=None):
     def save(name, result):
         if output:
             output.mkdir(parents=True, exist_ok=True)
-            (output/(name+'.json')).write_text(json.dumps(result, indent=2)+'\n')
+            path = output/(name+'.json')
+            if path.exists():
+                raise ValueError(f'Refusing to overwrite existing smoke receipt: {path}')
+            path.write_text(json.dumps(result, indent=2)+'\n')
     def check(name, fn):
         start = time.monotonic()
         try:

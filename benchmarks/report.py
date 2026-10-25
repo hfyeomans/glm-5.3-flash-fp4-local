@@ -17,6 +17,8 @@ def main():
             for key in ('protocol', 'workloads_sha256', 'model_revision', 'client_sha256'):
                 if manifest[key] != manifests[0][key]:
                     raise ValueError(f'Incomparable {key}')
+            if manifest['image_id'] != manifests[0]['image_id']:
+                raise ValueError('Incomparable image_id')
         manifests.append(manifest)
         summary = json.loads((folder / 'summary.json').read_text())
         rows = [json.loads(line) for line in (folder / 'requests.jsonl').read_text().splitlines()]
@@ -35,6 +37,10 @@ def main():
                 hashes = {r['response']['runtime']['token_sha256'] for r in selected}
                 consistency.append({'run': str(folder), 'case': case, 'mtp_modes': sorted({r['draft'] for r in selected}),
                                     'distinct_native_token_hashes_including_warmups': len(hashes)})
+    for backend in ('vllm', 'tensorfold'):
+        seen = {json.dumps(m['settings'], sort_keys=True) for m in manifests if m['backend'] == backend}
+        if len(seen) > 1:
+            raise ValueError(f'Incomparable {backend} launch settings across runs')
     keys = [(x['backend'], x['case'], x['mtp']) for x in cells]
     if len(keys) != len(set(keys)):
         raise ValueError('Duplicate backend/case/mode; create a separate candidate comparison')
