@@ -35,6 +35,19 @@ docker info >/dev/null 2>&1 || fail 'Docker daemon is unavailable.'
 if container_exists; then
   assert_owned
   if [[ "$MODE" == start && "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" == true ]]; then
+    RUNNING_COMMAND=$(docker inspect -f '{{json .Config.Cmd}}' "$CONTAINER_NAME")
+    python3 - "$RUNNING_COMMAND" "$PORT" <<'PYPORT'
+import json, sys
+try:
+    command = json.loads(sys.argv[1])
+    if not isinstance(command, list) or command[:2] != ['vllm', 'serve']:
+        raise ValueError('Unexpected serving command')
+    port = int(command[command.index('--port') + 1])
+except (ValueError, IndexError, TypeError):
+    sys.exit('Cannot determine the running container serving port. Inspect its launch before accepting readiness.')
+if port != int(sys.argv[2]):
+    sys.exit(f'Running container serves port {port}, but configured PORT={sys.argv[2]}. Run ./start.sh restart to apply settings.')
+PYPORT
     log "$CONTAINER_NAME already exists and is running. Use ./start.sh restart to apply settings."
     python3 "$REPO_ROOT/scripts/smoke.py" --ready
     exit 0

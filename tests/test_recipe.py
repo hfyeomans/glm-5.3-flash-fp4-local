@@ -205,7 +205,11 @@ if a[:2]==['container','inspect']:
     if status: print(os.environ.get('INSPECT_ERROR', 'Error response from daemon: No such container: '+a[-1]), file=sys.stderr)
     sys.exit(status)
 if a[:2]==['image','inspect']: print('sha256:fixture');sys.exit(0)
-if a[0]=='inspect': print(os.environ.get('OWNER','foreign'));sys.exit(0)
+if a[0]=='inspect':
+    if 'Running' in a[2]: print(os.environ.get('FAKE_RUNNING', 'false'))
+    elif 'Config.Cmd' in a[2]: print(json.dumps(['vllm','serve','/model','--port',os.environ.get('FAKE_SERVING_PORT', '8000')]))
+    else: print(os.environ.get('OWNER','foreign'))
+    sys.exit(0)
 if a[0]=='ps': print('other-gpu-service\tother-image');sys.exit(0)
 if a[0]=='logs': print('fixture log');sys.exit(0)
 if a[0]=='stop': sys.exit(0)
@@ -363,15 +367,30 @@ sys.exit(70)
 
     def test_start_uses_configured_endpoint_despite_inherited_base_url(self):
         self.env.update(BASE_URL='http://unrelated.invalid:1234', HOST='127.0.0.1', PORT='8123',
-                        OWNER='glm53-fp4-local-v1')
-        docker=self.bin/'docker'
-        docker.write_text(docker.read_text().replace("if a[0]=='inspect': print(os.environ.get('OWNER','foreign'));sys.exit(0)",
-            "if a[0]=='inspect': print('true' if 'Running' in a[2] else os.environ.get('OWNER','foreign'));sys.exit(0)"))
+                        OWNER='glm53-fp4-local-v1', FAKE_RUNNING='true', FAKE_SERVING_PORT='8123')
         (self.root/'scripts'/'smoke.py').write_text("import os; print(os.environ['BASE_URL'])\n")
         result=self.run_script('start.sh')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('http://127.0.0.1:8123', result.stdout)
         self.assertNotIn('unrelated.invalid', result.stdout)
+
+    def test_running_container_port_is_checked_before_http_readiness(self):
+        self.env.update(HOST='127.0.0.1', OWNER='glm53-fp4-local-v1', FAKE_RUNNING='true')
+        marker = Path(self.tmp.name)/'http-accepted'
+        (self.root/'scripts'/'smoke.py').write_text(
+            'from pathlib import Path\nPath(' + repr(str(marker)) + ').touch()\n')
+        for configured_port, succeeds in (('8000', True), ('8123', False)):
+            with self.subTest(configured_port=configured_port):
+                marker.unlink(missing_ok=True)
+                self.env['PORT'] = configured_port
+                result = self.run_script('start.sh')
+                self.assertEqual(result.returncode == 0, succeeds, result.stderr)
+                self.assertEqual(marker.exists(), succeeds)
+                if not succeeds:
+                    self.assertIn('serves port 8000', result.stderr)
+                    self.assertIn('PORT=8123', result.stderr)
+                    self.assertIn('./start.sh restart', result.stderr)
+        self.assertFalse(any(c[0] in ('run', 'rm', 'stop') for c in self.commands()))
 
     def test_busy_gpus_prevent_launch(self):
         self.env['ABSENT']='1'
