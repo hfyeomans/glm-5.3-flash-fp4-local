@@ -13,15 +13,12 @@ case "${1:-}" in
 esac
 (( $# <= 1 )) || fail 'Too many arguments.'
 validate_config
+# Lifecycle acceptance must check the endpoint this launch is configured to bind.
+export BASE_URL=$RECIPE_BASE_URL
 log "GLM-5.3-Flash FP4 | 2 GPUs ($GPUS) | drafter=$DRAFTER | port $PORT"
 RUN_IMAGE=$IMAGE
 if [[ "${DRY_RUN:-0}" == 1 ]]; then
-  if [[ -n "$MODEL_DIR" ]]; then
-    MODEL_CONTAINER_PATH=/model; MODEL_MOUNT_SOURCE=$MODEL_DIR; MODEL_MOUNT_TARGET=/model
-  else
-    MODEL_CONTAINER_PATH=/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/$MODEL_REVISION
-    MODEL_MOUNT_SOURCE=$HF_HUB_CACHE; MODEL_MOUNT_TARGET=/root/.cache/huggingface/hub
-  fi
+  resolve_model --plan
   resolve_drafter --plan
   build_serve_args
   build_docker_args
@@ -35,7 +32,7 @@ fi
 resolve_drafter
 lock_recipe
 docker info >/dev/null 2>&1 || fail 'Docker daemon is unavailable.'
-if docker container inspect "$CONTAINER_NAME" >/dev/null 2>&1; then
+if container_exists; then
   assert_owned
   if [[ "$MODE" == start && "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" == true ]]; then
     log "$CONTAINER_NAME already exists and is running. Use ./start.sh restart to apply settings."

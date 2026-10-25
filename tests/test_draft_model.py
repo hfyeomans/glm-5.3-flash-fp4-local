@@ -70,6 +70,28 @@ class DraftIdentityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'symlink escapes'):
             self.inspect()
 
+    def test_absolute_internal_blob_link_is_rejected(self):
+        file = self.path / 'model.safetensors'
+        blob = self.path / 'blob'
+        file.rename(blob); file.symlink_to(blob)
+        with self.assertRaisesRegex(ValueError, 'absolute symlink'):
+            self.inspect()
+
+    def test_relative_link_via_absolute_directory_is_rejected(self):
+        file = self.path/'model.safetensors'
+        blobs = self.path/'blobs'; blobs.mkdir()
+        file.rename(blobs/'blob')
+        (self.path/'alias').symlink_to(blobs, target_is_directory=True)
+        file.symlink_to('alias/blob')
+        with self.assertRaisesRegex(ValueError, 'absolute symlink'):
+            self.inspect()
+
+    def test_manual_hub_plan_and_inspection_use_same_mount(self):
+        result = self.inspect(model_dir=self.path)
+        planned = plan_draft(self.hub, self.path, self.lock)
+        for key in ('mount_source', 'mount_target', 'container_path'):
+            self.assertEqual(planned[key], result[key])
+
     def test_missing_draft_refused_but_plan_needs_no_files(self):
         (self.path / 'model.safetensors').unlink()
         with self.assertRaisesRegex(ValueError, 'file missing'):

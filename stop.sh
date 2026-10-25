@@ -8,7 +8,7 @@ if [[ "${1:-}" == --dry-run || "${DRY_RUN:-0}" == 1 ]]; then plan docker stop --
 [[ $# == 0 ]] || fail 'Usage: ./stop.sh [--dry-run]'
 lock_recipe
 docker info >/dev/null 2>&1 || fail 'Docker daemon is unavailable.'
-if ! docker container inspect "$CONTAINER_NAME" >/dev/null 2>&1; then log "$CONTAINER_NAME is absent."; exit 0; fi
+if ! container_exists; then log "$CONTAINER_NAME is absent."; exit 0; fi
 assert_owned
 docker stop --time 30 "$CONTAINER_NAME" >/dev/null
 mkdir -p "$LOG_DIR"
