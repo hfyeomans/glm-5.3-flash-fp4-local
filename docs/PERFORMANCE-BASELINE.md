@@ -29,12 +29,12 @@ Same pinned NVIDIA checkpoint, tokenizer IDs and raw prompts; one request at a t
 | prefill-65536 (65,536) | vllm | on | 167.9 | 10,161 | 6.450 | 6.476 |
 | prefill-65536 (65,536) | vllm | off | 117.7 | 10,341 | 6.338 | 6.361 |
 
-These are per-cell medians, not a universal engine ranking. Short-prompt prefill rates include fixed overhead and should not be extrapolated to long prompts.
+Values are per-cell medians. Short-prompt prefill rates include fixed overhead.
 
 Decode uses each server's post-first-token interval and (output tokens minus one). vLLM timings are isolated deltas of exactly one request in its Prometheus histograms; TensorFold returns runtime timings with the completion. Client TTFT is first nonempty raw text, including local HTTP/queue overhead. Server prefill boundaries are implementation-specific; client TTFT supplies a common external measurement.
 
 Every measured request had zero reused prompt tokens. vLLM retains its qualified MTP3/B12X budget, 1M configured window and eight slots, with one client request active. Its plain run removes only the speculative configuration. Unique cache salts prevent prefix reuse. TensorFold uses one decode warp, 128K configured context, one slot, FP8 KV, default reserve and zero retained prompt-cache budget.
 
-Some repeated vLLM greedy outputs differ despite the fixed seed; distinct text counts are retained in the JSON. The timing samples are valid fixed-input/fixed-output-length measurements, not a claim of bit-deterministic generation or an accuracy score. TensorFold token-hash consistency is reported separately. The 256-token cap is intentional for throughput. The earlier quality suite remains the accuracy reference.
+Some repeated vLLM greedy outputs differ despite the fixed seed; distinct text counts are retained in the JSON. The 256-token cap is intentional for throughput. TensorFold token-hash consistency and task quality are reported separately.
 
 Raw manifests, requests, SSE frames, counter snapshots and responses are retained under `logs/tuning/`. No clocks, power limits, checkpoint values or shared caches were changed.

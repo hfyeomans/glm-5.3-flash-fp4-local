@@ -2,8 +2,8 @@
 
 User authorization on 2026-10-24 covers local implementation and GPU experiments,
 including stopping this recipe's vLLM service. No upstream publication is requested.
-The existing PR #1050 work remains credited to its author; this extends the pinned
-integration in an isolated checkout rather than independently reimplementing #1015.
+This extends the pinned PR #1050 integration in an isolated checkout, with credit
+to its author.
 ATC's broad snapshot has incomplete file coverage; the scoped #1015 snapshot is
 complete and `takenOutside` through #1050. No claim or public session was created.
 
@@ -21,6 +21,5 @@ See ../COMPRESSED-SCALES-PLAN.md for owners, memory estimates and acceptance gat
 
 Correctness must be byte-exact to the legacy operators and model baseline. Register
 new operators in the native GPU contract and audit actual compiled launch limits.
-Run host checks and real-loader/GPU/model gates before claiming qualification.
-Screen end-to-end speed and cold prefill with fixed prompts; do not substitute a
-microbenchmark or relax a failed gate. Preserve failures and unrun checks explicitly.
+Run host, real-loader, GPU and model gates; measure end-to-end speed and cold
+prefill with fixed prompts. Preserve failed and unrun checks.

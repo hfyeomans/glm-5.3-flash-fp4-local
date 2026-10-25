@@ -7,11 +7,7 @@ keeps **all 52 shorter controls** and uses **two fixed examples per long task**:
 Both groups use the same 1M server allocation. Nine additional long results
 already completed under the larger plan are retained separately.
 
-This is an initial local RULER-derived regression baseline, not a published
-leaderboard score or a statistically precise accuracy estimate. Four examples
-per task was a coverage choice, not a significance threshold; two is a smaller
-screen. These are different examples, not repeated trials of an identical prompt.
-Capacity tests and three-marker retrieval remain separate evidence.
+The cases are distinct examples, selected by fixed index for a smaller regression screen.
 
 The source is [NVIDIA RULER](https://github.com/NVIDIA/RULER/tree/c3f5e3b4f87f97e048793bb510a3a6b19a46bf3a),
 using task constructors from [the pinned lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness/tree/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/ruler).
@@ -44,10 +40,8 @@ Every response score is checked against the original NVIDIA scorer.
 - Both cards' free memory is sampled once per second, including startup; a sample
   below 1,536 MiB stops the run. Peaks between samples are not observed.
 
-The substring scorer is intentionally the upstream metric and can accept an
-answer embedded in extra text. Inspect failed and suspicious successful answers;
-do not describe this screen as an unrestricted reasoning or factuality evaluation.
-No vLLM near-1M accuracy conclusion follows from TensorFold-only results.
+The upstream substring scorer accepts answers embedded in extra text; inspect
+failed and suspicious successful answers. This cohort runs TensorFold only.
 
 ## Reproduction
 
@@ -71,7 +65,6 @@ existing pinned lm-eval installation, NLTK assets, and the datasets recorded in
 its manifest. Dataset files remain under `/models_engrams/huggingface`, outside
 Git. The bank is complete only when `complete.json` matches its manifest hash.
 The runner owns only `glm53-fp4-tensorfold` and stops it after the sweep.
-
 
 The frozen bank has 44 near-1M cases across 11 task families. CWE reaches about
 143K input tokens and SQuAD about 205K; their cases are reported
@@ -98,7 +91,6 @@ content hashes are retained in the bank receipt. Existing short-quality setup
 provides the frozen lm-eval environment and NLTK assets. No existing shared-cache
 files are deleted or replaced during qualification.
 
-
 ## Preserved protocol failure and correction
 
 The first attempt used `enable_thinking=False` with the checkpoint Jinja template.
@@ -113,8 +105,7 @@ protocol**. The first near-1M request was cancelled and the owned service stoppe
 The corrected renderer explicitly selects the Low header and closes `<think>`
 before the unchanged answer prefix, exactly as the established performance
 benchmark does. The rewrapper preserves all 104 task bodies, gold answers, seeds
-and question selections, adding two tokens per case. It does not read inference
-outputs. The client validates the actual prefix before every request; regression
+and question selections, adding two tokens per case. The client validates the actual prefix before every request; regression
 tests reject an open prefix or unexpected header. The corrected full plan began in a separate directory; the user later reduced
 the remaining cohort as described below. Existing valid short-quality and performance baselines are
 not rerun.
@@ -127,22 +118,18 @@ v1 generator is preserved in commit `f7aab64` if its inputs need reconstruction.
 
 The official substring metric remains unchanged. The corrected report also lists
 truncations, generated reasoning markers and full-credit responses that have
-neither. A full substring score with an unfinished answer is not called clean
-completion or broad accuracy qualification.
-
+neither; unfinished answers fail the clean-completion check.
 
 The JSON group field `configured_context` is the bank's nominal length label,
 not a change to the server allocation. The launch manifest records actual
 `TF_CONTEXT=1048576` for both the roughly-28K controls and the longer cases.
-
 
 ## User-approved reduction and reuse
 
 After 71 valid corrected responses (52 shorter controls and 19 near-1M cases),
 the user requested fewer cases and approved a 22-case balanced near-1M baseline.
 The remaining full-plan request was cancelled and its sweep status remains
-stopped/failed, rather than falsely marked complete. This was a scope change,
-not a detected model or protocol failure.
+stopped/failed for the scope change.
 
 The selection rule is fixed sample indices 0 and 1 for every longest-length task,
 independent of scores; all four shorter examples per task remain included. Thus
@@ -165,8 +152,6 @@ refuses uncommitted selected responses. **Omit reuse for a new engine/kernel
 comparison**; different images are rejected. The official grader and generation
 settings are unchanged. There is no automatic expansion beyond this initial core.
 
-
 The reduced run has completed. [Results](../docs/LONG-CONTEXT-ACCURACY-V2.md)
 report the 22-case core, all shorter controls, corpus-limited cases, supplemental
-results and every miss separately. Different task mixes and sample counts mean
-the short/long aggregate difference is not a causal context-length effect.
+results and every miss separately, with task mixes and sample counts explicit.

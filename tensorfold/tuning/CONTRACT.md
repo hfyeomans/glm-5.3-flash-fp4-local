@@ -6,13 +6,11 @@ qualified recipe at commit `7e06307`. It keeps NVIDIA FP4-Local revision
 accumulation explicit. Native baseline: v1.1.3 plus PR #1050, merged tree
 `1d52effd182d9319d775d5787904c36783e532f1`, CUDA 13.3, Zig 0.17.0, SM120, TP2.
 
-The requested work is a local experiment on the existing PR, not an independent
-implementation of its checkpoint-loading issue or a publication. The ATC board
+Local experiments extend the existing PR. The ATC board
 was read with ATC 0.7.0, revision `e4f5a4a114eb2bcfef7a8ebcc2dbdfb718df28c4`.
 The broad board reported incomplete file coverage (`pullFilesLimit`); scoped
 issue #1015 was complete and `takenOutside` because PR #1050 already covers it.
-No claim, public session, issue, comment or competing PR was created. Local
-experiments do not constitute upstream clearance or maintainer approval. Any
+No claim, public session, issue, comment or competing PR was created. Any
 future upstream submission must coordinate with that PR and satisfy its full
 contract/launch-record and supported-platform requirements.
 
@@ -32,15 +30,12 @@ contract/launch-record and supported-platform requirements.
   only repeatable end-to-end improvements with no unexplained regression.
 - Split-K changes addition order. Screen its speed separately and retain
   independent FP64 numerical-reference results by projection class. A changed
-  reduction is not a bit-preserving replacement and is not ready to land merely
-  because it passes a same-engine draft/plain check or a small accuracy sample.
+  reduction needs its own numerical contract.
 - Screen existing local transport/overlap and launch controls independently;
   preserve the baseline and use fixed workloads. Do not change clocks, power,
   drivers, precision or unrelated services.
 - Capacity work (mapped immutable embedding or resident compressed scales) needs
-  separate allocation, lifetime, loader and long-context evidence. A scheduling
-  gain does not prove progress toward 1M; a configured window is not a measured
-  near-window request or a broad long-context quality score.
+  allocation, lifetime, loader, near-window inference and task-score evidence.
 
 Only these SM120 cards are available. Other architectures, full upstream release
 qualification and maintainer agreement remain explicitly outside local evidence.

@@ -6,7 +6,7 @@ Each profile passed readiness, four API checks and paired draft/plain three-need
 
 ## Initial screen
 
-The opening control was cooler during timing than the later profiles (about 4°C in the averages). Its prefill was 1.42% faster at 8K and 0.90% faster at 32K than the closing control. The table below uses the **closing control**, measured at 4,536 / 4,617 prefill tok/s for 8K / 32K, and about 122.4 tok/s decode after the 8K prompt. Small differences remain screening observations, not established gains.
+The opening control was cooler during timing than the later profiles (about 4°C in the averages). Its prefill was 1.42% faster at 8K and 0.90% faster at 32K than the closing control. The table below uses the **closing control**, measured at 4,536 / 4,617 prefill tok/s for 8K / 32K, and about 122.4 tok/s decode after the 8K prompt.
 
 | Profile | 8K prefill change | 32K prefill change | 8K decode change | All four output hashes match control |
 |---|---:|---:|---:|---|
@@ -27,7 +27,7 @@ The opening control was cooler during timing than the later profiles (about 4°C
 | cumem-host | +0.18% | -0.00% | -0.09% | yes |
 | host-embed | -1.11% | -1.29% | -0.09% | yes |
 
-Every profile was internally repeatable on these timed requests. A passing profile status means its requested API/retrieval checks and repeatability checks completed; it does **not** imply equivalence to control or adoption. Split-K 384/768 and shape-dependent prompt reduction changed all four output hashes. A changed greedy output is not by itself an accuracy loss, but those policies also lack a useful overall speed result here.
+Every profile was internally repeatable. Split-K 384/768 and shape-dependent prompt reduction changed all four output hashes and offered no useful overall speed result; none was adopted.
 
 Wider prefill tiles did not translate the isolated kernel improvements into a meaningful served-model gain. Four-piece overlap was the only scheduling candidate retained for a bracketed confirmation (0.58–0.80% prefill improvement). Narrow KDA lost decode speed; gather lost about 6.5–6.8% prefill throughput. PDL, ring and cuMem changes showed no clear benefit sufficient to adopt.
 
@@ -43,8 +43,7 @@ retains complete settings, measurements, telemetry summaries and evidence hashes
 | 8K | +1.05% | −0.01% | −0.12% |
 | 32K | +0.87% | +0.14% | −0.09% |
 
-This supports a small local prefill improvement. It does not establish the same
-gain for every workload or a decode improvement. The normal image then passed the fixed 256-item accuracy suite with every
+The normal image then passed the fixed 256-item accuracy suite with every
 output token hash and per-item grade identical to the original baseline:
 120/128 GSM8K, 113/128 strict IFEval and 114/128 loose IFEval. Its paired MTP
 on/off timing outputs also matched. The [quality receipt](results/overlap4-quality-v1.json)
@@ -70,16 +69,15 @@ The combined profile also passed 261,888 and 524,027 prompt tokens with MTP on/o
 recovering all three markers with identical output hashes. At configured 512K,
 one slot, zero retained cache and a 1.5 GiB reserve, minimum sampled free VRAM was
 **1,547 / 1,700 MiB**, up from **339 / 492 MiB**. The [capacity receipt](results/host-embedding-capacity-v1.json)
-records all responses, actual settings and raw evidence hashes. This is bounded
-retrieval/capacity evidence, not broad long-context accuracy.
+records responses, actual settings and raw evidence hashes.
 
-The 1M target remains about **2.15 GiB/rank short just to fit** on the limiting
+At this embedding-only stage, the 1M projection remained about **2.15 GiB/rank short just to fit** on the limiting
 GPU, or **3.65 GiB/rank short with 1.5 GiB headroom**, using the prior allocation
 slope and assuming no additional workspace. Resident compressed-scale storage
-or latent-cache sharding remains a separate engine task. The normal image retains device embedding; mapped embedding remains an explicit experimental profile. This embedding saving alone does not close the previously measured 1M memory gap.
+or latent-cache sharding required additional engine work. The normal image retained device embeddings; mapped embeddings used a separate experimental profile.
 
 ## Reproduction and scope
 
 See [the experimental recipe](tuning/README.md), [numerical contract](tuning/CONTRACT.md), [current vLLM/TensorFold benchmark](../docs/PERFORMANCE-CURRENT.md) and [precision guide](../docs/PRECISION-AND-QUALITY.md). Raw screen evidence is under `logs/tuning/served-screen-v1`; its original profile file is archived there. The screen used runner code from local commit `ba1a549`; later qualification options do not change those completed requests.
 
-No GPU power/clocks, unrelated containers, checkpoint values or shared caches were changed. No upstream submission was made. The experiments qualify only the available SM120 setup, not other architectures or a full upstream release.
+No GPU power/clocks, unrelated containers, checkpoint values or shared caches were changed. No upstream submission was made. Measurements cover the two local SM120 cards.

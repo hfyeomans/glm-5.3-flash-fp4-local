@@ -1,4 +1,4 @@
-# Diagnose from the station outward
+# Troubleshooting
 
 | Symptom | First check | Action |
 | --- | --- | --- |

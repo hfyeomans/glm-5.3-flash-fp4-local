@@ -24,8 +24,7 @@ python3 benchmarks/report.py logs/tuning/my-vllm-on logs/tuning/my-vllm-off \
 Use three measured repeats for the published baseline protocol. Each case/mode
 also has an excluded warmup. All requests have 256 output tokens, greedy
 sampling, seed 1729, verified identical input token IDs and zero reused prompt
-tokens. The rendered raw prompt explicitly closes the reasoning prefix so this
-speed test does not confound answer TTFT with a variable thinking phase.
+tokens. The raw prompt explicitly closes the reasoning prefix.
 
 The client saves raw SSE frames, text, server timings, token counts, per-request
 vLLM metrics and native output token hashes. It refuses concurrent/delayed vLLM
@@ -35,8 +34,8 @@ launches for MTP on/off; TensorFold supports a per-request draft switch.
 Client TTFT means the first nonempty raw text frame. Decode excludes the first
 token. Prefill timing boundaries are server-specific, so compare client TTFT as
 well as each server's reported prefill throughput. Short-prompt prefill rates
-include fixed overhead. Thermal drift, output variability and context/slot
-settings are part of the report, not hidden behind one headline speed.
+include fixed overhead. Reports retain thermal drift, output variability and
+context/slot settings.
 
 After testing, restore the normal vLLM service with `MTP_ENABLED=1 ./start.sh`
 and `./smoke.sh --suite`.

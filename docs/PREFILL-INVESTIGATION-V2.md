@@ -1,9 +1,7 @@
 # TensorFold prefill investigation on the two SM120 cards
 
-The new trace shows a distributed bottleneck: routed experts, projections and
-attention all take substantial time. The evidence does not support treating the
-entire vLLM gap as an embedding-placement or compressed-scale problem, or assuming
-that a faster expert kernel alone will close it.
+Routed experts, projections and attention all take substantial prefill time.
+Experts account for about 27% of traced chunk wall time.
 
 ## Measured timing
 
@@ -21,7 +19,7 @@ its baseline was not restarted or changed.
 Values summarize the two control medians. TensorFold's request-level `draft:false`
 disables draft decoding, while the loaded engine still absorbs prompt rows into
 its MTP state. vLLM's archived off run removes its speculative configuration at
-launch. These are served-mode comparisons, not identical internal work schedules.
+launch.
 
 The successful diagnostic follows those controls and uses the same immutable image,
 settings and stream measurement helper, with profiling enabled and separate stderr
@@ -35,7 +33,7 @@ was checked for completeness on both ranks.
 Representative rank-0 medians below are average milliseconds per 2,048-row chunk
 within each measured request. Rank 1 is similar. Traced chunk wall time was
 463.1 ms at 8K and 455.3 ms at 32K. CUDA events include the interval between their
-markers; they are not hardware-counter measurements of arithmetic alone.
+markers, including waits.
 
 | Stage | 8K ms/chunk | 32K ms/chunk | Interpretation |
 |---|---:|---:|---|
@@ -49,11 +47,9 @@ markers; they are not hardware-counter measurements of arithmetic alone.
 | Main-stream wait_shared + wait_gathered | 32.5 | 32.3 | Exposed waits across mixer and FFN sites |
 | GPU embedding gather | 0.034 | 0.030 | Very small in this GPU-placement profile |
 
-These are selected spans, not a partition that should sum to 100%. In particular,
-FFN parent spans include router/experts, output_projection includes shared_expert,
-and side-stream spans overlap main-stream work. The large side `wait_filled`
-interval mostly waits for main-stream work to become ready; calling that interval
-PCIe transfer time would be incorrect. Side partials are not added to main wall time.
+Spans overlap: FFN includes router/experts, output_projection includes shared_expert,
+and side-stream work overlaps the main stream. Side `wait_filled` mostly waits for
+main-stream work, so exclude it from PCIe transfer estimates and main-wall totals.
 
 ## Next optimization work, in evidence-based order
 
@@ -63,36 +59,30 @@ PCIe transfer time would be incorrect. Side partials are not added to main wall 
    tiles and split-K sweeps are retained; they did not establish a served speed gain.
 2. **Reduce CSF expansion/consumer overhead while preserving W4A16 arithmetic.**
    Matched earlier tests put the residency prefill cost at 3.2–4.1%, so this is a
-   bounded recovery opportunity, not an explanation for a greater-than-twofold gap.
+   bounded recovery opportunity.
    Reuse the existing integer byte-oracle, scratch-lifetime and full-model gates.
 3. **Investigate MLA/KDA and projection scheduling at real prompt shapes.** Compare
    launch counts and main-stream stalls with a matched vLLM trace. The current
    native 2,048-row chunk and vLLM 4,096 batched-token budget are different scheduler
-   concepts; simply doubling a constant is not a qualified optimization.
+   concepts requiring separate measurement.
 4. **Consider a separately qualified FP4-activation expert prefill path.** The
    pinned vLLM source enables hybrid A4 prefill when calibration/metadata conditions
    are met. Native experts use BF16 MMA after weight reconstruction. That is a
-   plausible contributor, but experts are only about 27% of the traced wall time;
-   this change alone cannot be assumed to close the whole gap. It changes activation
-   arithmetic and needs operator tolerances, fixed-history diagnostics, paired
+   candidate requiring operator tolerances, fixed-history diagnostics, paired
    short/long accuracy, and end-to-end timing before adoption.
 5. **Treat communication and MTP-off specialization as secondary investigations.**
    Four-piece overlap is already retained. Main exposed waits are much smaller
    than the misleading side wait total. Skipping MTP prompt absorption for plain
    requests could only help that mode and needs cache/state transition validation;
-   it cannot be removed from the normal MTP-on profile by assumption.
+   retain it for MTP-on requests.
 
 For workloads with repeated prefixes, separately qualify retained prompt-cache
 reuse. Earlier resident-scale cold/warm tests passed at 3,648/7,993 input tokens,
-but that does not qualify a 512K or 1M cache budget. Reuse can avoid repeated
-prefill; it does not accelerate the first cold prompt or demonstrate a kernel
-speedup. The current serving qualification keeps retained cache off, and the
-1M profile has little spare memory above its floor.
+while 512K/1M cache budgets remain untested. Current profiles keep retained cache
+off; the 1M profile has little memory above its floor.
 
-Do not infer a quality benefit from slower execution or from BF16 activations.
-The [short-quality comparison](QUALITY-BAKEOFF-V2.md) found no convincing advantage;
-the long-context task screen is separate. No native arithmetic/kernel change was
-made during this profiling and evaluation phase.
+The [short-quality comparison](QUALITY-BAKEOFF-V2.md) found similar scores.
+This profiling/evaluation phase left native arithmetic and kernels unchanged.
 
 ## Reproduction and preserved failures
 

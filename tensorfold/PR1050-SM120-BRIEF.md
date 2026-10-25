@@ -1,10 +1,10 @@
 # PR #1050 discussion brief: RTX PRO 6000 Blackwell SM120
 
-Updated on 2026-10-24 for the `hfyeomans/glm-5.3-flash-fp4-local` recipe; **not submitted to upstream PR #1050**. This is a record of measured local changes and proposed follow-up work, not a claim of exhaustive optimization or qualification on GB10/other GPUs. TensorFold is the engine name; TensorFlow is not involved.
+Updated on 2026-10-24 for the `hfyeomans/glm-5.3-flash-fp4-local` recipe; **not submitted to upstream PR #1050**. Measured local changes and follow-up work for two PCIe SM120 cards.
 
 ## Reproduction baseline and credit
 
-The checkpoint integration is the work of PR #1050's author, Bizuayeu: [PR #1050](https://github.com/ashhart/TensorFold/pull/1050), head `9b23b6a2e7ff226ca61934189c4cd57bf2933980`. Our local recipe combines it with TensorFold v1.1.3 `36415df4f76e4458e82d0fa729ecb28e287ebf38`, yielding source tree `1d52effd182d9319d775d5787904c36783e532f1`. Do not attribute the upstream loader/codec implementation to these local tuning experiments.
+The checkpoint integration is the work of PR #1050's author, Bizuayeu: [PR #1050](https://github.com/ashhart/TensorFold/pull/1050), head `9b23b6a2e7ff226ca61934189c4cd57bf2933980`. Our local recipe combines it with TensorFold v1.1.3 `36415df4f76e4458e82d0fa729ecb28e287ebf38`, yielding source tree `1d52effd182d9319d775d5787904c36783e532f1`.
 
 Hardware: two RTX PRO 6000 Blackwell Max-Q cards, 188 SMs/card, SM120, PCIe NODE topology; observed native transport NCCL P2P/IPC. CUDA 13.3, Zig 0.17.0, NCCL 2.31.2. No GPU power/clock changes, copied GB10 clock caps/CPU-affinity policies, NVLink or RoCE assumptions.
 
@@ -12,10 +12,8 @@ Model: `nvidia/GLM-5.3-Flash-FP4-Local@76348ddb2be2e35e39ecfc00e75dc07703f4f3d5`
 
 ## Integration and iteration history
 
-This is a local companion record for a possible future upstream contribution.
-Publishing this recipe does not update the author's branch, PR or issue discussion.
-The author owns the checkpoint integration; the experiments below extend that
-pinned work on our two PCIe SM120 cards.
+The author owns the checkpoint integration; the local experiments below extend
+that pinned work on our two PCIe SM120 cards.
 
 | Stage | What we did and learned | Reproduction/history |
 |---|---|---|
@@ -30,26 +28,24 @@ pinned work on our two PCIe SM120 cards.
 | Correct and complete long-task screening | Rejected an invalid prompt-wrapper cohort; explicitly closed reasoning and preserved task bodies/golds. Reduced the core by fixed sample index to 22 cases; reused valid evidence without selecting by score. Final core: 21 full credit, one partial. | `1ae4731`, `bc33561`, `111ee7c`, `13556fb`; [long-task results](../docs/LONG-CONTEXT-ACCURACY-V2.md) |
 | Document concurrency boundary | Specified four × 262,144 tokens as a future candidate. Current resident-scale recipe/native guards require one slot; scratch/state ordering and concurrent capacity/accuracy remain unqualified. No guard removed or profile enabled. | [Four-stream proposal](serving/FOUR-STREAMS.md) |
 
-The original GB10 results establish evidence for the author's tested hardware,
-not performance targets or qualification inherited by SM120. Likewise our local
-resident-scale restriction does not imply that the original PR lacks concurrent
-serving; it belongs to our newer storage extension.
+The one-slot restriction belongs to our resident-scale extension. The original
+PR includes concurrent serving on its tested GB10 hardware.
 
 ## What changed and what we retained
 
 | Area | RTX decision | Evidence and scope |
 |---|---|---|
-| GPU target and launch sizing | Build SM120; retain architecture dispatch and actual-device SM-count sizing | This is target selection, not deletion of every GB10/SM121 path. The SM121-specific draft-head PDL path stays off on SM120. |
+| GPU target and launch sizing | Build SM120; retain architecture dispatch and actual-device SM-count sizing | The SM121-specific draft-head PDL path stays off on SM120. |
 | Expert decode grouping | Select existing one-warp variant instead of upstream four | About +0.65–1.27% decode on measured workloads; full quality hashes unchanged. Normal recipe default `TF_NVFP4_DECODE_WARPS=1`; rollback `4`. |
 | Prefill communication overlap | Select four pieces instead of three | Bracketed five-repeat confirmation: +1.05% at 8K, +0.87% at 32K; decode approximately unchanged. Normal default `TF_GLM_OVERLAP_PIECES=4`; rollback `3`. |
-| Expert prefill tiles | Retain gate/up 4, down 8 | Wider 8/16 variants improved isolated kernels but did not materially improve served prefill. A GB10-associated setting can still be the best measured setting here. |
-| Split-K / prompt policy | Retain target 192 and fixed prompt-K `one` | 384/768 and shape-dependent policies changed output hashes and hurt prefill; no adoption or accuracy-loss claim from hashes alone. |
+| Expert prefill tiles | Retain gate/up 4, down 8 | Wider 8/16 variants improved isolated kernels but did not materially improve served prefill. |
+| Split-K / prompt policy | Retain target 192 and fixed prompt-K `one` | 384/768 and shape-dependent policies changed output hashes and hurt prefill; not adopted. |
 | PDL and KDA | Retain supported BF16 PDL and wide KDA decode | PDL-off showed no clear gain; narrow KDA lost roughly 1.3–2% decode. |
-| Collectives / allocation | Retain split prefill reduction, NCCL cuMem flags off | Gather lost 6.5–6.8% prefill; ring and cuMem variants showed no compelling benefit. cuMem flags select allocation mechanisms, not extra VRAM. |
-| Embedding placement | Optional immutable BF16 mapped-host embedding in a separate image | Saves 1,208 MiB/GPU; roughly 1.11–1.29% prefill cost in screening, decode approximately unchanged. Capacity tradeoff, not default placement or quantization. |
+| Collectives / allocation | Retain split prefill reduction, NCCL cuMem flags off | Gather lost 6.5–6.8% prefill; ring and cuMem variants showed no compelling benefit. |
+| Embedding placement | Optional immutable BF16 mapped-host embedding in a separate image | Saves 1,208 MiB/GPU; roughly 1.11–1.29% prefill cost in screening, decode approximately unchanged. Optional placement; BF16 retained. |
 | Resident CSF32 | Implemented and locally tested in a separate image | All routed scale bytes exact; all 256 quality hashes unchanged. Near-1M retrieval passed in both MTP modes, with 1,693/1,846 MiB sampled free. Matched timing shows a 6.6–7.9% decode and 3.2–4.1% 2K–64K prefill cost; retain it as an explicit capacity tradeoff. |
 
-Screening covered 18 fresh configurations: two controls and 16 candidates, 144 measured timing requests plus 72 excluded warmups. Small percentages in the initial screen are not causal gains; retained overlap received a separate control–candidate–control confirmation. Automatic clocks/temperatures varied and were recorded. The full [tuning results](TUNING-RESULTS.md) preserve rejected candidates and limitations.
+Screening covered 18 fresh configurations: two controls and 16 candidates, 144 measured timing requests plus 72 excluded warmups. Retained overlap received a separate control–candidate–control confirmation. Automatic clocks/temperatures varied and were recorded. The full [tuning results](TUNING-RESULTS.md) preserve rejected candidates and limitations.
 
 ## Source patches versus recipe settings
 
@@ -61,11 +57,11 @@ Local history separates `7e06307` (one-warp adoption), `ba1a549` (isolated sourc
 
 ## Validation and measured limits
 
-- Normal four-piece and experimental mapped-embedding profiles each reproduced all 256 original quality output hashes and grades: GSM8K 120/128; IFEval strict 113/128, loose 114/128. These are bounded task scores, not universal accuracy proof.
+- Normal four-piece and experimental mapped-embedding profiles each reproduced all 256 original quality output hashes and grades: GSM8K 120/128; IFEval strict 113/128, loose 114/128.
 - The combined profile's fixed-history comparison covered 1,439 positions: zero top-one flips and zero target-token log-probability difference. See [probability receipt](results/host-embedding-probabilities-v1.json).
 - Normal-cache tests at 3,648/7,993 input tokens matched cold/warm and MTP/plain output hashes. The final shared 2K–64K refresh matched all 48 original native responses, including warmups and both MTP modes.
-- Mapped embedding plus four-piece overlap passed retrieval at 261,888 and 524,027 actual prompt tokens, MTP on/off, with all three markers and identical outputs. The 512K configuration left 1,547/1,700 MiB sampled free. This does not qualify broad long-context reasoning or multiple active slots.
-- The old device-embedding 1M configuration failed allocation. The new compressed-resident image passed near-1M retrieval at 1,048,311 actual input tokens in both MTP modes. This is a one-slot capacity/retrieval result, not broad long-context accuracy.
+- Mapped embedding plus four-piece overlap passed retrieval at 261,888 and 524,027 actual prompt tokens, MTP on/off, with all three markers and identical outputs. The 512K configuration left 1,547/1,700 MiB sampled free.
+- The old device-embedding 1M configuration failed allocation. The new compressed-resident image passed near-1M retrieval at 1,048,311 actual input tokens in both MTP modes. This used one slot.
 
 Portable evidence: [decode](results/decode-warps-v1.json), [screen](results/served-screen-v1.json), [overlap confirmation](results/overlap4-confirmation-v1.json), [normal quality](results/overlap4-quality-v1.json), [normal cache](results/overlap4-cache-v1.json), [mapped quality](results/host-embedding-quality-v1.json), [capacity](results/host-embedding-capacity-v1.json). The chronological [validation record](../docs/VALIDATION.md) includes actual GPU checks and failures; raw local logs remain outside Git.
 
@@ -78,37 +74,34 @@ At 8K input/256 output, the archived normal-storage matched benchmark reports (t
 | TensorFold | on | 122.27 | 4,499 | 1.822 |
 | TensorFold | off | 69.70 | 4,538 | 1.806 |
 
-The [full report](../docs/PERFORMANCE-CURRENT.md) describes frozen prompts, three measured repeats, cold cache, tokenizer checks and reused unchanged vLLM cohorts. vLLM is faster on this cell; TensorFold has lower TTFT on some tiny prompts. We have not profiled enough to assign the cross-engine gap to a particular kernel or PR omission. Changed vLLM greedy outputs occurred with and without MTP; their cause remains unestablished.
+The [full report](../docs/PERFORMANCE-CURRENT.md) describes frozen prompts, three measured repeats, cold cache, tokenizer checks and reused unchanged vLLM cohorts. vLLM is faster on this cell; TensorFold has lower TTFT on some tiny prompts. A matched cross-engine trace/ablation remains pending. Changed vLLM greedy outputs occurred with and without MTP; their cause remains unestablished.
 
-## Implemented storage extension and next work
+## Resident-scale extension and upstream status
 
 The [compressed-scale plan](COMPRESSED-SCALES-PLAN.md) led to the separate
-[resident-CSF32 patch and recipe](csf-resident/README.md). It uses codes-only packing,
-compact rank-local descriptors and 216 MiB shared expansion scratch per rank while
-preserving expert arithmetic. Actual requested saving is 3.81765 GiB/rank; measured
-physical headroom improves by 3.8047 GiB/rank. Combined with mapped embedding, it
-passed 1,048,311 input tokens with 1,693/1,846 MiB minimum sampled free memory.
+[resident-CSF32 recipe](csf-resident/README.md): compact TP slices/descriptors,
+codes-only storage, 216 MiB shared expansion scratch/rank and unchanged expert
+arithmetic. The [loader receipt](results/csf-resident-loader-v1.json) records exact
+scale reconstruction, allocations and draft-head exclusions. Savings: 3.81765
+GiB/rank requested, 3.8047 GiB/rank physical. [Results](csf-resident/RESULTS.md)
+cover the 640K→768K→896K→near-1M ladder and the measured throughput cost.
 
-All 256 quality hashes and 1,439 sampled target log probabilities are unchanged.
-Same-image legacy→resident→legacy timing matched all 144 response hashes but measured
-a 6.6–7.9% decode cost and 3.2–4.1% 2K–64K prefill cost. It is a capacity option, not
-a faster default. The retained prompt gate/up kernel already uses 254 registers per
-thread on SM120; direct compressed consumption needs resource/profiling evidence
-before fusion can be called an optimization. The full upstream GPU suite's inherited
-resource-record failures and original HTTP-fixture failures remain in the receipts.
+Normal storage defaults remain legacy; resident mode is a one-slot TP2 capacity
+option. The retained gate/up kernel uses 254 registers/thread, so direct compressed
+consumption needs resource and timing analysis. Hybrid A4 prefill in the pinned
+vLLM source is a separate arithmetic policy; its controlled ablation remains
+pending. [Precision notes](../docs/PRECISION-AND-QUALITY.md).
 
-Questions for eventual maintainer coordination: preferred descriptor/owner boundary; scratch lifetime across native stream modes; supported TP slicing envelope; whether storage separation should land independently; required platforms and performance gates. These are topics for a later authorized upstream discussion, not requests already sent.
+Read-only metadata on 2026-10-24 reported PR #1050 open, unmerged and not mergeable:
+head `9b23b6a2e7ff226ca61934189c4cd57bf2933980`, main
+`bd264368ae7382672faef6cc99c2add8b24c5ec0`.
+[Metadata receipt](results/pr1050-status-20261024.json). Refresh before rebasing;
+our qualified tree remains the v1.1.3 merge. No upstream changes or comments were
+made; this brief lives in the hfyeomans recipe repository.
 
-Read-only GitHub metadata checked on 2026-10-24 still reports PR #1050 open, unmerged and not mergeable, with head `9b23b6a2e7ff226ca61934189c4cd57bf2933980` against main `bd264368ae7382672faef6cc99c2add8b24c5ec0`. This matches our pinned PR head; it does not replace our qualified v1.1.3 merge tree. [Metadata receipt](results/pr1050-status-20261024.json). Refresh the status before a future rebase. No upstream comment, issue, branch change, PR update, merge or release was performed; this write-up is maintained in the hfyeomans recipe repository only.
-
-## Resident-scale implementation record
-
-The [separate recipe](csf-resident/README.md) adds compact TP slices, typed GPU descriptors, shared expansion scratch, codes-only consumers and native contract tests. It extends the credited PR integration and the earlier mapped-embedding/tuning patch. The [loader receipt](results/csf-resident-loader-v1.json) records actual payload allocations, exact scale reconstruction and explicit draft-head exclusions. The original planning estimates above are preserved for comparison. Normal defaults remain legacy storage; this is an opt-in one-slot TP2 experiment.
-
-A pinned vLLM source audit also found hybrid A4 prefill enabled by the supplied flags. That is a separate arithmetic choice from TensorFold's W4A16 expert path; see [precision notes](../docs/PRECISION-AND-QUALITY.md). No timing ablation attributes the full cross-engine gap to this policy.
-
-The [resident-scale results](csf-resident/RESULTS.md) record the implemented patch, measured 3.80 GiB/rank headroom gain at 512K, exact quality comparisons and completed 640K→768K→896K→near-1M prompt ladder. The 1M pool has only 157 MiB above the 1.5 GiB target on the limiting GPU; scope remains explicit.
-
+Future maintainer coordination should cover descriptor ownership, scratch
+lifetimes, supported TP slices, separate storage/consumer patches, platforms and
+performance gates.
 
 ## Follow-up qualification and profiling (2026-10-24)
 
@@ -116,16 +109,13 @@ The separate serving profiles now keep embeddings in VRAM through 512K and map
 them only for 1M. Actual 512K cold retrieval passed in both MTP modes, with
 4,235/4,388 MiB free through retrieval and 4,177/4,330 MiB whole-run minima after
 the extra probability diagnostic. All 256 short-quality outputs and 1,439
-probabilities matched the earlier native reference. This is not broad 512K accuracy.
+probabilities matched the earlier native reference.
 
 [Complete native prefill traces](../docs/PREFILL-INVESTIGATION-V2.md) show routed
 experts at about 27% of chunk wall time, alongside substantial projection and
-attention costs. These results support targeted kernel/attention investigation,
-not a claim that removing a GB10-associated setting or adding A4 alone solves the
-whole gap. The diagnostic launcher changes stderr routing only; no native kernel
+attention costs. These results prioritize targeted kernel/attention investigation. The diagnostic launcher changes stderr routing only; no native kernel
 or precision change was made in this phase. The short vLLM comparison shows no
 convincing quality advantage for the slower native configuration.
-
 
 The subsequent [initial long-context accuracy screen](../docs/LONG-CONTEXT-ACCURACY-V2.md)
 completed 22 core near-1M cases (two fixed samples per task): 21 fully correct,
@@ -138,13 +128,9 @@ corrected cohort. A prompt-wrapper bug in the initial attempt was corrected and
 its invalid scores excluded. The user reduced the larger plan by fixed sample
 index; completed valid evidence was reused without selecting by score.
 
-This adds bounded accuracy evidence for the RTX 1M host-embedding/resident-scale
-profile, with the same 1,693/1,846 MiB sampled free floor measurements. It is not
-full release qualification, a statistical quality advantage or a matched
-vLLM long-context result. The inherited CUDA resource-record findings remain as
-previously documented; this phase changed recipe/evaluation tooling, not native
-kernel arithmetic. No upstream posting has been made.
-
+The 1M profile retained 1,693/1,846 MiB sampled free. Matched vLLM long-context
+comparison remains pending, along with the inherited CUDA resource-record issues.
+This phase changed recipe/evaluation tooling only.
 
 ## Current contribution boundary and next candidates
 
@@ -158,8 +144,7 @@ and earlier results remain reproducible independently.
 Latest isolated resident-scale/GPU-embedding controls measured approximately
 4,442/4,481 prefill tok/s and 1.845/7.313 s TTFT at 8K/32K, with request-level MTP
 decoding off and a 128K allocation. The archived vLLM-off cells measured
-10,422/10,387 tok/s and 0.791/3.166 s. These are separate recorded cohorts, not a
-new simultaneous test or a four-client result. Expert work accounts for about
+10,422/10,387 tok/s and 0.791/3.166 s. These are separate recorded cohorts with one client. Expert work accounts for about
 27% of the traced native chunk wall time; projections and attention also warrant
 investigation. Instrumented timings are excluded from performance controls.
 
@@ -167,14 +152,11 @@ The full native GPU0 suite passed 146 numerical kernels and caught 33 planted
 controls but exited 1 on 949 inherited incomplete/stale resource records, reproduced
 on the parent on both cards. All 14 new launch records passed. The full numerical
 suite did not reach GPU1; targeted new operators and loader checks covered both
-cards. These results must accompany any proposed patch instead of claiming a
-clean full-suite pass. [Detailed limits](csf-resident/RESULTS.md).
+cards. Include these unresolved failures with any proposed patch. [Detailed limits](csf-resident/RESULTS.md).
 
 Potential upstream contributions should stay separable: RTX tuning evidence for
 existing controls; optional embedding ownership/placement; resident-scale storage,
-consumer contracts and tests. Four-slot support is a subsequent implementation and
-qualification task, not part of the completed one-slot result. Proposed concurrency
+consumer contracts and tests. Four-slot implementation and qualification remain pending. Proposed concurrency
 settings and memory/isolation/quality/performance gates are in
-[FOUR-STREAMS.md](serving/FOUR-STREAMS.md). New fusion, A4 arithmetic, wider split-K
-or cross-platform defaults need their own evidence; none are established by these
-measurements. No new inference or kernel work was run for this documentation update.
+[FOUR-STREAMS.md](serving/FOUR-STREAMS.md). Fusion, A4 arithmetic, wider split-K and cross-platform defaults need separate
+qualification. This update changed documentation only.

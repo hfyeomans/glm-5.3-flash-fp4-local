@@ -31,16 +31,15 @@ Same pinned NVIDIA checkpoint, tokenizer IDs and raw prompts; one request at a t
 | prefill-65536 (65,536) | vllm | on | 167.9 | 10,161 | 6.450 | 6.476 |
 | prefill-65536 (65,536) | vllm | off | 117.7 | 10,341 | 6.338 | 6.361 |
 
-These are per-cell medians, not a universal engine ranking. Short-prompt prefill rates include fixed overhead and should not be extrapolated to long prompts.
+Values are per-cell medians. Short-prompt prefill rates include fixed overhead.
 
 Decode uses each server's post-first-token interval and (output tokens minus one). vLLM timings are isolated deltas of exactly one request in its Prometheus histograms; TensorFold returns runtime timings with the completion. Client TTFT is first nonempty raw text, including local HTTP/queue overhead. Server prefill boundaries are implementation-specific; client TTFT supplies a common external measurement.
 
 Every measured request had zero reused prompt tokens. vLLM retains its qualified MTP3/B12X budget, 1M configured window and eight slots, with one client request active. Its plain run removes only the speculative configuration. Unique cache salts prevent prefix reuse. TensorFold settings: decode warps=1, configured context=131,072 tokens, slots=1, FP8 KV, reserve=native default, zero retained prompt-cache budget and overlap pieces=4.
 
-Some repeated vLLM greedy outputs differ despite the fixed seed; distinct text counts are retained in the JSON. The timing samples are valid fixed-input/fixed-output-length measurements, not a claim of bit-deterministic generation or an accuracy score. TensorFold token-hash consistency is reported separately. The 256-token cap is intentional for throughput. The earlier quality suite remains the accuracy reference.
+Some repeated vLLM greedy outputs differ despite the fixed seed; distinct text counts are retained in the JSON. The 256-token cap is intentional for throughput. TensorFold token-hash consistency and task quality are reported separately.
 
 Raw manifests, requests, SSE frames, counter snapshots and responses are retained under `logs/tuning/`. No clocks, power limits, checkpoint values or shared caches were changed.
-
 
 ## Separate compressed-residency capacity experiment
 
@@ -54,9 +53,7 @@ normal-image and vLLM table above remains its own unchanged cohort comparison.
 
 The [pinned vLLM source audit](../tensorfold/results/vllm-prefill-policy-audit-v1.json)
 found hybrid A4 prefill enabled by the supplied flags. TensorFold's expert path here
-remains W4A16. This is a plausible contributor to the prefill gap, not a measured
-causal attribution of the whole cross-engine difference.
-
+remains W4A16. A controlled activation-precision ablation remains pending.
 
 ## GPU embeddings and native prefill trace
 
@@ -65,5 +62,4 @@ GPU embeddings at about 4,442/4,481 prefill tok/s and 1.845/7.313 s TTFT for 8K/
 with request-level MTP decoding off. Two controls agree within 0.05%. Complete
 per-rank traces identify substantial expert, projection and attention costs;
 experts alone are about 27% of traced chunk wall time. Instrumented timings are
-kept separate and all output hashes matched. These observations do not attribute
-the entire cross-engine gap to one kernel or establish a quality advantage.
+kept separate; all output hashes matched.

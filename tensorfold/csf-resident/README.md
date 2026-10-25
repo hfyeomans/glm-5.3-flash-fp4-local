@@ -6,9 +6,8 @@ experiment directory retain their historical placement to reproduce archived
 measurements.
 
 This isolated TensorFold patch retains the NVIDIA checkpoint's compressed block
-scales on the GPUs. It is a memory optimization with an expansion cost, not a new
-quantization method. The normal TensorFold recipe and vLLM image remain unchanged.
-The engine is TensorFold, not TensorFlow. See [measured results](RESULTS.md) for qualification status.
+scales on the GPUs, saving memory at an expansion cost. The normal TensorFold
+and vLLM images remain unchanged. See [measured results](RESULTS.md).
 
 ## Pins and scope
 
@@ -22,7 +21,6 @@ is needed for the existing local snapshot. Model mounts are read-only.
 Qualification targets two SM120 RTX PRO 6000 Blackwell Max-Q cards, TP2, one serving
 slot, no external draft model or vision, native MTP unchanged. CUDA resource records
 were compiled for SM80/86/89/120/121, but only SM120 hardware is being tested.
-This does not establish a universal replacement for GB10/DGX tuning.
 
 ## Storage and lifetime
 
@@ -42,8 +40,7 @@ BF16 activations, FP32 accumulation, calibration values and compute/reduction or
 are preserved. This is W4A16, with exact storage reconstruction rather than A4.
 
 The actual loader ledger requests about **3.81765 GiB less per rank**, including
-216 MiB scratch, alignment and descriptors. That figure is not an allocator-peak
-measurement or proof that a 1M request succeeds.
+216 MiB scratch, alignment and descriptors.
 
 ## Reproduce
 
@@ -70,8 +67,8 @@ absent and the two GPUs available):
 ```
 
 Profiles include matched legacy/separate/resident performance controls, cache tests,
-and 512K/640K/768K/896K/1M capacity stages. Configuration is not validation: advance
-only after output checks and measured free memory meet the 1.5 GiB target.
+and 512K/640K/768K/896K/1M capacity stages. Advance after output checks pass and
+measured free memory meets the 1.5 GiB target.
 
 ## Evidence and failure record
 
@@ -93,7 +90,6 @@ unrelated H3 asset. The callback/fixture were corrected without relaxing numeric
 gates; the full suite was rebuilt with complete CUDA assets. Raw logs remain under
 `logs/csf-resident-v1/`, outside Git. No upstream publication has been made.
 
-
 ## Patch ownership and further optimization
 
 | Files in the pinned native tree | Change |
@@ -111,7 +107,6 @@ end-to-end qualification. The current implementation deliberately measures the
 simpler reusable-scratch design first. No A4 arithmetic, new split-K reduction order,
 GB10 clock policy or DGX transport assumption is introduced by this storage patch.
 
-
 Once the 512K rung passes with measured headroom, the one-slot 1M profile can allocate
 its final pool once and then test progressively longer requests:
 
@@ -123,13 +118,10 @@ its final pool once and then test progressively longer requests:
   --context-stage-timeout 7200 --output logs/csf-resident-v1/capacity-ladder-v1
 ```
 
-This tests four prompt lengths in an already allocated 1M pool; it does not claim
-four different allocation configurations. The harness checks all sampled free-memory
-values after smoke and each rung, including startup peaks, and stops before the next
-rung if either card misses the floor. Sampling is once per second, not a guarantee
-against shorter transient peaks. Each rung checks three markers, server token counts,
-cold cache, finish reason and MTP/plain output identity.
-
+This tests four prompt lengths in one 1M pool. The harness samples memory once per
+second through startup, smoke and each rung, stopping below 1,536 MiB on either
+card. Each rung checks three markers, token counts, cold cache, finish reason and
+MTP/plain output identity.
 
 For matched performance, use identical cases on returning legacy controls. The
 cancellation fixture runs after timing and is extracted from the pinned image's
@@ -150,23 +142,17 @@ cancellation smoke allowance; this is not the HIP-specific half-second target.
 Further loader work can remove the current temporary legacy packing and duplicate
 CPU scale materialization used for validation. That requires preserving malformed-
 input checks and the full real-checkpoint byte audit. The present implementation
-optimizes GPU residency; it does not claim optimal startup time. Direct scale
+targets GPU residency. Direct scale
 consumption, expansion/consumer profiling and any A4 prefill path remain separate
 work requiring their own correctness, resource and served-performance evidence.
-
 
 The compiled SM120 separate gate/up prompt kernel already uses 254 registers per
 thread at the retained tile width; the expansion kernel uses 40. See
 `resources-layout.json` and `resources-csf32.json`. An in-kernel decoder therefore
-needs an explicit register/spill and occupancy study: eliminating a launch or scratch
-traffic does not by itself prove a speedup.
+needs register/spill, occupancy and end-to-end timing measurements.
 
-
-The native reserve setting alone is not a physical-memory guarantee because its
-first sequence is allocated before stream admission. Use the measured-headroom
-ladder gate above for capacity qualification; the demonstrated 1M margin applies
-to these available GPUs and settings, not additional GPU workloads or retained cache.
-
+The first sequence is allocated before reserve admission. Use the measured
+headroom gate above and repeat it if GPU workloads or retained-cache budgets change.
 
 The output paths above name recorded attempts. Choose an unused output directory for
 fresh measurements; existing attempts are preserved, and incompatible resume

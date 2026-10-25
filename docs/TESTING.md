@@ -15,14 +15,14 @@ Use this order for GPU validation. Preserve every failure and change one setting
 ./bench.sh --concurrency 8 --requests 8 --max-tokens 256 --output logs/bench-c8.json
 ```
 
-The client reports aggregate end-to-end completion tokens/second, median TTFT and request latency. These rates include prompt processing and network time; completion-token usage includes reasoning tokens, and TTFT measures the first visible content. It requires server token usage, retains every sample and fails the run on a request failure. One warmup is excluded. These are synthetic measurements with related prompts and possible prefix reuse; they are not cold-prefill or isolated decode benchmarks.
+The client reports aggregate end-to-end completion tokens/second, median TTFT and request latency. These rates include prompt processing and network time; completion-token usage includes reasoning tokens, and TTFT measures the first visible content. It requires server token usage, retains every sample and fails the run on a request failure. One warmup is excluded. Related prompts may reuse prefixes.
 
-6. Test long prompts progressively: approximately 8K, 32K, 128K, then larger only after successful admission and complete responses. Count prompt tokens with the running server's tokenizer or response usage; character counts do not establish token length. Insert fresh retrieval facts and verify the actual answer. Save prompts, usage, response, TTFT and admission failures.
-7. Send the same long conversation prefix twice, then append a turn. Compare fresh and resumed answers, prompt accounting and latency. Repeat after other requests displace the cache. GPU prefix caching does not imply persistence across restart.
-8. If vision is required, add local test images and verify answers and token use independently. Text-only API checks do not qualify images.
+6. Test long prompts progressively: approximately 8K, 32K, 128K, then larger only after successful admission and complete responses. Count prompt tokens with the running server's tokenizer or response usage. Insert fresh retrieval facts and verify the actual answer. Save prompts, usage, response, TTFT and admission failures.
+7. Send the same long conversation prefix twice, then append a turn. Compare fresh and resumed answers, prompt accounting and latency. Repeat after other requests displace the cache. Repeat after restart to check cache lifetime.
+8. If vision is required, add local test images and verify answers and token use independently.
 9. Stop and restart the recipe; rerun acceptance. Check JIT cache reuse and unchanged model/image identities. Establish an acceptable repeated-run range before trying TensorFold.
 
-For an engine comparison, preserve the same checkpoint files, prompts, sampler settings, thinking mode, token budgets and tool schemas. Record differences in precision, context, cache budgets and speculation. Greedy output differences across engines need investigation; byte identity is not assumed. Single-host PCIe RTX results cannot be inferred from two-host GB10 measurements.
+For an engine comparison, preserve the same checkpoint files, prompts, sampler settings, thinking mode, token budgets and tool schemas. Record differences in precision, context, cache budgets and speculation. Investigate changed greedy outputs on the tested hardware.
 
 `./scripts/check.sh` is the independent CPU-only repository check. It checks local cache selection, missing shards, escaped symlinks, literal configuration handling, safe container ownership, refusal to launch on busy GPUs and the HTTP client against a local server. It never loads the model.
 

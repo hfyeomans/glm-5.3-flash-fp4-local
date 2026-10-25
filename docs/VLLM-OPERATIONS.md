@@ -1,12 +1,13 @@
 # Detailed vLLM operations and provenance
 
-A repeatable service recipe for **`nvidia/GLM-5.3-Flash-FP4-Local`** on **two 96 GB NVIDIA RTX PRO 6000 Blackwell GPUs**. The first course uses the model card's supported Local Inference Lab vLLM image, B12X kernels and MTP3. [A separate native TensorFold recipe](../tensorfold/README.md) integrates pinned PR #1050 for this checkpoint; its local qualification is recorded independently from the measured vLLM baseline.
+Detailed reference for the pinned NVIDIA checkpoint, vLLM launch and operational
+checks on two RTX PRO 6000 Blackwell GPUs. Use the root [quick start](../README.md)
+for normal startup. [Validation](VALIDATION.md) records loading and acceptance
+results; [performance](PERFORMANCE-CURRENT.md) and [quality](QUALITY-BASELINE.md)
+use separate protocols. Native experiments are in [TensorFold](../tensorfold/README.md)
+and its [tuning recipe](../tensorfold/tuning/README.md).
 
-The kitchen rule: weigh the ingredients, check the station, then fire the service. Every launch records its checkpoint identity, image ID, settings and results. The measured acceptance checks, loading results and bounded concurrency sample are recorded in [the validation record](../docs/VALIDATION.md).
-
-The matched [MTP on/off performance report](../docs/PERFORMANCE-CURRENT.md) separates decode speed, prefill and client TTFT. The [quality benchmark](../docs/QUALITY-BASELINE.md) measures answer accuracy separately. Local SM120 experiments have their own [pinned tuning recipe](../tensorfold/tuning/README.md).
-
-## The ingredients
+## Fixed configuration
 
 | Ingredient | Fixed starting point |
 | --- | --- |
@@ -36,7 +37,7 @@ sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29
 
 The default image reference includes both the release tag and this digest. The compressed scale format needs the specialized image; replacing it with an arbitrary upstream vLLM image is not a supported substitution. [Sources and deliberate choices](../docs/PROVENANCE.md).
 
-## Mise en place
+## Requirements and model cache
 
 Use Linux x86_64 with working NVIDIA drivers, Docker, NVIDIA Container Toolkit, Bash, Python 3.10+, `flock` and ordinary GNU utilities. The service smoke/performance clients use only the standard library; the optional quality benchmark installs its own isolated client environment. ShellCheck is needed for the repository checks.
 
@@ -61,9 +62,9 @@ This is the standard Hub layout for the namespace `nvidia/`; a second literal `n
 
 The recipe's **`HF_CACHE_ROOT`** defaults to `/models_engrams/huggingface`. It derives host `HF_HOME` and `HF_HUB_CACHE` from that setting so an older login-shell cache setting cannot send it back to `/data`. The container sees the Hub cache at `/root/.cache/huggingface/hub`, mounted read-only. Relative blob links stay intact. Kernels and compilation caches go into the separate Docker volume `glm53-fp4-runtime-10152026`.
 
-**`HF_TOKEN` is a credential, not a directory.** Serving these local files does not need it. The launcher runs with `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`; it does not forward a token or download replacement weights. Reserve disk space for the image and JIT caches on Docker's filesystem; use `docker system df` and `df -h` before pulling. A 60 GiB planning allowance is a starting budget, not a measured image size.
+Offline serving needs no `HF_TOKEN`. The launcher runs with `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`; it does not forward a token or download replacement weights. Reserve disk space for the image and JIT caches on Docker's filesystem; use `docker system df` and `df -h` before pulling. Allow roughly 60 GiB initially; measure actual image/cache use.
 
-## The first service
+## Start the service
 
 From this repository:
 
@@ -94,9 +95,9 @@ First startup can spend minutes loading and compiling; the default readiness dea
 
 The explicit `vllm serve` command is passed through the image's normal entrypoint, retaining its CUDA/NCCL bootstrap. **`PRESET=glm53-tp2` is deliberately omitted:** that preset selects a different Local Inference Lab checkpoint and may start an additional LMCache RAM tier. This recipe selects the NVIDIA snapshot directly and uses GPU prefix caching.
 
-## Taste before serving
+## API acceptance
 
-A successful `./start.sh` proves `/health` responds, `/v1/models` lists the expected model, and a short greedy completion returns `ready`. It does not establish long-context capacity or model quality.
+`./start.sh` checks `/health`, model identity and a short greedy `ready` completion.
 
 `./smoke.sh --suite` additionally requires:
 
@@ -121,9 +122,9 @@ curl -fsS http://127.0.0.1:8000/v1/chat/completions \
   }'
 ```
 
-The short checks select `reasoning_effort=low` with a 512-token budget. This image's template always opens a reasoning block; do not send `enable_thinking=false`, which disables parser separation without removing the template's reasoning prefix. Normal requests retain the server's `max` reasoning default. The default bind is `0.0.0.0`, matching the model card, and the API has no key by default. Set `HOST=127.0.0.1` for local-only clients. Export `VLLM_API_KEY` before startup to enable API authentication; the supplied Python clients read it without printing it.
+Short checks use `reasoning_effort=low` and 512 output tokens; normal requests default to `max`. Avoid `enable_thinking=false`: the template still opens reasoning, causing parser mismatch. The default bind is `0.0.0.0`, matching the model card, and the API has no key by default. Set `HOST=127.0.0.1` for local-only clients. Export `VLLM_API_KEY` before startup to enable API authentication; the supplied Python clients read it without printing it.
 
-## During service
+## Lifecycle
 
 ```bash
 ./status.sh                 # container state plus API/model readiness
@@ -150,7 +151,7 @@ server.log             captured on startup failure; stop/restart also save logs
 
 `prepare.sh` records `.state/image.json`. If the tag later points at a different local image ID, `start.sh` refuses silent drift; review the image and rerun `prepare.sh` to update the lock. Normal launch resolves the image to its immutable local ID and does not pull it automatically.
 
-## Change one ingredient at a time
+## Configuration changes
 
 `.env` is literal `KEY=value` data. No shell expansion, quote removal or shell execution occurs. Use `.env.example` as the template; exported recipe settings take precedence. Keep credentials in the exported environment.
 
@@ -160,7 +161,7 @@ For another shared cache, set `HF_CACHE_ROOT=/absolute/path`. For a complete sta
 
 If graph capture runs out of memory, preserve the failure logs first. Check other GPU users before experimenting with fewer sequences or a smaller graph configuration. Reducing `GPU_MEMORY_UTILIZATION` alone does **not** reduce the explicitly allocated `KV_CACHE_MEMORY_BYTES`.
 
-## Kitchen checks and next course
+## Repository checks
 
 ```bash
 ./scripts/check.sh         # shell syntax, ShellCheck, Python syntax and CPU-only tests

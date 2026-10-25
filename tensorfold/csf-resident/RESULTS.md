@@ -16,7 +16,7 @@ Normal recipes remain available. This is an opt-in capacity experiment.
 - All 256 frozen quality output hashes and grades match the original native baseline:
   GSM8K 120/128; IFEval strict 113/128, loose 114/128. No truncated/unclosed outputs.
 - Fixed-history probabilities: 1,439 positions, zero top-one flips and zero target
-  log-probability changes. This is sampled evidence, not universal equivalence.
+  log-probability changes.
 - Cold/warm cache checks at 3,648/7,993 tokens passed with identical MTP/plain hashes.
 
 See portable [loader](../results/csf-resident-loader-v1.json),
@@ -37,7 +37,7 @@ The observed gain at 512K is **3,896 MiB (3.8047 GiB) per card**. The loader req
 accounts for the distinction, without assigning it to a particular component.
 Doubling the configured window consumed another 3,750 MiB/rank, matching the earlier
 allocation-slope estimate. The limiting card has only **157 MiB above the 1.5 GiB
-free-memory target**. These are one-second samples, not proof against shorter peaks.
+free-memory target**, measured at one-second intervals.
 
 One slot, no retained prompt cache, immutable BF16 mapped embedding, FP8 KV and
 native MTP loaded throughout. Rank-0 native counters reported a device allocation
@@ -58,9 +58,7 @@ The 512K profile passed at 261,888 and 524,027 actual prompt tokens. Then one fi
 Each request reserved room for up to 128 output tokens, retrieved three markers near
 10/50/90% of the input, reported the expected token count and zero cached tokens,
 finished normally, and matched its paired output hash. The final prompt had
-**1,048,311 input tokens**; this demonstrates near-ceiling inference in the 1M window.
-The intermediate prompt lengths ran in that same final pool, not separate pool sizes.
-This does not qualify broad long-context reasoning or multiple active slots.
+**1,048,311 input tokens**. All intermediate lengths used that same 1M pool and one slot.
 
 Receipts: [512K](../results/csf-resident-capacity-512k-v1.json),
 [1M ladder](../results/csf-resident-capacity-1m-v1.json).
@@ -93,7 +91,7 @@ Observed decode cost: **6.6–7.9%** across cells. At 2K–64K, prefill throughp
 was **3.2–4.1%**; tiny-prompt TTFT increased roughly 8–10 ms. Returning legacy decode
 medians differed by at most 0.25%; 8K–64K prefill controls differed by less than 0.7%.
 Short/2K timing is noisier. Automatic clocks, temperatures and power were sampled;
-no settings were changed. This is a capacity tradeoff, **not a faster default**.
+no settings were changed.
 
 At 128K, sampled free memory was 4,361/4,514 MiB in each legacy control and
 8,257/8,410 MiB with resident scales: the same 3,896 MiB/card gain measured at 512K.
@@ -109,8 +107,7 @@ and adapted hashes retained. Corrected cancellation checks passed separately on 
 events per layout, observed-running disconnects, and identical follow-up text/token
 hashes. Resident release was 0.027 s in all three observed trials; legacy ranged
 0.017–0.356 s. The longest follow-up request was 0.165/0.626 s respectively. These
-small samples establish recovery within the declared bounds, not a recovery-speed
-ranking. No timing data was overwritten or rerun, and no server policy changed.
+trials met the declared bounds. Timing data and server policy were unchanged.
 [Corrected cancellation receipt](../results/csf-resident-cancellation-v2.json).
 
 ## Qualification limits and preserved failures
@@ -123,7 +120,6 @@ reproduced the same 949 findings on both cards, with identical live failures. Al
 14 newly registered launches passed; none of the 64 live mismatches exceeded the
 observed device launch limits. The GPU1 full numerical suite was not reached after
 GPU0's nonzero exit; new operator and loader gates separately passed on both cards.
-This is not a clean full upstream release qualification.
 
 [The contract receipt](../results/csf-resident-contract-v1.json) and
 [chronological validation](../../docs/VALIDATION.md) preserve the failed test-harness,
@@ -132,12 +128,10 @@ broad long-context accuracy, exhaustive concurrency and direct KV/state-array au
 remain outside the demonstrated scope. The storage patch does not change KV/state
 arithmetic. No upstream publication has been made.
 
-
 [Final evidence index](../results/csf-resident-qualification-v1.json) pins all portable
 receipts and the code-check log. At handoff both model services are stopped, the
 vLLM container is preserved, and no GPU compute jobs remain. GPU free memory returned
 to 97,187/97,340 MiB; the unrelated existing graphics allocation was preserved.
-
 
 ## Later serving and accuracy qualification
 
@@ -146,6 +140,5 @@ The [serving profiles](../serving/README.md) now measure 512K with GPU embedding
 and reserve host embedding for the explicit 1M profile. The
 [initial longer-task screen](../../docs/LONG-CONTEXT-ACCURACY-V2.md) completed
 21/22 core near-1M cases with full credit; one aggregation answer matched two of
-three words. This extends the earlier capacity-only evidence without claiming
-exhaustive long-context quality. Native image/arithmetic and historical receipts
+three words. Native image/arithmetic and historical receipts
 above are unchanged.

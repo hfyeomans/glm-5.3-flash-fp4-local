@@ -1,13 +1,11 @@
 # Local SM120 tuning experiments
 
-These experiments target the two RTX PRO 6000 Blackwell Max-Q cards. The regular
-TensorFold recipe still selects its separately qualified image. This directory
-contains an explicitly pinned experimental image, not an upstream release.
+SM120 experiments for two RTX PRO 6000 Blackwell Max-Q cards, using a separate
+pinned image.
 See [CONTRACT.md](CONTRACT.md) for scope and acceptance criteria.
 
 The checkpoint remains NVIDIA `GLM-5.3-Flash-FP4-Local`, revision
-`76348ddb2be2e35e39ecfc00e75dc07703f4f3d5`, with CSF32 compressed scales. We do
-not replace it with ZAI, EXL3 or a separately quantized checkpoint.
+`76348ddb2be2e35e39ecfc00e75dc07703f4f3d5`, with CSF32 compressed scales.
 
 ## Build and select
 
@@ -75,37 +73,30 @@ existing container, serializes sweeps, skips completed matching attempts and
 preserves interrupted attempts for inspection. It finishes with TensorFold
 stopped; the operator restores vLLM after subsequent qualification.
 
-Two measured repeats per screen cell identify candidates, not reliable small
-speedups. Qualify promising settings with bracketed controls, the full shared
-MTP on/off benchmark, fixed-history diagnostics, the unchanged 256-item quality
-suite, and relevant cache/capacity checks. Do not promote a setting on the basis
-of an isolated kernel benchmark or one short successful completion.
+Screen with two measured repeats per cell. Confirm candidates with bracketed
+controls, the shared MTP on/off benchmark, fixed histories, the 256-item quality
+suite and relevant cache/capacity checks.
 
 ## Numerical probes
 
 `prefill_tiles.cu` instantiates the pinned upstream NVFP4 expert template at
 multiple widths. It checks output identity, repeatability, guards and unchanged
 inputs on both GPUs, including valid partial tiles and non-finite fixtures.
-Its speed measurements are synthetic and do not replace served-model timing.
+Time the full model separately.
 
 `glm_mm_bench_fp64.zig` is a separate probe, adapted from the pinned upstream
 matrix benchmark. It computes independent FP64 references for the first three
 rows of each matrix shape, checking every output column of those sampled rows.
-For larger batches this is sampled coverage, not full-matrix FP64 validation.
-It retains the upstream whole-output cross-product check and timing. Probe
-compilation does not replace the served image's native binary.
+It retains the upstream whole-output cross-product check and timing, using a
+separate probe binary.
 
 The 192/384/768 policies all passed the sampled bound, but each larger target
-increased the maximum absolute error in six of 56 shape/row cells. This rules
-out describing them as bit-preserving or universally numerically improved.
-The quantized reference gate covers its own upstream fixtures; it is not a
-claim that every draft projection and actual model activation has been checked.
+increased maximum absolute error in six of 56 shape/row cells.
 
 `teacher_force.py` freezes up to the first 128 output tokens from eight GSM8K and eight
 IFEval baseline examples, then requests top-two prompt log probabilities at
 those identical histories. It reports target-log-probability differences and
-top-one changes with the baseline margin. This is a sampled numerical diagnostic,
-not an accuracy score or proof of full-model equivalence.
+top-one changes with the baseline margin.
 
 ## Candidate qualification stages
 
@@ -133,8 +124,7 @@ history file from `teacher_force.py prepare`.
 The optional quality stage runs the unchanged 256-item client and saves a
 sidecar benchmark manifest with the full tuning settings. The optional teacher
 stage compares fixed histories separately from throughput; its extra head passes
-are outside the timed benchmark. These are requested checks, not a declaration
-that a profile has passed; consult the validation record for actual outcomes.
+are outside the timed benchmark. Outcomes are in the validation record.
 
 `host-embed-overlap4-512k` is the capacity experiment: 524,288 configured context, one slot,
 zero retained cache, 1.5 GiB reserve and mapped embedding. To exercise long prompts
@@ -146,9 +136,7 @@ with draft/plain retrieval without rerunning the short throughput screen:
   --context-targets 261888 524032 --output logs/tuning/my-host-capacity
 ```
 
-Keep the full logs and GPU telemetry. Configured capacity alone is not successful
-inference at that length or a broad long-context quality score. This option does
-not create enough memory for 1M by itself.
+Keep full logs and GPU telemetry. This embedding-only profile still falls short of 1M.
 
 For the normal 8K profile, retained-cache acceptance is a separate stage:
 
