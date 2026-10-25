@@ -1,0 +1,931 @@
+{
+  "protocol": "vllm-independent-context-v1",
+  "date_utc": "2026-10-25",
+  "model": "nvidia/GLM-5.3-Flash-FP4-Local",
+  "revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+  "image_id": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+  "command": [
+    "vllm",
+    "serve",
+    "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+    "--host",
+    "0.0.0.0",
+    "--port",
+    "8000",
+    "--served-model-name",
+    "glm-5.3-flash-fp4-local",
+    "--additional-config",
+    "{\"glm53_kda_decode_backend\":\"auto\",\"kda_prefill_backend\":\"b12x\"}",
+    "--attention-backend",
+    "B12X",
+    "--block-size",
+    "256",
+    "--chat-template",
+    "/opt/lil/runtime/templates/glm53-flash.jinja",
+    "--compilation-config",
+    "{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+    "--cp-kv-cache-interleave-size",
+    "4",
+    "--cudagraph-capture-sizes",
+    "1",
+    "2",
+    "4",
+    "8",
+    "12",
+    "16",
+    "20",
+    "24",
+    "28",
+    "32",
+    "--dcp-kv-cache-interleave-size",
+    "4",
+    "--decode-context-parallel-size",
+    "2",
+    "--default-chat-template-kwargs",
+    "{\"reasoning_effort\":\"max\",\"clear_thinking\":false}",
+    "--dtype",
+    "bfloat16",
+    "--enable-auto-tool-choice",
+    "--enable-chunked-prefill",
+    "--no-enable-flashinfer-autotune",
+    "--enable-prefix-caching",
+    "--enable-prompt-tokens-details",
+    "--gpu-memory-utilization",
+    "0.985",
+    "--kv-cache-dtype",
+    "fp8",
+    "--kv-cache-memory-bytes",
+    "7650410496",
+    "--linear-backend",
+    "b12x",
+    "--load-format",
+    "safetensors",
+    "--mamba-cache-mode",
+    "align",
+    "--max-cudagraph-capture-size",
+    "32",
+    "--max-model-len",
+    "1048576",
+    "--max-num-batched-tokens",
+    "4096",
+    "--max-num-seqs",
+    "8",
+    "--max-parallel-prefills",
+    "1",
+    "--moe-backend",
+    "b12x",
+    "--override-generation-config",
+    "{\"temperature\":1.0,\"top_p\":0.95}",
+    "--prefill-compute-share",
+    "0.4",
+    "--prefill-schedule-interval",
+    "1",
+    "--quantization",
+    "modelopt_mixed",
+    "--reasoning-parser",
+    "glm45",
+    "--recurrent-checkpoint-policy",
+    "request_boundaries",
+    "--speculative-config",
+    "{\"method\":\"mtp\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"standard\",\"moe_backend\":\"b12x\",\"attention_backend\":\"B12X\",\"num_speculative_tokens\":3}",
+    "--tensor-parallel-size",
+    "2",
+    "--tool-call-parser",
+    "glm47"
+  ],
+  "tokenizer_sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+  "template_sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+  "startup_kv_capacity_tokens": 1844162,
+  "startup_full_1m_concurrency": 1.76,
+  "startup_log": "logs/concurrent-context-v1/server-through-single-control.log",
+  "startup_log_sha256": "7c4caa9c4784e513bf9fa43210cfac61381b24bc213d4254a631bc0003b9bb7e",
+  "findings": [
+    "Two independent full-window requests completed through queueing; sustained 1M pair had zero token-stream decode overlap, peak one running/one waiting and zero preemptions.",
+    "Both sustained clients used 1032192 input and 16384 generated tokens, verified against returned prompt IDs and streamed output IDs.",
+    "The smaller sustained 8K pair showed 7.20 seconds of token-stream decode overlap without preemption.",
+    "Full-input admission defaults on in this pinned image; live waiting reason was capacity. Allocation and scheduler flags were unchanged.",
+    "Sampled free memory settled at 903/1056 MiB; the capacity screen used a 512 MiB stop floor after preserving the failed 1536 MiB initial probe.",
+    "One short ordinary smoke response retrieved its markers but repeated reasoning text and hit the output cap; all ordinary long retrieval cells passed."
+  ],
+  "admission_source_audit": {
+    "image": "ghcr.io/local-inference-lab/vllm:release-10152026",
+    "method": "Read-only inspection of the running pinned image and live /metrics; no scheduler setting changes",
+    "default_scheduler_reserve_full_isl": true,
+    "launch_has_reserve_full_isl_override": false,
+    "source_behavior": "Waiting admission passes full_sequence_must_fit to allocate_slots; required full-input blocks exceeding free blocks returns None and leaves the request queued.",
+    "observed_during_first_sustained_decode": {
+      "waiting_reason_capacity": 1,
+      "waiting_reason_deferred": 0
+    },
+    "files": [
+      {
+        "container_path": "vllm/config/scheduler.py",
+        "local_path": "logs/concurrent-context-v1/admission-source/0-scheduler.py",
+        "sha256": "905c2df6a6814ec8b70c5f5c19394841a6f37c11103c46e0445c4ca0ba0b0afd"
+      },
+      {
+        "container_path": "vllm/v1/core/sched/scheduler.py",
+        "local_path": "logs/concurrent-context-v1/admission-source/1-scheduler.py",
+        "sha256": "0ca4fd9825c9176ef548b671d63ac76ca16ded2ed3c41fb62dd3a49c2b916006"
+      },
+      {
+        "container_path": "vllm/v1/core/kv_cache_manager.py",
+        "local_path": "logs/concurrent-context-v1/admission-source/2-kv_cache_manager.py",
+        "sha256": "b87296e9f1276d0e6da154334a6ae518de5a762d85f1ab45932ebaea6a13a6ba"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "smoke-8k-x2",
+      "window_budget_per_client": 8192,
+      "clients": 2,
+      "max_output_tokens": 256,
+      "sustained": false,
+      "min_free_mib_stop_floor": 1536,
+      "manifest": "logs/concurrent-context-v1/smoke-8k-x2/manifest.json",
+      "manifest_sha256": "a368ef67d00a1e4ed717e292b25ba9b0defcb1b0735959a1a1b1b6e588efaef4",
+      "report_sha256": "f3e1a8b58867b5befccce7cbbce8c79f28d99af9cdf9abe4f0e4f72d41ce5187",
+      "telemetry_sha256": "e42615dca5994ad80f963021d4dd6978a03e348f501bff4f4ba77aae88b7163a",
+      "source": "logs/concurrent-context-v1/client-sources/7f715b19746ee9f66995580f0fe610eb83fba6a6c3c7050a603c8013754bc544.py",
+      "source_sha256": "7f715b19746ee9f66995580f0fe610eb83fba6a6c3c7050a603c8013754bc544",
+      "input_token_hashes": [
+        "aa39cfbbff8b2845cad5a71e053f1b34bf9d92f7b81e38629414dd7c36b55a41",
+        "712947f76c4a66fda122fb58bb3129ad8a8d3d9ae536c34c2cfeb47a1bb37efa"
+      ],
+      "posthoc_marker_isolation_passed": null,
+      "result": {
+        "requests_completed_cleanly": false,
+        "retrieval_all_passed": false,
+        "preemptions_delta": 0.0,
+        "successes_delta": 0.0,
+        "isolated_success_count": false,
+        "all_client_decode_interval_overlap_seconds": 0.0,
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 0.0,
+        "peak_waiting": 0.0,
+        "min_free_mib": {
+          "0": 1191,
+          "1": 1344
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 7936,
+            "usage": null,
+            "ttft_seconds": 0.0,
+            "elapsed_seconds": 0.0,
+            "finish_reason": null,
+            "retrieved": [
+              false,
+              false,
+              false
+            ],
+            "text_sha256": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+            "error": "Client aborted without final response"
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 7936,
+            "usage": null,
+            "ttft_seconds": 0.0,
+            "elapsed_seconds": 0.0,
+            "finish_reason": null,
+            "retrieved": [
+              false,
+              false,
+              false
+            ],
+            "text_sha256": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+            "error": "Client aborted without final response"
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": "ValueError: Sampled physical GPU headroom below floor",
+        "passed": false
+      }
+    },
+    {
+      "name": "smoke-8k-x2-capacity",
+      "window_budget_per_client": 8192,
+      "clients": 2,
+      "max_output_tokens": 256,
+      "sustained": false,
+      "min_free_mib_stop_floor": 512,
+      "manifest": "logs/concurrent-context-v1/smoke-8k-x2-capacity/manifest.json",
+      "manifest_sha256": "1091dffed4c01dd7a4a62b14859d93dd9dda40e03fa8baa44f1e7e0ea9335628",
+      "report_sha256": "a3432edd435bbe83c67c7a9a1d544877b419eace3e5c3e8bfe799710b537ff4f",
+      "telemetry_sha256": "f4149930a64858727eb7ffb18be8ec885fe11eb1de073ebd0d5623a8d27e1c55",
+      "source": "logs/concurrent-context-v1/client-sources/7f715b19746ee9f66995580f0fe610eb83fba6a6c3c7050a603c8013754bc544.py",
+      "source_sha256": "7f715b19746ee9f66995580f0fe610eb83fba6a6c3c7050a603c8013754bc544",
+      "input_token_hashes": [
+        "1ced6583f8138d84ae8af114db650105e87a42b97bf50b70d99675f556cde963",
+        "b197a614252768b78dbe4d92dca84a9040b25f56729a50b0bfca58c7f2a7edad"
+      ],
+      "posthoc_marker_isolation_passed": true,
+      "result": {
+        "requests_completed_cleanly": false,
+        "retrieval_all_passed": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 2.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 0.22677638503955677,
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 2.0,
+        "peak_waiting": 0.0,
+        "min_free_mib": {
+          "0": 903,
+          "1": 1056
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 7936,
+            "usage": {
+              "prompt_tokens": 7936,
+              "total_tokens": 7986,
+              "completion_tokens": 50,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 2.302428526978474,
+            "elapsed_seconds": 2.570282439002767,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "a9b52cdeab7e19916377c41025c13d5dcda83af0d10bb609553a818a99deed51",
+            "error": null
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 7936,
+            "usage": {
+              "prompt_tokens": 7936,
+              "total_tokens": 8192,
+              "completion_tokens": 256,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 0.8216181159950793,
+            "elapsed_seconds": 2.935508127033245,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "b277d24a138c41087ebd664136fe0350e0bf6fc1fcaef22baf6a72b9e8c01297",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "passed": false
+      }
+    },
+    {
+      "name": "retrieval-1m-x1",
+      "window_budget_per_client": 1048576,
+      "clients": 1,
+      "max_output_tokens": 256,
+      "sustained": false,
+      "min_free_mib_stop_floor": 512,
+      "manifest": "logs/concurrent-context-v1/retrieval-1m-x1/manifest.json",
+      "manifest_sha256": "2e2d427d0bd5dc084122f47b02c3f411f276fba83baa7dc2ab282a6dbe29613e",
+      "report_sha256": "9f7b560620b844b4ac81287a51e4f88e79ce405c5c1086b547376c7a40356cae",
+      "telemetry_sha256": "28bd9f130fd0b85b57db375235e8b78755a18b784dfc0f48da09b725b4810dbc",
+      "source": "logs/concurrent-context-v1/client-sources/3ad50eb65796bf994ddc841e7dd344082ed9a70bb212fdb2c9e3baf1cd4e4fa0.py",
+      "source_sha256": "3ad50eb65796bf994ddc841e7dd344082ed9a70bb212fdb2c9e3baf1cd4e4fa0",
+      "input_token_hashes": [
+        "217d496a5b9e2640f930a2dae9718703c778302ddf1e5aea35e07373bdd8d482"
+      ],
+      "posthoc_marker_isolation_passed": true,
+      "result": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 1.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 0.035168985021300614,
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 1.0,
+        "peak_waiting": 0.0,
+        "peak_kv_cache_usage_fraction": 0.5479204339963833,
+        "prompt_tokens_processed_delta": 1048320.0,
+        "min_free_mib": {
+          "0": 903,
+          "1": 1056
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 1048320,
+            "usage": {
+              "prompt_tokens": 1048320,
+              "total_tokens": 1048367,
+              "completion_tokens": 47,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 145.74336755200056,
+            "elapsed_seconds": 145.7786919500213,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "8f3d23bbc01862a233080940333bea1868a5f5a323a4169ddb41ad71b5eb61f8",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      }
+    },
+    {
+      "name": "retrieval-262k-x2",
+      "window_budget_per_client": 262144,
+      "clients": 2,
+      "max_output_tokens": 256,
+      "sustained": false,
+      "min_free_mib_stop_floor": 512,
+      "manifest": "logs/concurrent-context-v1/retrieval-262k-x2/manifest.json",
+      "manifest_sha256": "2a64c935d45d69c4cf31cb5b33100cb85a77e9594680d915a4f49875df4f03b8",
+      "report_sha256": "4797e2a2d87f27cb6f7be71a27f137d5286e6f608efe1aeb8c3c7fa13e292fcd",
+      "telemetry_sha256": "addb93cc5035bb1ad349fafffc6cce9dca63a61255fcfcd4397634056b479048",
+      "source": "logs/concurrent-context-v1/client-sources/edc9f95f484f58a1b6580842dec6aabe540d1bca6d132c657fb685113ee78b8c.py",
+      "source_sha256": "edc9f95f484f58a1b6580842dec6aabe540d1bca6d132c657fb685113ee78b8c",
+      "input_token_hashes": [
+        "d6e26d2d7858ac9080ea5c538184e0e1aab6fa5f5adb6efa88f7173d0806e085",
+        "e4e5cefa613677bd03209b6a95989500dcb7707ec6f6faa95af7a3e77c44a62c"
+      ],
+      "posthoc_marker_isolation_passed": true,
+      "result": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 2.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 0.0,
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 2.0,
+        "peak_waiting": 1.0,
+        "peak_kv_cache_usage_fraction": 0.26582278481012656,
+        "prompt_tokens_processed_delta": 523776.0,
+        "min_free_mib": {
+          "0": 903,
+          "1": 1056
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 261888,
+            "usage": {
+              "prompt_tokens": 261888,
+              "total_tokens": 261932,
+              "completion_tokens": 44,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 31.771245429001283,
+            "elapsed_seconds": 32.274166518996935,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "32449bb879a5aaa08194a6558c646ac3c09495c05e42016419edce689ddbaa96",
+            "error": null
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 261888,
+            "usage": {
+              "prompt_tokens": 261888,
+              "total_tokens": 261935,
+              "completion_tokens": 47,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 64.01525381498504,
+            "elapsed_seconds": 64.13948484195862,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "3351e951b90187c6faa161668b809823dc399d64c889717320c124882f8ea7d1",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      }
+    },
+    {
+      "name": "retrieval-512k-x2",
+      "window_budget_per_client": 524288,
+      "clients": 2,
+      "max_output_tokens": 256,
+      "sustained": false,
+      "min_free_mib_stop_floor": 512,
+      "manifest": "logs/concurrent-context-v1/retrieval-512k-x2/manifest.json",
+      "manifest_sha256": "4791d994b18e2bb67743a4f1a9089bbf181e4a56db21478bbf24b61a3a1de9ff",
+      "report_sha256": "85284929b92b7ae6d29bd713373e697985cb0ff6e0c504fef901bff4c351571a",
+      "telemetry_sha256": "d220a50b9d8f84b939884cd26b9c2c42108a0c5ee4fa5c8f8e6ef0219b5c1266",
+      "source": "logs/concurrent-context-v1/client-sources/edc9f95f484f58a1b6580842dec6aabe540d1bca6d132c657fb685113ee78b8c.py",
+      "source_sha256": "edc9f95f484f58a1b6580842dec6aabe540d1bca6d132c657fb685113ee78b8c",
+      "input_token_hashes": [
+        "912ef24a54e4c05549ac5b7eb13f6148d44a63ff15f182296278a3ce0cef3ef9",
+        "cf32f87273f752497307286d3c8d7c246834560b4594d39fc875867c2b041900"
+      ],
+      "posthoc_marker_isolation_passed": true,
+      "result": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 2.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 0.0,
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 2.0,
+        "peak_waiting": 1.0,
+        "peak_kv_cache_usage_fraction": 0.3833634719710669,
+        "prompt_tokens_processed_delta": 1048064.0,
+        "min_free_mib": {
+          "0": 903,
+          "1": 1056
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 524032,
+            "usage": {
+              "prompt_tokens": 524032,
+              "total_tokens": 524076,
+              "completion_tokens": 44,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 68.38850170205114,
+            "elapsed_seconds": 68.86211618204834,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "52258dacd8c4ef24a317bac82277869b2652a2c7d975edfa0add1755c3a0440c",
+            "error": null
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 524032,
+            "usage": {
+              "prompt_tokens": 524032,
+              "total_tokens": 524079,
+              "completion_tokens": 47,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 136.65290299401386,
+            "elapsed_seconds": 136.74710227403557,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "d10f15d0aed4001362341b3671662c49c5fec2bc71385be8558eab453dbc29c7",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      }
+    },
+    {
+      "name": "retrieval-768k-x2",
+      "window_budget_per_client": 786432,
+      "clients": 2,
+      "max_output_tokens": 256,
+      "sustained": false,
+      "min_free_mib_stop_floor": 512,
+      "manifest": "logs/concurrent-context-v1/retrieval-768k-x2/manifest.json",
+      "manifest_sha256": "4d8a9ce1a8e44e0fc3bf43e54b66e0bf088f20da4181110b76d68b2ac56043c9",
+      "report_sha256": "66251ea37596ec523bedfd2e89916694491262bd7f0369271c2b6e04eb6a39e4",
+      "telemetry_sha256": "f4207ac2c019b3a78b728a1350f78480264ea3e0e1caef023b0321c65b47d0cc",
+      "source": "logs/concurrent-context-v1/client-sources/edc9f95f484f58a1b6580842dec6aabe540d1bca6d132c657fb685113ee78b8c.py",
+      "source_sha256": "edc9f95f484f58a1b6580842dec6aabe540d1bca6d132c657fb685113ee78b8c",
+      "input_token_hashes": [
+        "11feaa0da3a0cadc4b3406975ac8e9098838e5516403d4342babc20e415cd13b",
+        "67ae14f6eb0bc5b2b1c0907bebcb2caab8d1ef8ac9f7571b61d46675c6a1f59b"
+      ],
+      "posthoc_marker_isolation_passed": true,
+      "result": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 2.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 0.0,
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 2.0,
+        "peak_waiting": 1.0,
+        "peak_kv_cache_usage_fraction": 0.49728752260397835,
+        "prompt_tokens_processed_delta": 1572352.0,
+        "min_free_mib": {
+          "0": 903,
+          "1": 1056
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 786176,
+            "usage": {
+              "prompt_tokens": 786176,
+              "total_tokens": 786220,
+              "completion_tokens": 44,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 106.62300558399875,
+            "elapsed_seconds": 107.06281249201857,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "cf62fd9f360e9334a9d49b5a64883b33d056139836e872e97a0aeed681073e41",
+            "error": null
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 786176,
+            "usage": {
+              "prompt_tokens": 786176,
+              "total_tokens": 786217,
+              "completion_tokens": 41,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 212.6634182849666,
+            "elapsed_seconds": 212.67990591196576,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "e281664bc6ad9a8484cef59ab8d006ca022479fc11cc937917d2c053a4ce95fb",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      }
+    },
+    {
+      "name": "retrieval-1m-x2",
+      "window_budget_per_client": 1048576,
+      "clients": 2,
+      "max_output_tokens": 256,
+      "sustained": false,
+      "min_free_mib_stop_floor": 512,
+      "manifest": "logs/concurrent-context-v1/retrieval-1m-x2/manifest.json",
+      "manifest_sha256": "8236b7bc5ca0783cf5c7b1a7a33867f8c7586f0c77a5200da011fcef120823ca",
+      "report_sha256": "0bc0bcd9f22265f929f3db0032db63be9437bb3392ef4fc5af5c83144576e8e8",
+      "telemetry_sha256": "35d47d0b45ee15b3e7594287b9c88fed980bbfba1dcf72d32c5540f17e93d751",
+      "source": "logs/concurrent-context-v1/client-sources/edc9f95f484f58a1b6580842dec6aabe540d1bca6d132c657fb685113ee78b8c.py",
+      "source_sha256": "edc9f95f484f58a1b6580842dec6aabe540d1bca6d132c657fb685113ee78b8c",
+      "input_token_hashes": [
+        "483af3948b99c27fa8f32ca7f81a7c9b5115333f83fbb944114f3e6279396560",
+        "0fbf2eb874c2304a1514bab71facce158738cefebb4853a17c093afc6e1b1b95"
+      ],
+      "posthoc_marker_isolation_passed": true,
+      "result": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 2.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 0.0,
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 1.0,
+        "peak_waiting": 1.0,
+        "peak_kv_cache_usage_fraction": 0.5497287522603979,
+        "prompt_tokens_processed_delta": 2096640.0,
+        "min_free_mib": {
+          "0": 903,
+          "1": 1056
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 1048320,
+            "usage": {
+              "prompt_tokens": 1048320,
+              "total_tokens": 1048370,
+              "completion_tokens": 50,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 147.28821841301396,
+            "elapsed_seconds": 147.34384074504487,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "874fc1c9650d92903b2cd323edf85e3d8ca6f9d8fdeab4bc0a90f991bbb4e094",
+            "error": null
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 1048320,
+            "usage": {
+              "prompt_tokens": 1048320,
+              "total_tokens": 1048364,
+              "completion_tokens": 44,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 293.95299275097204,
+            "elapsed_seconds": 293.96978132997174,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "df050d913c3ee0363982a7764b820b10b3b7e5e9631a743ae34b00dd61801894",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      }
+    },
+    {
+      "name": "sustained-8k-x2",
+      "window_budget_per_client": 8192,
+      "clients": 2,
+      "max_output_tokens": 1024,
+      "sustained": true,
+      "min_free_mib_stop_floor": 512,
+      "manifest": "logs/concurrent-context-v1/sustained-8k-x2/manifest.json",
+      "manifest_sha256": "f5f84bafcd441e0b54669787769d3fc71155b70911cec424d87202dae28cad60",
+      "report_sha256": "4d931b9054df3795f006b9ff07752c5c36833397fa35208a76355fca69f8a087",
+      "telemetry_sha256": "b8769e39f81d9a3f027cd8512493ffd94b651ef0c7e725060e58591495fbe0ee",
+      "source": "logs/concurrent-context-v1/sustained-8k-x2/client-source.py",
+      "source_sha256": "ed784abbff4487528fa2a290e034137002157dbd4b04c2026b1d1148e9ffd295",
+      "input_token_hashes": [
+        "01bba659ae6324f27c5dc48887b2b8a9a2fe96968c49306e16c735fc8659659c",
+        "b200ec22563408415141ee7bf5c44467c920fc886408dbd77e2cecd971faf27d"
+      ],
+      "posthoc_marker_isolation_passed": true,
+      "result": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": false,
+        "request_isolation_passed": true,
+        "server_idle_after": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 2.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 7.199944915017113,
+        "decode_interval_basis": "token_ids",
+        "overlapping_decode_without_preemption": true,
+        "peak_running": 2.0,
+        "peak_waiting": 0.0,
+        "peak_kv_cache_usage_fraction": 0.11030741410488243,
+        "prompt_tokens_processed_delta": 14336.0,
+        "min_free_mib": {
+          "0": 903,
+          "1": 1056
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 7168,
+            "usage": {
+              "prompt_tokens": 7168,
+              "total_tokens": 8192,
+              "completion_tokens": 1024,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 0.7519574380130507,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 1024,
+            "elapsed_seconds": 9.379466927028261,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "876ebbe0966276ff2f08dade0a1d6dc4a31d9dc9e43a6706b5ac04e8962ed261",
+            "error": null
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 7168,
+            "usage": {
+              "prompt_tokens": 7168,
+              "total_tokens": 8192,
+              "completion_tokens": 1024,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 2.1794358430197462,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 1024,
+            "elapsed_seconds": 9.615310752007645,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "90d11728ee4820771a90c6a78af62e754d57c648b302f70fcf02abbbe9a987aa",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      }
+    },
+    {
+      "name": "sustained-1m-x2",
+      "window_budget_per_client": 1048576,
+      "clients": 2,
+      "max_output_tokens": 16384,
+      "sustained": true,
+      "min_free_mib_stop_floor": 512,
+      "manifest": "logs/concurrent-context-v1/sustained-1m-x2/manifest.json",
+      "manifest_sha256": "a4ef55792e8e7a14a14e9147baad426c89fc5a6bc93e0ffc559381e04ab55c3b",
+      "report_sha256": "ec0ae8dfc5d9c8560a54b170f4e3e6da64d78b71af2c2c8b839168d1ea3da9ea",
+      "telemetry_sha256": "2a7e8c5ddb3a52246249151677ddc3751c005aa65f15896681fd15c1b2d59176",
+      "source": "logs/concurrent-context-v1/sustained-1m-x2/client-source.py",
+      "source_sha256": "ed784abbff4487528fa2a290e034137002157dbd4b04c2026b1d1148e9ffd295",
+      "input_token_hashes": [
+        "1fb49ac897952829ec9ccf341662f72ed59d27b753be65a5727fc887568dc0a9",
+        "399375c2b2bb2ba32e538da8cac19d3905683e8bb1628060bbb4e53f41365022"
+      ],
+      "posthoc_marker_isolation_passed": true,
+      "result": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": false,
+        "request_isolation_passed": true,
+        "server_idle_after": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 2.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 0.0,
+        "decode_interval_basis": "token_ids",
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 1.0,
+        "peak_waiting": 1.0,
+        "peak_kv_cache_usage_fraction": 0.5443037974683544,
+        "prompt_tokens_processed_delta": 2064384.0,
+        "min_free_mib": {
+          "0": 903,
+          "1": 1056
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 1032192,
+            "usage": {
+              "prompt_tokens": 1032192,
+              "total_tokens": 1048576,
+              "completion_tokens": 16384,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 363.6957988310023,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 16384,
+            "elapsed_seconds": 438.5856445750105,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "eb47a68a6da7dce0fade440d68158c0ab632a8471ce931fb84f22b40136fc532",
+            "error": null
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 1032192,
+            "usage": {
+              "prompt_tokens": 1032192,
+              "total_tokens": 1048576,
+              "completion_tokens": 16384,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 144.02281096001389,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 16384,
+            "elapsed_seconds": 219.16150324599585,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "4d99766ebee6b255cf80782f2b9d84b663aabe52f8bf0f112fbca113cf904024",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      }
+    }
+  ],
+  "scope": {
+    "hardware": "2 x NVIDIA RTX PRO 6000 Blackwell Max-Q, SM120, GPUs 0 and 1",
+    "generation": "greedy, native MTP3; independent cache salts; no cached prompt tokens in completed cells",
+    "samples": "One request per client per cell; three synthetic retrieval markers per prompt. Sustained continuation is capacity-only.",
+    "telemetry": "About one sample per second; decode intervals use visible text in ordinary cells and token IDs in sustained cells.",
+    "changes": "New client/evidence tools only; no vLLM/TensorFold kernels, model, memory budgets, GPU clocks/power or caches changed."
+  },
+  "post_test": {
+    "api_suite": "readiness, text, JSON, tools and streaming passed",
+    "artifact_directory": "logs/concurrent-context-v1/post-suite",
+    "final_state": {
+      "checked_utc": "2026-10-25T00:32:32.703632+00:00",
+      "container": "glm53-fp4-tp2",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-10-25T00:01:08.658274683Z",
+        "FinishedAt": "2026-10-25T00:32:32.523641856Z"
+      },
+      "gpus_csv": "index, memory.free [MiB], memory.used [MiB], utilization.gpu [%]\n0, 97187 MiB, 152 MiB, 100 %\n1, 97340 MiB, 2 MiB, 0 %\n",
+      "compute_processes_csv": "pid, process_name, used_gpu_memory [MiB]\n",
+      "note": "Restored initial stopped service state; container, model and runtime caches preserved."
+    },
+    "final_state_sha256": "353263cbce3258dd71055d501a9c096b52eb7eec9f68fb3a817d72b6f53260cf",
+    "server_log": "logs/concurrent-context-v1/server-final.log",
+    "server_log_sha256": "b5800b34caecde3b5fe7d9fd8f713f4dfabf62539f18ab938150a226a71bc10a",
+    "recipe_checks": {
+      "passed": 62,
+      "log": "logs/concurrent-context-v1/check.log",
+      "sha256": "4bac73db8d8b7a1762bfe3af7d634958f8c3f131753b78011dc5268cb60cdaf0"
+    }
+  }
+}

@@ -43,7 +43,7 @@ All runs used the same image, checkpoint, TP2/DCP2/MTP3, 98.5% utilization and f
 | InstantTensor, 256 MiB buffer / eight I/O slots | 27.30 s | Same I/O-setup memory failure during MTP load |
 | Final safetensors restart | 24.75 s | 0.31 s; startup smoke, API suite, default reasoning and concurrency test passed |
 
-The file cache was warm. Safetensors loaded fastest and remains the default; `LOAD_FORMAT=instanttensor` remains available for investigation.
+The file cache was warm. Only safetensors completed loading and remains the default; `LOAD_FORMAT=instanttensor` remains available for investigation.
 
 The first safetensors server started correctly, but the original smoke client sent `enable_thinking=false`. The image's template always appends `<think>`; disabling parser separation put reasoning and the final answer together in `content`. The client now uses supported `reasoning_effort=low`, keeps parser separation enabled and allows 512 output tokens. The server's default remains `max`.
 
@@ -817,3 +817,35 @@ publication change.
 
 No GPU tests, service restarts, new performance/accuracy measurements, engine
 changes or model revisions were made in this documentation phase.
+
+
+## vLLM independent-client context screen (2026-10-25)
+
+The original MTP-on baseline was started from its stopped state, retaining 1M
+per-request context, eight slots, 98.5% utilization and the fixed FP8 KV budget.
+The single near-1M control and all four two-client retrieval cells (262K, 512K,
+768K, near-1M) passed: nine requests, all markers retrieved, zero cached prompt
+tokens, normal stops and no preemption. Ordinary pairs had no decode overlap.
+
+The sustained small control showed 7.20 s of token-stream overlap. For the
+sustained full-size pair, each client processed 1,032,192 input + 16,384 output
+tokens with exact input-ID/output-count verification and isolated markers. Both
+completed, at 219.16/438.59 s, but ran sequentially: one running, one waiting,
+zero decode overlap and zero preemptions. Pinned source inspection confirmed
+full-input cache admission enabled by default; live waiting reason was capacity.
+Startup reported 1,844,162 shared KV tokens, below the pair's combined input.
+
+The initial 1,536 MiB headroom probe stopped before completion. After workspace
+growth, free memory settled at 903/1,056 MiB. Further capacity cells used a
+recorded 512 MiB stop floor without changing server allocation. One ordinary 8K
+probe retrieved its markers but repeated reasoning and truncated; it remains a
+formatting failure. Exact earlier client sources were restored and verified
+against their recorded hashes; raw reports were preserved unchanged.
+
+Post-test readiness and all four API checks passed. The owned vLLM container was
+stopped cleanly, exit 0, preserving its model/runtime caches. No compute processes
+remained and free memory returned to 97,187/97,340 MiB. CPU checks passed 62 tests.
+
+[Results](VLLM-CONCURRENCY.md) · [Protocol](../benchmarks/CONCURRENCY.md) ·
+[Portable receipt](../benchmarks/results/vllm-concurrent-context-v1.json).
+The TensorFold engine and serving profiles were unchanged.

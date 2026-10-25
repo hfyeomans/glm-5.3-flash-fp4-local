@@ -43,3 +43,8 @@ and `./smoke.sh --suite`.
 The original TensorFold baseline used three overlap pieces. Set
 `TF_GLM_OVERLAP_PIECES=3` explicitly to reproduce it; the current qualified recipe
 default is four. Exact settings and image IDs accompany every result.
+
+
+For multiple active clients, use the [concurrent-context harness](CONCURRENCY.md).
+[Measured results](../docs/VLLM-CONCURRENCY.md) cover independent requests through
+two full 1M windows, including sustained generation and scheduler telemetry.

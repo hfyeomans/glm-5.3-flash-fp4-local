@@ -80,8 +80,8 @@ The recipe allows one parallel prefill (`--max-parallel-prefills 1`).
 Four-full-context capacity testing is pending.
 
 The MTP-on baseline reported **1,844,162 shared KV tokens**, or 1.76 full 1M
-windows. Two independent full 1M requests exceed that pool. Monitor queueing,
-cache usage and preemption when increasing concurrency. The fixed KV budget is
+windows. [Concurrent testing](docs/VLLM-CONCURRENCY.md) completed two full 1M
+requests through queueing; the smaller sustained control generated concurrently. The fixed KV budget is
 controlled by `KV_CACHE_MEMORY_BYTES`, independently of the memory fraction.
 
 ```bash
