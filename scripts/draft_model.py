@@ -7,18 +7,17 @@ import os
 from pathlib import Path
 import sys
 
+from model import mount_paths, validate_mounted_file
+
 LOCK_PATH = Path(__file__).resolve().parents[1] / 'config/dflash2-lock.json'
-CONTAINER_HUB = Path('/root/.cache/huggingface/hub')
 
 
 def plan_draft(hub, model_dir=None, lock=None):
     lock = lock or json.loads(LOCK_PATH.read_text())
     hub = Path(hub).resolve()
     path = (Path(model_dir) if model_dir else hub / ('models--' + lock['model_id'].replace('/', '--')) / 'snapshots' / lock['revision']).resolve()
-    source, target = (hub, CONTAINER_HUB) if path.is_relative_to(hub) else (path, Path('/draft'))
     return {'model_id': lock['model_id'], 'revision': lock['revision'], 'license': lock['license'],
-            'path': str(path), 'mount_source': str(source), 'mount_target': str(target),
-            'container_path': str(target / path.relative_to(source))}
+            **mount_paths(hub, path, '/draft')}
 
 
 def inspect_draft(hub, model_dir=None, *, verify=False, lock=None):
@@ -29,8 +28,7 @@ def inspect_draft(hub, model_dir=None, *, verify=False, lock=None):
         file = path / name
         if not file.is_file():
             raise ValueError(f'DFlash2 file missing: {file}. Select the pinned local draft with DFLASH2_MODEL_DIR; no automatic download.')
-        if not file.resolve().is_relative_to(source):
-            raise ValueError(f'{file}: symlink escapes draft mount; retain the complete Hub cache.')
+        validate_mounted_file(file, source)
     config = (path / 'config.json').read_bytes()
     if hashlib.sha256(config).hexdigest() != lock['config_sha256']:
         raise ValueError('DFlash2 metadata differs from the pinned revision; original DFlash/other drafts cannot substitute.')

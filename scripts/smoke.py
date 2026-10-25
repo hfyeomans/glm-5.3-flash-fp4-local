@@ -39,26 +39,31 @@ def payload(prompt, max_tokens=512):
             'chat_template_kwargs': {'reasoning_effort': 'low', 'clear_thinking': False}}
 
 
+def require_running_container():
+    name = os.environ.get('CONTAINER_NAME')
+    if name:
+        state = subprocess.run(['docker', 'inspect', '-f', '{{.State.Running}}', name],
+                               text=True, capture_output=True, timeout=10)
+        if state.returncode or state.stdout.strip() != 'true':
+            raise RuntimeError('Serving container is not running; inspect ./logs.sh')
+
+
 def ready(wait=0):
     deadline = time.monotonic() + wait
     heartbeat = time.monotonic()
     while True:
+        require_running_container()
         try:
             with request('/health', timeout=5) as response:
                 if response.status != 200: raise ValueError('Health endpoint is not ready')
             models = call('/v1/models', timeout=5)
             if MODEL not in [m['id'] for m in models.get('data', [])]:
                 raise ValueError(f'API does not list expected model {MODEL}')
+            require_running_container()
             return models
         except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
             if time.monotonic() >= deadline:
                 raise RuntimeError(f'API readiness failed: {exc}') from exc
-            name = os.environ.get('CONTAINER_NAME')
-            if name:
-                state = subprocess.run(['docker', 'inspect', '-f', '{{.State.Running}}', name],
-                                       text=True, capture_output=True, timeout=10)
-                if state.returncode or state.stdout.strip() != 'true':
-                    raise RuntimeError('Serving container exited before readiness; inspect ./logs.sh') from exc
             if time.monotonic() - heartbeat >= 30:
                 print('Waiting for weights, kernel compilation and graph capture...', flush=True)
                 heartbeat = time.monotonic()
@@ -144,7 +149,9 @@ def run_checks(suite=False, output=None):
             if len(tools) != 1 or tools[0]['function']['name'] != 'get_temperature':
                 raise ValueError('Expected one get_temperature tool call')
             args = json.loads(tools[0]['function']['arguments'])
-            if args.get('city', '').lower() != 'paris' or args.get('unit') != 'celsius':
+            if (not isinstance(args, dict) or set(args) != {'city', 'unit'}
+                    or not isinstance(args['city'], str) or args['city'].lower() != 'paris'
+                    or args['unit'] != 'celsius'):
                 raise ValueError('Tool arguments failed validation')
             return r
         check('json', json_check)

@@ -157,6 +157,12 @@ server.log             captured on startup failure; stop/restart also save logs
 
 For another shared cache, set `HF_CACHE_ROOT=/absolute/path`. For a complete standalone checkpoint directory, set `MODEL_DIR=/absolute/path/to/checkpoint`. Do not detach just a snapshot directory from its Hub blobs; the validator rejects links that would escape the container mount. Automatic local-folder discovery also recognizes `nvidia/glm-5.3-flash-fp4-local` and `glm-5.3-flash-fp4-local` under the cache root, but the standard Hub layout is preferred.
 
+Model validation checks each shard's header, indexed tensor names and exact data
+extent. Use relative links within the mounted tree; absolute internal links are
+rejected because the container uses a different path. Receipts retain the requested
+revision; directories without matching snapshot-path evidence are marked
+`local-directory-unverified-revision`.
+
 `config/model-lock.json` pins the NVIDIA config and index hashes. Startup checks metadata identity, required tokenizer files, shard presence, sizes and container-visible links; it does not rehash 165 GiB on every launch. An intentional checkpoint upgrade needs reviewed metadata and its own full revision. `config/b12x.env` holds the supplied kernel/NCCL settings. The default `LOAD_FORMAT=safetensors` passed on this host. Both the original InstantTensor settings and a 256 MiB/eight-slot staging experiment failed while loading MTP; `LOAD_FORMAT=instanttensor` remains available for further investigation. Inference uses the same B12X kernels with either loader. Keep those fixed for the initial baseline.
 
 If graph capture runs out of memory, preserve the failure logs first. Check other GPU users before experimenting with fewer sequences or a smaller graph configuration. Reducing `GPU_MEMORY_UTILIZATION` alone does **not** reduce the explicitly allocated `KV_CACHE_MEMORY_BYTES`.

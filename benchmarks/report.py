@@ -5,6 +5,27 @@ import json
 from pathlib import Path
 
 
+def comparable_settings(manifest):
+    """Permit only the MTP option/value to differ between vLLM on/off runs."""
+    settings = dict(manifest['settings'])
+    if manifest['backend'] != 'vllm':
+        return settings
+    command = list(settings['command'])
+    count = command.count('--speculative-config')
+    if manifest['mtp'] not in ('on', 'off') or count != (manifest['mtp'] == 'on'):
+        raise ValueError('vLLM launch and recorded MTP mode differ')
+    if count:
+        index = command.index('--speculative-config')
+        if index + 1 == len(command):
+            raise ValueError('Missing vLLM speculative configuration')
+        spec = json.loads(command[index + 1])
+        if spec.get('method') != 'mtp':
+            raise ValueError('MTP comparison refuses other drafters')
+        del command[index:index + 2]
+    settings['command'] = command
+    return settings
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('runs', nargs='+', type=Path)
@@ -13,22 +34,31 @@ def main():
     manifests, cells, consistency = [], [], []
     for folder in args.runs:
         manifest = json.loads((folder / 'manifest.json').read_text())
+        if manifest['backend'] not in ('vllm', 'tensorfold') or manifest['mtp'] not in ('on', 'off', 'both'):
+            raise ValueError('Unknown engine or MTP mode')
+        comparable_settings(manifest)
         if manifests:
             for key in ('protocol', 'workloads_sha256', 'model_revision', 'client_sha256'):
                 if manifest[key] != manifests[0][key]:
                     raise ValueError(f'Incomparable {key}')
-            if manifest['image_id'] != manifests[0]['image_id']:
-                raise ValueError('Incomparable image_id')
         manifests.append(manifest)
         summary = json.loads((folder / 'summary.json').read_text())
         rows = [json.loads(line) for line in (folder / 'requests.jsonl').read_text().splitlines()]
+        modes = (True, False) if manifest['mtp'] == 'both' else (manifest['mtp'] == 'on',)
+        expected = {(case, mode) for case in manifest['cases'] for mode in modes}
+        if not expected or {(r['case'], r['mtp']) for r in summary} != expected:
+            raise ValueError('Summary coverage differs from manifest cases/modes')
+        if {(r['case'], r['draft']) for r in rows if not r['warmup']} != expected:
+            raise ValueError('Measured coverage differs from manifest cases/modes')
         for row in summary:
             selected = [r for r in rows if not r['warmup'] and r['case'] == row['case'] and r['draft'] == row['mtp']]
-            if len(selected) != manifest['repeats'] or len(selected) != row['n']:
+            if (len(selected) != manifest['repeats'] or len(selected) != row['n']
+                    or {r['repeat'] for r in selected} != set(range(manifest['repeats']))):
                 raise ValueError('Incomplete measured sample set')
             if any(r['response']['usage']['prompt_tokens'] != row['prompt_tokens'] or
                    r['response']['usage']['completion_tokens'] != 256 or
-                   r['response']['usage'].get('prompt_tokens_details', {}).get('cached_tokens', 0) != 0 for r in selected):
+                   (r['response']['usage'].get('prompt_tokens_details') or {}).get('cached_tokens') != 0 or
+                   r['response'].get('finish_reason') != 'length' for r in selected):
                 raise ValueError('Counts or cold-cache contract differs')
             cells.append(dict(backend=manifest['backend'], run=str(folder), **row))
         if manifest['backend'] == 'tensorfold':
@@ -38,7 +68,14 @@ def main():
                 consistency.append({'run': str(folder), 'case': case, 'mtp_modes': sorted({r['draft'] for r in selected}),
                                     'distinct_native_token_hashes_including_warmups': len(hashes)})
     for backend in ('vllm', 'tensorfold'):
-        seen = {json.dumps(m['settings'], sort_keys=True) for m in manifests if m['backend'] == backend}
+        backend_runs = [m for m in manifests if m['backend'] == backend]
+        if len({m['image_id'] for m in backend_runs}) > 1:
+            raise ValueError(f'Incomparable {backend} image_id')
+        seen = {json.dumps(comparable_settings(m), sort_keys=True) for m in backend_runs}
+        specs = {json.dumps(json.loads(m['settings']['command'][m['settings']['command'].index('--speculative-config') + 1]), sort_keys=True)
+                 for m in backend_runs if backend == 'vllm' and m['mtp'] == 'on'}
+        if len(specs) > 1:
+            raise ValueError('Incomparable vllm MTP configurations across runs')
         if len(seen) > 1:
             raise ValueError(f'Incomparable {backend} launch settings across runs')
     keys = [(x['backend'], x['case'], x['mtp']) for x in cells]

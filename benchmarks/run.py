@@ -148,7 +148,8 @@ def main():
         if env.get('MODEL_PATH') != model['container_path']:
             raise ValueError('TensorFold container does not serve the locked checkpoint path')
     endpoint = urlparse(base)
-    if str(endpoint.port or (443 if endpoint.scheme == 'https' else 80)) != env.get('PORT' if args.backend == 'vllm' else 'TF_PORT'):
+    expected_port = command[command.index('--port') + 1] if args.backend == 'vllm' else env.get('TF_PORT')
+    if str(endpoint.port if endpoint.port is not None else (443 if endpoint.scheme == 'https' else 80)) != expected_port:
         raise ValueError('Benchmark endpoint port does not match the recorded container')
     args.output.mkdir(parents=True, exist_ok=False)
     manifest = {'protocol': workload['protocol'], 'backend': args.backend, 'mtp': args.mtp,

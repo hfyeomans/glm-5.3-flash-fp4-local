@@ -61,7 +61,8 @@ LOG_DIR=$REPO_ROOT/logs
 API_HOST=$HOST
 [[ "$API_HOST" != 0.0.0.0 && "$API_HOST" != :: ]] || API_HOST=127.0.0.1
 [[ "$API_HOST" != *:* ]] || API_HOST=[$API_HOST]
-export BASE_URL=${BASE_URL:-http://$API_HOST:$PORT}
+RECIPE_BASE_URL=http://$API_HOST:$PORT
+export BASE_URL=${BASE_URL:-$RECIPE_BASE_URL}
 validate_config() {
   python3 - <<'PYCFG'
 import os, re
@@ -94,13 +95,25 @@ lock_recipe() {
   exec 9>"$STATE_DIR/lifecycle.lock"
   flock -n 9 || fail 'Another recipe lifecycle operation is running.'
 }
+container_exists() {
+  local error
+  if error=$(docker container inspect "$CONTAINER_NAME" 2>&1 >/dev/null); then
+    return 0
+  fi
+  case "$error" in
+    "Error response from daemon: No such container: $CONTAINER_NAME"|"Error: No such container: $CONTAINER_NAME"|\
+    "Error response from daemon: No such object: $CONTAINER_NAME"|"Error: No such object: $CONTAINER_NAME") return 1 ;;
+    *) fail "Cannot inspect container $CONTAINER_NAME: $error" ;;
+  esac
+}
+
 assert_owned() {
   local owner
   owner=$(docker inspect -f '{{index .Config.Labels "local.glm53.recipe"}}' "$CONTAINER_NAME")
   [[ "$owner" == "$RECIPE_LABEL" ]] || fail "Container $CONTAINER_NAME is not owned by this recipe. Choose another CONTAINER_NAME."
 }
 resolve_model() {
-  MODEL_METADATA=$(python3 "$REPO_ROOT/scripts/model.py") || return
+  MODEL_METADATA=$(python3 "$REPO_ROOT/scripts/model.py" "$@") || return
   MODEL_HOST_PATH=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["path"])' <<< "$MODEL_METADATA")
   MODEL_CONTAINER_PATH=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["container_path"])' <<< "$MODEL_METADATA")
   MODEL_MOUNT_SOURCE=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["mount_source"])' <<< "$MODEL_METADATA")
