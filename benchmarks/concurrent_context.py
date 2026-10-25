@@ -3,6 +3,7 @@
 import argparse
 import gzip
 import hashlib
+import importlib.util
 import json
 import multiprocessing as mp
 import os
@@ -200,10 +201,44 @@ def summarize(rows, samples, before, after, sustained, output_tokens):
             'scope': 'Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.'}
 
 
+def draft_bench():
+    module_spec = importlib.util.spec_from_file_location('draft_bench', ROOT / 'experiments/dflash2/bench.py')
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    return module
+
+
+def validate_mtp_profile(state, base, profile, window, clients):
+    command = state['Config']['Cmd']
+    spec = json.loads(command[command.index('--speculative-config') + 1])
+    if spec.get('method') != 'mtp':
+        raise ValueError('This MTP baseline harness refuses DFlash2/other drafters')
+    settings = {'--max-model-len': '1048576', '--max-num-seqs': '8',
+                '--gpu-memory-utilization': '0.985', '--kv-cache-memory-bytes': '7650410496'}
+    if profile == 'capacity':
+        draft_bench().validate_server(state, 'mtp', base)
+        target = '/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/' + REVISION
+        if not command[2].endswith(target):
+            raise ValueError('Expected pinned NVIDIA target snapshot for MTP capacity profile')
+        if '--host' not in command or command[command.index('--host') + 1] not in ('localhost', '127.0.0.1', '::1'):
+            raise ValueError('MTP capacity profile requires a loopback serving host')
+        expected_spec = {'method': 'mtp', 'draft_sample_method': 'probabilistic',
+                         'rejection_sample_method': 'standard', 'moe_backend': 'b12x',
+                         'attention_backend': 'B12X', 'num_speculative_tokens': 3}
+        if spec != expected_spec:
+            raise ValueError('Expected the recipe MTP3/B12X speculative configuration')
+        settings.update({'--max-model-len': str(window), '--max-num-seqs': str(clients)})
+    for key, expected in settings.items():
+        if key not in command or command[command.index(key) + 1] != expected:
+            raise ValueError('Unexpected ' + profile + ' setting: ' + key)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base-url', default='http://127.0.0.1:8000')
     parser.add_argument('--drafter', choices=('mtp', 'dflash2'), default='mtp')
+    parser.add_argument('--mtp-profile', choices=('baseline', 'capacity'), default='baseline',
+                        help='baseline keeps the historical 1M/eight-slot launch; capacity requires exact window/client launch limits')
     parser.add_argument('--container', default='glm53-fp4-tp2')
     parser.add_argument('--window', type=int, required=True)
     parser.add_argument('--clients', type=int, choices=(1, 2, 4, 8), required=True)
@@ -214,6 +249,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     base = args.base_url.rstrip('/')
+    if args.drafter != 'mtp' and args.mtp_profile != 'baseline':
+        parser.error('--mtp-profile capacity requires --drafter mtp')
     if urlparse(base).hostname not in ('localhost', '127.0.0.1', '::1'):
         parser.error('Local endpoints only')
     if not 8192 <= args.window <= 1048576 or not 1 <= args.output_tokens < args.window // 2:
@@ -229,17 +266,9 @@ def main():
         raise ValueError('Expected pinned checkpoint and MTP-on baseline')
     draft_lock = None
     if args.drafter == 'mtp':
-        if json.loads(command[command.index('--speculative-config') + 1]).get('method') != 'mtp':
-            raise ValueError('This MTP baseline harness refuses DFlash2/other drafters')
-        for key, expected in {'--max-model-len': '1048576', '--max-num-seqs': '8',
-                              '--gpu-memory-utilization': '0.985', '--kv-cache-memory-bytes': '7650410496'}.items():
-            if command[command.index(key) + 1] != expected:
-                raise ValueError('Unexpected baseline setting: ' + key)
+        validate_mtp_profile(state, base, args.mtp_profile, args.window, args.clients)
     else:
-        import importlib.util
-        module_spec = importlib.util.spec_from_file_location('draft_bench', ROOT / 'experiments/dflash2/bench.py')
-        module = importlib.util.module_from_spec(module_spec)
-        module_spec.loader.exec_module(module)
+        module = draft_bench()
         module.validate_server(state, 'dflash2', base)
         draft_lock = module.LOCK
         if int(command[command.index('--max-model-len') + 1]) < args.window:
@@ -266,7 +295,8 @@ def main():
         cases.append((path, {k: v for k, v in case.items() if k != 'request'}))
         print(f'Prepared client {i}: {case["prompt_tokens"]} exact input tokens, {args.output_tokens} output budget', flush=True)
     manifest = {'protocol': 'independent-context-v1', 'image_id': state['Image'], 'command': command,
-        'drafter': args.drafter, 'draft_lock': draft_lock, 'container_id': state['Id'],
+        'drafter': args.drafter, 'mtp_profile': args.mtp_profile if args.drafter == 'mtp' else None,
+        'draft_lock': draft_lock, 'container_id': state['Id'],
         'model_revision': REVISION, 'client_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'tokenizer_sha256': hashlib.sha256((Path(model['path']) / 'tokenizer.json').read_bytes()).hexdigest(),
         'template_sha256': hashlib.sha256((Path(model['path']) / 'chat_template.jinja').read_bytes()).hexdigest(),

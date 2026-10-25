@@ -1,8 +1,8 @@
 # Concurrent long-context vLLM screen
 
 `concurrent_context.py` tests independent active requests against the local vLLM
-service. It checks the pinned NVIDIA checkpoint, MTP-on baseline, 1M context,
-eight slots, GPU fraction 0.985 and 7,650,410,496-byte per-GPU KV budget.
+service. Its default MTP profile requires the historical 1M context/eight-slot
+launch, GPU fraction 0.985 and 7,650,410,496-byte per-GPU KV budget.
 Keep other client traffic off the endpoint during measurement.
 
 ## Run
@@ -34,6 +34,30 @@ MAX_MODEL_LEN=1048576 MAX_NUM_SEQS=8 MTP_ENABLED=1 ./start.sh
 environment. The 512 MiB setting is a **capacity-screen stop floor**. The initial
 probe stopped at the default 1,536 MiB floor; vLLM workspace growth left
 903/1,056 MiB free on this unchanged server budget.
+
+## Matched MTP capacity profiles
+
+For a separately launched MTP service with limits matching the test, opt in with
+`--mtp-profile capacity`. This requires the pinned image and NVIDIA Hub snapshot,
+loopback serving host/endpoint, the recipe's MTP3/B12X configuration, the same
+0.985/7,650,410,496-byte memory budget, and launch limits exactly equal to
+`--window` and `--clients`. The selected profile is recorded in `manifest.json`.
+
+```bash
+DRAFTER=mtp MAX_MODEL_LEN=262144 MAX_NUM_SEQS=4 \
+  CONTAINER_NAME=glm53-fp4-swarm-probe HOST=127.0.0.1 PORT=8002 ./start.sh
+
+.state/quality-venv/bin/python benchmarks/concurrent_context.py \
+  --mtp-profile capacity --container glm53-fp4-swarm-probe \
+  --base-url http://127.0.0.1:8002 --window 262144 --clients 4 \
+  --sustained --output-tokens 16384 --min-free-mib 1024 \
+  --output logs/concurrent-context-v1/my-mtp-262k-x4
+# For the 1M/one-client profile, relaunch with MAX_MODEL_LEN=1048576 MAX_NUM_SEQS=1
+# and use --window 1048576 --clients 1 with a fresh output directory.
+```
+
+DFlash2 capacity runs select `--drafter dflash2`; see its
+[capacity client commands](../experiments/dflash2/README.md#capacity-client).
 
 ## Protocol and results
 
