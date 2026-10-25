@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 import statistics
 
+from receipts import completed_runs
+
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -12,8 +14,8 @@ def main():
     p.add_argument('--output', type=Path, required=True)
     args = p.parse_args()
     runs = []
-    for file in sorted(args.input.glob('*/complete.json')):
-        run = json.loads(file.read_text())
+    completed, _ = completed_runs(args.input)
+    for file, run in completed:
         run['folder'] = file.parent.name
         summary = file.parent / 'bench/summary.json'
         run['measurements'] = json.loads(summary.read_text()) if summary.exists() else []

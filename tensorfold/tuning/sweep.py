@@ -13,6 +13,10 @@ import threading
 import time
 
 from run import ROOT, environment
+from receipts import completed_runs
+
+TELEMETRY_QUERY_TIMEOUT = 30
+TELEMETRY_JOIN_TIMEOUT = TELEMETRY_QUERY_TIMEOUT + 5
 
 
 def sha(path):
@@ -87,8 +91,12 @@ def main():
     if args.cache_check and (not args.skip_benchmark or args.teacher_histories or args.quality):
         p.error('Cache qualification requires --skip-benchmark and no teacher/quality stages')
     args.output.mkdir(parents=True, exist_ok=True)
-    lock = (ROOT / '.state/tuning-sweep.lock').open('w')
-    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with (ROOT / '.state/tuning-sweep.lock').open('w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return execute_sweep(args, profiles)
+
+
+def execute_sweep(args, profiles):
     protocol = {'profiles_sha256': sha(args.profile_file),
                 'client_sha256': sha(ROOT / 'benchmarks/run.py'),
                 'workloads_sha256': sha(ROOT / 'logs/tuning/workloads.json'),
@@ -110,7 +118,8 @@ def main():
             protocol['long_context_samples'] = args.long_context_samples
         if args.long_context_reuse:
             protocol['long_context_reuse_sha256'] = sha(args.long_context_reuse / 'requests.jsonl')
-    had_failure = False
+    previous, comparison_image = completed_runs(args.output, protocol)
+    had_failure = any(run.get('status') != 'pass' for _, run in previous)
     for number, profile in enumerate(args.profiles):
         folder = args.output / f'{number:02}-{profile}'
         done = folder / 'complete.json'
@@ -123,8 +132,14 @@ def main():
             continue
         if folder.exists():
             raise ValueError(f'Incomplete attempt preserved at {folder}; inspect before choosing a new output directory')
-        folder.mkdir()
         env = environment(profile, baseline=args.baseline_image, profiles=profiles)
+        expected_image = subprocess.check_output(
+            ['docker', 'image', 'inspect', '--format', '{{.Id}}', env['TF_IMAGE']],
+            text=True, timeout=30).strip()
+        if not expected_image or (comparison_image is not None and expected_image != comparison_image):
+            raise ValueError('Completed run image differs from the selected image; use a new output directory')
+        comparison_image = expected_image
+        folder.mkdir()
         recipe = [sys.executable, str(ROOT / 'tensorfold/scripts/recipe.py')]
         before = subprocess.check_output(['docker', 'ps', '-a', '--format', '{{.Names}}'], text=True).splitlines()
         if env['TF_CONTAINER'] in before:
@@ -136,7 +151,7 @@ def main():
                 with (folder / 'gpu.csv').open('w') as out:
                     out.write('utc,index,memory_used_MiB,memory_free_MiB,utilization_pct,temperature_C,power_W,sm_clock_MHz,memory_clock_MHz,clock_event_reasons\n')
                     while not stop.is_set():
-                        r = subprocess.run(['nvidia-smi', '--query-gpu=index,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw,clocks.sm,clocks.mem,clocks_event_reasons.active', '--format=csv,noheader,nounits'], capture_output=True, text=True, timeout=30)
+                        r = subprocess.run(['nvidia-smi', '--query-gpu=index,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw,clocks.sm,clocks.mem,clocks_event_reasons.active', '--format=csv,noheader,nounits'], capture_output=True, text=True, timeout=TELEMETRY_QUERY_TIMEOUT)
                         if r.returncode != 0 or not r.stdout.strip():
                             raise RuntimeError(f'nvidia-smi failed: rc={r.returncode} {r.stderr.strip()[:200]}')
                         now = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
@@ -209,6 +224,8 @@ def main():
                         raise ValueError(f'Capacity headroom floor failed: {gate["sampled_min_free_MiB"]}')
                 if stage == 'start':
                     state = json.loads(subprocess.check_output(['docker', 'inspect', env['TF_CONTAINER']], text=True))[0]
+                    if state['Image'] != expected_image:
+                        raise ValueError('Started container image differs from the inspected image')
                     actual = dict(item.split('=', 1) for item in state['Config']['Env'])
                     launch = {'image_id': state['Image'], 'profile': profile, 'protocol': protocol,
                               'settings': {k: v for k, v in actual.items() if k.startswith(('TF_', 'NCCL_')) or k == 'MODEL_PATH'}}
@@ -225,17 +242,35 @@ def main():
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as exc:
             status.update(status='failed', error=str(exc))
         finally:
-            with (folder / 'server.log').open('w') as out:
-                subprocess.run(['docker', 'logs', env['TF_CONTAINER']], stdout=out, stderr=subprocess.STDOUT)
-            with (folder / 'stop.log').open('w') as out:
-                subprocess.run([*recipe, 'stop'], env=env, cwd=ROOT, stdout=out, stderr=subprocess.STDOUT, check=True, timeout=120)
-            stop.set(); thread.join(timeout=10)
-            if telemetry_error and status.get('status') == 'pass':
-                status.update(status='failed', error='GPU telemetry failed: ' + telemetry_error[0])
+            cleanup_errors = []
+            try:
+                for filename, command, timeout in [
+                    ('server.log', ['docker', 'logs', env['TF_CONTAINER']], 30),
+                    ('stop.log', [*recipe, 'stop'], 120),
+                ]:
+                    try:
+                        with (folder / filename).open('w') as out:
+                            subprocess.run(command, env=env, cwd=ROOT, stdout=out,
+                                           stderr=subprocess.STDOUT, check=True, timeout=timeout)
+                    except (OSError, subprocess.SubprocessError) as exc:
+                        cleanup_errors.append(f'{filename}: {exc}')
+            finally:
+                stop.set()
+                thread.join(timeout=TELEMETRY_JOIN_TIMEOUT)
+            telemetry_pending = thread.is_alive()
+            if telemetry_pending:
+                cleanup_errors.append('GPU telemetry did not finish within the cleanup deadline')
+            elif telemetry_error:
+                cleanup_errors.append('GPU telemetry failed: ' + telemetry_error[0])
+            if cleanup_errors:
+                status.update(status='failed', error='; '.join(
+                    ([status['error']] if status.get('error') else []) + cleanup_errors))
         had_failure = had_failure or status['status'] != 'pass'
         status['elapsed_seconds'] = time.time() - started
         done.write_text(json.dumps(status, indent=2) + '\n')
         print(f'END {profile}: {status["status"]} {status["elapsed_seconds"]:.1f}s', flush=True)
+        if telemetry_pending:
+            return 1
     print('Sweep finished; TensorFold stopped. Restore the vLLM recipe when qualification is complete.', flush=True)
     return 1 if had_failure else 0
 

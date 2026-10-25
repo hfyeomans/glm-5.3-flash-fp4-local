@@ -9,6 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('tuning_profiles', ROOT / 'tensorfold/tuning/run.py')
 runner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runner)
+receipt_spec = importlib.util.spec_from_file_location('tuning_receipts', ROOT / 'tensorfold/tuning/receipts.py')
+receipts = importlib.util.module_from_spec(receipt_spec)
+receipt_spec.loader.exec_module(receipts)
 
 
 class ProfileSelectionTests(unittest.TestCase):
@@ -38,7 +41,7 @@ class SweepStatusTests(unittest.TestCase):
         import tempfile
         sweep_spec = importlib.util.spec_from_file_location('csf_sweep', ROOT / 'tensorfold/tuning/sweep.py')
         sweep = importlib.util.module_from_spec(sweep_spec)
-        with patch.dict(sys.modules, {'run': runner}):
+        with patch.dict(sys.modules, {'run': runner, 'receipts': receipts}):
             sweep_spec.loader.exec_module(sweep)
         with tempfile.TemporaryDirectory() as folder:
             base = Path(folder)
@@ -54,10 +57,12 @@ class SweepStatusTests(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0)
 
             with patch.object(sweep, 'ROOT', base), patch.object(sweep, 'sha', return_value='fixed'), \
-                 patch.object(sweep, 'environment', return_value={'TF_CONTAINER': 'owned'}), \
-                 patch.object(sweep.threading, 'Thread'), patch.object(sweep.subprocess, 'check_output', return_value='') as ps, \
+                 patch.object(sweep, 'environment', return_value={'TF_CONTAINER': 'owned', 'TF_IMAGE': 'test:image'}), \
+                 patch.object(sweep.threading, 'Thread') as thread, \
+                 patch.object(sweep.subprocess, 'check_output', side_effect=lambda cmd, **kw: 'sha256:test' if cmd[1] == 'image' else '') as ps, \
                  patch.object(sweep.subprocess, 'run', side_effect=fail_start), patch('sys.argv', argv), \
                  contextlib.redirect_stdout(io.StringIO()):
+                thread.return_value.is_alive.return_value = False
                 self.assertEqual(sweep.main(), 1)
                 receipt = json.loads((output / '00-candidate/complete.json').read_text())
                 self.assertEqual(receipt['status'], 'failed')
@@ -72,7 +77,7 @@ class CapacityHeadroomTests(unittest.TestCase):
         import tempfile
         spec = importlib.util.spec_from_file_location('capacity_sweep', ROOT / 'tensorfold/tuning/sweep.py')
         sweep = importlib.util.module_from_spec(spec)
-        with patch.dict(sys.modules, {'run': runner}):
+        with patch.dict(sys.modules, {'run': runner, 'receipts': receipts}):
             spec.loader.exec_module(sweep)
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'gpu.csv'
@@ -92,7 +97,7 @@ class CancelFixtureTests(unittest.TestCase):
         import types
         spec = importlib.util.spec_from_file_location('cancel_sweep', ROOT / 'tensorfold/tuning/sweep.py')
         sweep = importlib.util.module_from_spec(spec)
-        with patch.dict(sys.modules, {'run': runner}):
+        with patch.dict(sys.modules, {'run': runner, 'receipts': receipts}):
             spec.loader.exec_module(sweep)
         original = ('sock.sendall(b"POST /v1/chat/completions HTTP/1.1\\r\\nHost: x\\r\\nContent-Type: application/json\\r\\nContent-Length: "'
                     ' + str(len(payload)).encode() + b"\\r\\n\\r\\n" + payload)\n')

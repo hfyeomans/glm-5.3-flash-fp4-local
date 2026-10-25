@@ -102,16 +102,51 @@ pub fn run(gpu: Gpu) !void {
             std.debug.print("FP64 target={d} n={d} k={d} rows={d} checked_rows={d} worst_col={d} fraction={e:.9} max_abs={e:.9}\n",
                 .{ cuda.sm120_tuning.splitTarget(), n, k, rows, @min(rows, 3), worst_col, worst, max_abs });
             try check.expect(worst <= 1, "glm-mm-fp64: independent reference bound", .{});
-            var most: f32 = 0;
-            var big: f32 = 0;
-            for (ga, gb) |u, v| {
-                most = @max(most, @abs(u - v));
-                big = @max(big, @abs(u));
-            }
-            try check.expect(most <= big * 1e-3, "glm-mm-bench: {d} x {d} at {d} rows: the products agree", .{ n, k, rows });
+            try check.expect(productsAgree(ga, gb), "glm-mm-bench: {d} x {d} at {d} rows: finite products agree", .{ n, k, rows });
         }
         std.debug.print("RESULT {d} x {d} (rows 1/2/4/8/64/128/512):\n  b16    {d:.3}/{d:.3}/{d:.3}/{d:.3}/{d:.3}/{d:.3}/{d:.3} ms\n  glm_mm {d:.3}/{d:.3}/{d:.3}/{d:.3}/{d:.3}/{d:.3}/{d:.3} ms\n", .{ n, k, ms[0][0], ms[0][1], ms[0][2], ms[0][3], ms[0][4], ms[0][5], ms[0][6], ms[1][0], ms[1][1], ms[1][2], ms[1][3], ms[1][4], ms[1][5], ms[1][6] });
     }
     std.debug.print("RESULT all shapes once (rows 1/2/4/8/64/128/512):\n  b16    {d:.2}/{d:.2}/{d:.2}/{d:.2}/{d:.2}/{d:.2}/{d:.2} ms\n  glm_mm {d:.2}/{d:.2}/{d:.2}/{d:.2}/{d:.2}/{d:.2}/{d:.2} ms\n", .{ total[0][0], total[0][1], total[0][2], total[0][3], total[0][4], total[0][5], total[0][6], total[1][0], total[1][1], total[1][2], total[1][3], total[1][4], total[1][5], total[1][6] });
     check.pass("glm-mm-bench: both products agree on every shape and row count", .{});
+}
+
+// Keep the full-output agreement gate independently testable on a CPU host.
+fn productsAgree(ga: []const f32, gb: []const f32) bool {
+    if (ga.len == 0 or ga.len != gb.len) return false;
+    var most: f32 = 0;
+    var big: f32 = 0;
+    for (ga, gb) |u, v| {
+        if (!std.math.isFinite(u) or !std.math.isFinite(v)) return false;
+        const difference = @abs(u - v);
+        if (!std.math.isFinite(difference)) return false;
+        most = @max(most, difference);
+        big = @max(big, @abs(u));
+    }
+    return most <= big * 1e-3;
+}
+
+test "agreement rejects nonfinite operands at every position" {
+    const finite = [_]f32{ 1, -2, 0, 4 };
+    for ([_]f32{ std.math.inf(f32), -std.math.inf(f32), std.math.nan(f32) }) |bad| {
+        for (0..finite.len) |index| {
+            var corrupt = finite;
+            corrupt[index] = bad;
+            try std.testing.expect(!productsAgree(&corrupt, &finite));
+            try std.testing.expect(!productsAgree(&finite, &corrupt));
+            try std.testing.expect(!productsAgree(&corrupt, &corrupt));
+        }
+    }
+}
+
+test "agreement rejects overflow and finite disagreement" {
+    try std.testing.expect(!productsAgree(&.{std.math.floatMax(f32)}, &.{-std.math.floatMax(f32)}));
+    try std.testing.expect(!productsAgree(&.{1}, &.{2}));
+    try std.testing.expect(!productsAgree(&.{}, &.{}));
+    try std.testing.expect(!productsAgree(&.{1}, &.{ 1, 2 }));
+}
+
+test "agreement accepts finite equal and within-tolerance products" {
+    try std.testing.expect(productsAgree(&.{ 0, -0.0 }, &.{ -0.0, 0 }));
+    try std.testing.expect(productsAgree(&.{ 1, -2, 3 }, &.{ 1, -2, 3 }));
+    try std.testing.expect(productsAgree(&.{ 1, -2 }, &.{ 1.0001, -2.0001 }));
 }
