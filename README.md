@@ -117,7 +117,7 @@ pinned by [the draft lock](config/dflash2-lock.json), under **CC BY-NC-ND 4.0**.
 Our use is non-commercial research/evaluation. MTP uses the target checkpoint's
 built-in head. The NVIDIA target's terms apply in either mode.
 
-Edit the existing root `.env`; keep its container name and port so `restart`
+Edit the existing root `.env`; keep its container name, port and bind address so `restart`
 replaces the current service. Set these common values:
 
 ```dotenv
@@ -127,7 +127,9 @@ GPU_MEMORY_UTILIZATION=0.985
 KV_CACHE_MEMORY_BYTES=7650410496
 ```
 
-Then choose one tested profile; context includes **input plus output**:
+Copy only `MAX_MODEL_LEN`, `MAX_NUM_SEQS` and `DFLASH2_KV_CACHE_DTYPE` from the
+chosen profile below. The linked files also contain separate probe-service settings.
+Context includes **input plus output**:
 
 | Profile | `MAX_MODEL_LEN` | `MAX_NUM_SEQS` | `DFLASH2_KV_CACHE_DTYPE` | Minimum free MiB, GPU 0 / 1 |
 |---|---:|---:|---|---:|

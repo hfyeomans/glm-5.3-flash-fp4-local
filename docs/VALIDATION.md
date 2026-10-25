@@ -928,3 +928,16 @@ guard; this fix was CPU-tested. The GPU timing client used its own metric reader
 [Measurements and profiles](../experiments/dflash2/RESULTS.md) ·
 [Immutable GPU receipt](../experiments/dflash2/results/gpu-v1.json) ·
 [TensorFold implementation plan](../tensorfold/DFLASH2-PLAN.md).
+
+## DFlash2 PR review fixes (2026-10-25)
+
+PR #3 review found a timing-client race: scheduler gauges can remain nonzero
+briefly after the response stream ends. The client now waits for one completed
+request and idle gauges, rejects extra completions and times out after 30 seconds.
+Busy start boundaries still fail. Three regression tests cover delayed gauges,
+missing gauges, overlapping traffic and timeout behavior.
+
+`./scripts/check.sh` passed **87 CPU tests**. README profile instructions now copy
+only the three profile-specific settings, preserving the existing container, port
+and bind address. The 128K example identifies its measured timing profile.
+Historical GPU receipts are unchanged; this follow-up made no serving changes.

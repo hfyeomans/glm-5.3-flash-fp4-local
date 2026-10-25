@@ -55,9 +55,31 @@ def read_metrics(base):
         if match and match[1].startswith('vllm:'):
             totals[match[1]] = totals.get(match[1], 0) + float(match[2])
     for key in ('vllm:num_requests_running', 'vllm:num_requests_waiting'):
-        if key not in totals or totals[key]:
-            raise ValueError('Missing idle scheduler boundary: ' + key)
+        if key not in totals:
+            raise ValueError('Missing scheduler gauge: ' + key)
     return totals
+
+
+
+def require_idle(totals):
+    if totals['vllm:num_requests_running'] or totals['vllm:num_requests_waiting']:
+        raise ValueError('Other traffic active at timing start')
+
+
+def completion_metrics(base, before, timeout=30):
+    deadline = time.monotonic() + timeout
+    count_key = shared.METRICS[0] + '_count'
+    while True:
+        after = read_metrics(base)
+        completed = after[count_key] - before[count_key]
+        if completed > 1:
+            raise ValueError('Metrics do not isolate exactly one request')
+        if (completed == 1 and not after['vllm:num_requests_running']
+                and not after['vllm:num_requests_waiting']):
+            return after
+        if time.monotonic() >= deadline:
+            raise ValueError('Request metrics or idle scheduler boundary delayed')
+        time.sleep(.2)
 
 
 def gpu_sample(devices):
@@ -119,18 +141,12 @@ def main():
                     if errors:
                         raise ValueError(errors[0])
                     before = read_metrics(args.base_url)
+                    require_idle(before)
                     body = {'model':'glm-5.3-flash-fp4-local','prompt':case['prompt'],'temperature':0,'top_p':1,
                             'seed':workload['seed'],'max_tokens':args.output_tokens,'add_special_tokens':False,
                             'stream':True,'stream_options':{'include_usage':True},'cache_salt':str(uuid.uuid4())}
                     response = shared.stream(args.base_url, body)
-                    deadline = time.monotonic()+30
-                    while True:
-                        after = read_metrics(args.base_url)
-                        if after[shared.METRICS[0]+'_count'] > before[shared.METRICS[0]+'_count']:
-                            break
-                        if time.monotonic()>deadline:
-                            raise ValueError('Delayed request metrics')
-                        time.sleep(.2)
+                    after = completion_metrics(args.base_url, before)
                     timing = shared.metric_delta(before,after,case['prompt_tokens'],args.output_tokens)
                     usage=response['usage']
                     if usage['prompt_tokens']!=case['prompt_tokens'] or usage['completion_tokens']!=args.output_tokens or usage.get('prompt_tokens_details',{}).get('cached_tokens')!=0 or response['finish_reason']!='length':

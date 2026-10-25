@@ -1,6 +1,8 @@
 """Prevent draft, checkpoint and endpoint misattribution in GPU comparisons."""
 import copy
 import importlib.util
+import io
+from unittest import mock
 import unittest
 from pathlib import Path
 
@@ -40,6 +42,38 @@ class AttributionTests(unittest.TestCase):
         for other in variants:
             with self.assertRaises(ValueError):
                 bench.validate_server(other,'dflash2','http://127.0.0.1:8002')
+
+
+class MetricBoundaryTests(unittest.TestCase):
+    def snapshot(self, count, running=0, waiting=0):
+        return {bench.shared.METRICS[0]+'_count':count,
+                'vllm:num_requests_running':running, 'vllm:num_requests_waiting':waiting}
+
+    def test_reader_accepts_busy_gauges_but_start_boundary_refuses_them(self):
+        data=b'vllm:num_requests_running 1\nvllm:num_requests_waiting 0\n'
+        with mock.patch.object(bench.shared.urllib.request, 'urlopen', return_value=io.BytesIO(data)):
+            totals=bench.read_metrics('http://127.0.0.1:8002')
+        with self.assertRaisesRegex(ValueError, 'Other traffic'):
+            bench.require_idle(totals)
+        with mock.patch.object(bench.shared.urllib.request, 'urlopen', return_value=io.BytesIO(b'vllm:num_requests_running 0\n')):
+            with self.assertRaisesRegex(ValueError, 'Missing scheduler gauge'):
+                bench.read_metrics('http://127.0.0.1:8002')
+
+    def test_completion_waits_for_both_count_and_idle_gauges(self):
+        before=self.snapshot(10)
+        samples=[self.snapshot(10,1),self.snapshot(11,1),self.snapshot(11,0,1),self.snapshot(11)]
+        with mock.patch.object(bench, 'read_metrics', side_effect=samples), mock.patch.object(bench.time, 'sleep') as sleep:
+            self.assertEqual(bench.completion_metrics('local',before),samples[-1])
+            self.assertEqual(sleep.call_count,3)
+
+    def test_overlap_and_persistent_busy_state_fail(self):
+        before=self.snapshot(10)
+        with mock.patch.object(bench, 'read_metrics', return_value=self.snapshot(12)):
+            with self.assertRaisesRegex(ValueError, 'exactly one request'):
+                bench.completion_metrics('local',before)
+        with mock.patch.object(bench, 'read_metrics', return_value=self.snapshot(11,1)):
+            with self.assertRaisesRegex(ValueError, 'idle scheduler boundary delayed'):
+                bench.completion_metrics('local',before,timeout=0)
 
 
 if __name__=='__main__':
