@@ -941,3 +941,27 @@ missing gauges, overlapping traffic and timeout behavior.
 only the three profile-specific settings, preserving the existing container, port
 and bind address. The 128K example identifies its measured timing profile.
 Historical GPU receipts are unchanged; this follow-up made no serving changes.
+
+## Swarm review and regression fixes (2026-10-25)
+
+Reviewed `17d312e` against the 15 findings originally reported at `4153ef5`.
+#1 was already fixed; #7 was partly fixed. Confirmed remaining cases were
+reproduced before correction across separate lifecycle, measurement and native
+worktrees, followed by independent Sol review and a Luna mechanical pass.
+
+The combined branch passed **130 CPU tests**, shell lint and Python syntax checks.
+This included the exact Zig agreement helper compiled with Zig 0.17.0: the old
+nonfinite comparison failed its reproduction, and three corrected numerical tests
+passed. A read-only inspection validated the actual 42-shard NVIDIA cache and
+DFlash2 metadata/header/size. No GPU inference or container lifecycle actions ran.
+
+Fixes cover endpoint attribution, relocatable model mounts, per-shard truncation,
+revision accounting, Docker inspect failures, malformed API tool results, report
+comparability/coverage, late telemetry errors and resumed-run protocol/image drift.
+Independent follow-ups caught automatic local-folder dry-run discovery and an
+already-running container's changed-port acceptance. Cleanup failures retain
+telemetry shutdown and no longer print a successful stop message.
+
+Historical receipts are unchanged. The full CUDA probe is pending.
+[Finding ledger and tests](SWARM-REVIEW-20261025.md) ·
+[Zig maintainer note](../tensorfold/FP64-AGREEMENT-FIX.md).

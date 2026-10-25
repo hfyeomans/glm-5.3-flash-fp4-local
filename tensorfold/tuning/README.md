@@ -70,8 +70,8 @@ python3 tensorfold/tuning/report.py logs/tuning/my-screen \
 
 The sweep controls only the recipe-owned TensorFold container. It refuses an
 existing container, serializes sweeps, skips completed matching attempts and
-preserves interrupted attempts for inspection. It finishes with TensorFold
-stopped; the operator restores vLLM after subsequent qualification.
+preserves interrupted attempts for inspection. Successful sweeps finish with TensorFold stopped; failed cleanup is recorded
+in the receipt and `stop.log`. Restore vLLM after checking the final status.
 
 Screen with two measured repeats per cell. Confirm candidates with bracketed
 controls, the shared MTP on/off benchmark, fixed histories, the 256-item quality
@@ -87,8 +87,9 @@ Time the full model separately.
 `glm_mm_bench_fp64.zig` is a separate probe, adapted from the pinned upstream
 matrix benchmark. It computes independent FP64 references for the first three
 rows of each matrix shape, checking every output column of those sampled rows.
-It retains the upstream whole-output cross-product check and timing, using a
-separate probe binary.
+Its whole-output cross-product check now rejects nonfinite values in both
+arrays; timing and the FP64 bound are unchanged. See the
+[maintainer note and CPU regression](../FP64-AGREEMENT-FIX.md).
 
 The 192/384/768 policies all passed the sampled bound, but each larger target
 increased maximum absolute error in six of 56 shape/row cells.

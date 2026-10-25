@@ -229,6 +229,7 @@ The PR brief is maintained here for a possible upstream contribution.
 GPU validation results and compact receipts are linked below.
 
 - [Validation record](docs/VALIDATION.md): actual checks, failures and scope.
+- [Swarm review](docs/SWARM-REVIEW-20261025.md): disposition of all 15 supplied findings and regression evidence.
 - [Performance](docs/PERFORMANCE-CURRENT.md) and [prefill investigation](docs/PREFILL-INVESTIGATION-V2.md).
 - [Three-way short-quality comparison](docs/QUALITY-BAKEOFF-V2.md) and [initial long-context screen](docs/LONG-CONTEXT-ACCURACY-V2.md).
 - [Precision guide](docs/PRECISION-AND-QUALITY.md): W4A16, BF16, FP4, compressed scales and MTP.
