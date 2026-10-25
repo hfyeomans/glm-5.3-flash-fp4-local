@@ -953,7 +953,8 @@ The combined branch passed **130 CPU tests**, shell lint and Python syntax check
 This included the exact Zig agreement helper compiled with Zig 0.17.0: the old
 nonfinite comparison failed its reproduction, and three corrected numerical tests
 passed. A read-only inspection validated the actual 42-shard NVIDIA cache and
-DFlash2 metadata/header/size. No GPU inference or container lifecycle actions ran.
+DFlash2 metadata/header/size. This initial review phase used no GPU inference or
+container lifecycle actions; subsequent GPU qualification follows below.
 
 Fixes cover endpoint attribution, relocatable model mounts, per-shard truncation,
 revision accounting, Docker inspect failures, malformed API tool results, report
@@ -965,3 +966,46 @@ telemetry shutdown and no longer print a successful stop message.
 Historical receipts are unchanged. The full CUDA probe is pending.
 [Finding ledger and tests](SWARM-REVIEW-20261025.md) ·
 [Zig maintainer note](../tensorfold/FP64-AGREEMENT-FIX.md).
+
+## Swarm vLLM GPU qualification (2026-10-25)
+
+Both drafters passed from the review worktree at code commit `fb1823a`, using
+the pinned NVIDIA CSF32 checkpoint and release-10152026 image. GPU fraction
+remained **0.985**, with **7,650,410,496 bytes of KV cache per GPU** and a
+1,024 MiB physical-memory stop floor. Hardware: two RTX PRO 6000 Blackwell Max-Q
+cards, driver 615.71.09.
+
+| Drafter / profile | Input + output per request | Four-way decode overlap | Minimum free MiB, GPU 0 / 1 | Result |
+|---|---|---:|---:|---|
+| MTP, 262K × 4 | 229,376 + 32,768 | 126.70 s | 1,187 / 1,270 | Pass |
+| MTP, 1M × 1 | 1,048,320 + 44 (256 budget) | — | 1,219 / 1,302 | Pass |
+| DFlash2, 262K × 4, FP8 draft KV | 245,760 + 16,384 | 47.31 s | 1,461 / 1,540 | Pass |
+| DFlash2, 1M × 1, BF16 draft KV | 1,048,320 + 44 (256 budget) | — | 1,649 / 1,730 | Pass |
+
+All runs passed marker retrieval, request isolation, exact input counts, zero
+cache reuse and zero preemptions. The four-client runs also matched streamed
+input/output token IDs and counts. Each profile passed completion, JSON, tools
+and streaming API checks. Single-request 1M TTFT was 145.58 s for MTP and
+139.50 s for DFlash2; the four-client tests used different output lengths.
+
+The initial MTP four-client run passed capacity/retrieval with 16K outputs, but
+its first request finished before the fourth began decoding. Its receipt is
+retained alongside the successful 32K-output repeat. Both keep each request's
+total ceiling at 262,144 tokens.
+
+The explicit `--mtp-profile capacity` option validates matching context/slot
+limits, pinned image/checkpoint, loopback endpoint and unchanged MTP3/B12X
+configuration. The historical baseline guard remains the default. **136 CPU
+tests passed**, including the compiled Zig helper tests; independent Sol review
+found no issues in this harness addition. The full TensorFold CUDA probe remains
+pending.
+
+[Portable receipt](../benchmarks/results/swarm-vllm-validation-v1.json) ·
+[Reproduction commands](../benchmarks/CONCURRENCY.md#matched-mtp-capacity-profiles).
+Raw logs, prompts, frames and telemetry remain under
+`logs/swarm-validation-20261025/` in the review worktree. Historical receipts are
+unchanged.
+
+The original MTP container was restored with identical container ID, image and
+launch command, and passed the full API suite. MTP remains the recipe default;
+the restored service keeps its previous 262,144-token/four-sequence settings.

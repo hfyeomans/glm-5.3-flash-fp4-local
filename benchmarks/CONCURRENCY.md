@@ -50,11 +50,15 @@ DRAFTER=mtp MAX_MODEL_LEN=262144 MAX_NUM_SEQS=4 \
 .state/quality-venv/bin/python benchmarks/concurrent_context.py \
   --mtp-profile capacity --container glm53-fp4-swarm-probe \
   --base-url http://127.0.0.1:8002 --window 262144 --clients 4 \
-  --sustained --output-tokens 16384 --min-free-mib 1024 \
+  --sustained --output-tokens 32768 --min-free-mib 1024 \
   --output logs/concurrent-context-v1/my-mtp-262k-x4
 # For the 1M/one-client profile, relaunch with MAX_MODEL_LEN=1048576 MAX_NUM_SEQS=1
 # and use --window 1048576 --clients 1 with a fresh output directory.
 ```
+
+The 32K output allowance kept all four MTP clients decoding together in the
+[qualification run](../docs/VALIDATION.md#swarm-vllm-gpu-qualification-2026-10-25);
+with 16K outputs, the first client finished before the fourth began decoding.
 
 DFlash2 capacity runs select `--drafter dflash2`; see its
 [capacity client commands](../experiments/dflash2/README.md#capacity-client).

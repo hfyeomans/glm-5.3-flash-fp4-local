@@ -49,8 +49,12 @@ The compiler was copied read-only from an existing stopped build container.
 
 Read-only inspection of the real NVIDIA cache passed all 42 shards and
 177,463,841,024 physical bytes. DFlash2's pinned metadata/header and 2,342,169,800-byte
-size passed. No GPU inference or real container lifecycle actions were performed.
-Historical receipts and main remain unchanged.
+size passed. These initial checks used no GPU inference or container lifecycle
+actions. Subsequent vLLM GPU qualification is recorded in
+[VALIDATION.md](VALIDATION.md#swarm-vllm-gpu-qualification-2026-10-25).
+Historical receipts are unchanged. The follow-up passed 136 CPU tests and all
+four MTP/DFlash2 capacity profiles (262K × four and 1M × one). See the linked
+validation record for overlap, memory minima and the retained shorter MTP attempt.
 
 Regression suites:
 

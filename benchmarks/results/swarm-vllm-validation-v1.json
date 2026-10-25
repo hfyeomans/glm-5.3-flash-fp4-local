@@ -1,0 +1,1653 @@
+{
+  "schema": "swarm-vllm-capacity-validation-v1",
+  "date_utc": "2026-10-25",
+  "source_commit": "fb1823af4aabb4fcc6b568d65e198cf08e31d75d",
+  "hardware": "2 x NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition, 97887 MiB each, driver 615.71.09",
+  "default_drafter": "mtp",
+  "target_checkpoint": "nvidia/GLM-5.3-Flash-FP4-Local",
+  "target_format": "Original NVIDIA ModelOpt mixed FP4 with CSF32 compressed scales",
+  "memory_budget": {
+    "gpu_memory_utilization": 0.985,
+    "kv_cache_memory_bytes_per_gpu": 7650410496,
+    "physical_free_stop_floor_mib": 1024
+  },
+  "runs": [
+    {
+      "name": "mtp-262k4",
+      "qualification": "capacity/retrieval passed; four-way overlap absent, superseded by 32K-output repeat",
+      "manifest": {
+        "protocol": "independent-context-v1",
+        "image_id": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+        "command": [
+          "vllm",
+          "serve",
+          "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "8002",
+          "--served-model-name",
+          "glm-5.3-flash-fp4-local",
+          "--additional-config",
+          "{\"glm53_kda_decode_backend\":\"auto\",\"kda_prefill_backend\":\"b12x\"}",
+          "--attention-backend",
+          "B12X",
+          "--block-size",
+          "256",
+          "--chat-template",
+          "/opt/lil/runtime/templates/glm53-flash.jinja",
+          "--compilation-config",
+          "{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+          "--cp-kv-cache-interleave-size",
+          "4",
+          "--cudagraph-capture-sizes",
+          "1",
+          "2",
+          "4",
+          "8",
+          "12",
+          "16",
+          "20",
+          "24",
+          "28",
+          "32",
+          "--dcp-kv-cache-interleave-size",
+          "4",
+          "--decode-context-parallel-size",
+          "2",
+          "--default-chat-template-kwargs",
+          "{\"reasoning_effort\":\"max\",\"clear_thinking\":false}",
+          "--dtype",
+          "bfloat16",
+          "--enable-auto-tool-choice",
+          "--enable-chunked-prefill",
+          "--no-enable-flashinfer-autotune",
+          "--enable-prefix-caching",
+          "--enable-prompt-tokens-details",
+          "--gpu-memory-utilization",
+          "0.985",
+          "--kv-cache-dtype",
+          "fp8",
+          "--kv-cache-memory-bytes",
+          "7650410496",
+          "--linear-backend",
+          "b12x",
+          "--load-format",
+          "safetensors",
+          "--mamba-cache-mode",
+          "align",
+          "--max-cudagraph-capture-size",
+          "32",
+          "--max-model-len",
+          "262144",
+          "--max-num-batched-tokens",
+          "4096",
+          "--max-num-seqs",
+          "4",
+          "--max-parallel-prefills",
+          "1",
+          "--moe-backend",
+          "b12x",
+          "--override-generation-config",
+          "{\"temperature\":1.0,\"top_p\":0.95}",
+          "--prefill-compute-share",
+          "0.4",
+          "--prefill-schedule-interval",
+          "1",
+          "--quantization",
+          "modelopt_mixed",
+          "--reasoning-parser",
+          "glm45",
+          "--recurrent-checkpoint-policy",
+          "request_boundaries",
+          "--speculative-config",
+          "{\"method\":\"mtp\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"standard\",\"moe_backend\":\"b12x\",\"attention_backend\":\"B12X\",\"num_speculative_tokens\":3}",
+          "--tensor-parallel-size",
+          "2",
+          "--tool-call-parser",
+          "glm47"
+        ],
+        "drafter": "mtp",
+        "mtp_profile": "capacity",
+        "draft_lock": null,
+        "container_id": "6538dfc7ba9a0759b9a0a7f397cb0305f7fe2bb17a66a72a86658c50b406df10",
+        "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "client_sha256": "4070aa824fd42cb3369d1ca67e02f70dbed2aba4a6be852bae6cae3d110c738e",
+        "tokenizer_sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+        "template_sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+        "started_utc": "2026-10-25T15:10:40Z",
+        "window": 262144,
+        "clients": 4,
+        "sustained": true,
+        "max_output_tokens": 16384,
+        "timeout_seconds": 1200,
+        "min_free_mib": 1024,
+        "cases": [
+          {
+            "prompt_tokens": 245760,
+            "token_sha256": "69b8484b09178578e732d970581182a29516924ed7b690a7aed2ca67f4941b83",
+            "expected": [
+              "cedar-fe02aa689cef-17",
+              "orchid-fe02aa689cef-27",
+              "willow-fe02aa689cef-37"
+            ],
+            "needle_token_positions": [
+              24576,
+              122880,
+              221184
+            ]
+          },
+          {
+            "prompt_tokens": 245760,
+            "token_sha256": "7d099ae3669dc7f7e8fe63485f30c45a075e184a11002d65750caeac3db5c4da",
+            "expected": [
+              "cedar-6c1108193804-17",
+              "orchid-6c1108193804-27",
+              "willow-6c1108193804-37"
+            ],
+            "needle_token_positions": [
+              24576,
+              122880,
+              221184
+            ]
+          },
+          {
+            "prompt_tokens": 245760,
+            "token_sha256": "8666530dd79d5796068e8115c874bd7a85f5ab83ce21eb4e6d7f0f1bac96c7a6",
+            "expected": [
+              "cedar-63aee109c28a-17",
+              "orchid-63aee109c28a-27",
+              "willow-63aee109c28a-37"
+            ],
+            "needle_token_positions": [
+              24576,
+              122880,
+              221184
+            ]
+          },
+          {
+            "prompt_tokens": 245760,
+            "token_sha256": "031b904b89dd9b1fe91a265224dbdee6f60fc8ea2837cd8cc1fc5d26a4400af9",
+            "expected": [
+              "cedar-e37fad6ecd4b-17",
+              "orchid-e37fad6ecd4b-27",
+              "willow-e37fad6ecd4b-37"
+            ],
+            "needle_token_positions": [
+              24576,
+              122880,
+              221184
+            ]
+          }
+        ],
+        "prompt_protocol": "Exact token-ID input, independent salted filler/markers, checkpoint low reasoning with explicitly closed think prefix. Sustained mode ignores EOS solely to hold decode active; its tail is not quality-scored."
+      },
+      "report": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": false,
+        "request_isolation_passed": true,
+        "server_idle_after": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 4.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 0.0,
+        "decode_interval_basis": "token_ids",
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 3.0,
+        "peak_waiting": 3.0,
+        "peak_kv_cache_usage_fraction": 0.5271028037383177,
+        "prompt_tokens_processed_delta": 983040.0,
+        "min_free_mib": {
+          "0": 1187,
+          "1": 1270
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 245760,
+            "usage": {
+              "prompt_tokens": 245760,
+              "total_tokens": 262144,
+              "completion_tokens": 16384,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 240.252787541016,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 16384,
+            "elapsed_seconds": 369.234484193963,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "3744e96382d624d79d220a5672ddf8e797807166e953a57ef465d9efc94a70ff",
+            "error": null
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 245760,
+            "usage": {
+              "prompt_tokens": 245760,
+              "total_tokens": 262144,
+              "completion_tokens": 16384,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 28.952270754030906,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 16384,
+            "elapsed_seconds": 160.18161348003196,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "5157aba2c7e01a412bbfdd90a77a15745d2cfe6cfcbc41dc9f1ca5111c4f318e",
+            "error": null
+          },
+          {
+            "client": "client-2",
+            "prompt_tokens": 245760,
+            "usage": {
+              "prompt_tokens": 245760,
+              "total_tokens": 262144,
+              "completion_tokens": 16384,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 98.15340579702752,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 16384,
+            "elapsed_seconds": 288.660404225986,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "453676308ce2053a4c8024aa15b615ef1299520f092dd8c7788556fcb24481db",
+            "error": null
+          },
+          {
+            "client": "client-3",
+            "prompt_tokens": 245760,
+            "usage": {
+              "prompt_tokens": 245760,
+              "total_tokens": 262144,
+              "completion_tokens": 16384,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 169.11262136802543,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 16384,
+            "elapsed_seconds": 334.3697646330111,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "614967ffecf3dfb290b04dafd3122b33f13c0744b1c807ef6099535ccb2f9565",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      },
+      "api_checks": [
+        {
+          "check": "completion",
+          "passed": true,
+          "seconds": 0.11161477101268247
+        },
+        {
+          "check": "json",
+          "passed": true,
+          "seconds": 0.5458512469776906
+        },
+        {
+          "check": "tools",
+          "passed": true,
+          "seconds": 0.2658539689728059
+        },
+        {
+          "check": "streaming",
+          "passed": true,
+          "seconds": 0.3759727139840834
+        }
+      ],
+      "raw_path": "logs/swarm-validation-20261025/mtp-262k4",
+      "artifacts_sha256": {
+        "mtp-262k4/manifest.json": "84f4c31f7ecd13de0b7d89554bb3a981f3cc4f5f3860550be7181acfcccff80d",
+        "mtp-262k4/report.json": "b628df9f3a9a6faf3bb2c2446c888878dfe8d20e576317ca3b709c8ff9f9ea4e",
+        "mtp-262k4/telemetry.jsonl": "68b07a1ea038b810f6a775283fb79da641fe4b431baf5249ec1a363ca09db7e1",
+        "mtp-262k4-server.log": "99e1f423b95f058b6d9be3570beb831d9ad54c103eb85151248cd590dba0aced",
+        "mtp-262k4-client-command.json": "fe4d5f4f8751fafbe77f1630ca4a36be756f267d7bcb63285b16dad77eb09bb0"
+      }
+    },
+    {
+      "name": "mtp-262k4-32k",
+      "qualification": "passed",
+      "manifest": {
+        "protocol": "independent-context-v1",
+        "image_id": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+        "command": [
+          "vllm",
+          "serve",
+          "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "8002",
+          "--served-model-name",
+          "glm-5.3-flash-fp4-local",
+          "--additional-config",
+          "{\"glm53_kda_decode_backend\":\"auto\",\"kda_prefill_backend\":\"b12x\"}",
+          "--attention-backend",
+          "B12X",
+          "--block-size",
+          "256",
+          "--chat-template",
+          "/opt/lil/runtime/templates/glm53-flash.jinja",
+          "--compilation-config",
+          "{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+          "--cp-kv-cache-interleave-size",
+          "4",
+          "--cudagraph-capture-sizes",
+          "1",
+          "2",
+          "4",
+          "8",
+          "12",
+          "16",
+          "20",
+          "24",
+          "28",
+          "32",
+          "--dcp-kv-cache-interleave-size",
+          "4",
+          "--decode-context-parallel-size",
+          "2",
+          "--default-chat-template-kwargs",
+          "{\"reasoning_effort\":\"max\",\"clear_thinking\":false}",
+          "--dtype",
+          "bfloat16",
+          "--enable-auto-tool-choice",
+          "--enable-chunked-prefill",
+          "--no-enable-flashinfer-autotune",
+          "--enable-prefix-caching",
+          "--enable-prompt-tokens-details",
+          "--gpu-memory-utilization",
+          "0.985",
+          "--kv-cache-dtype",
+          "fp8",
+          "--kv-cache-memory-bytes",
+          "7650410496",
+          "--linear-backend",
+          "b12x",
+          "--load-format",
+          "safetensors",
+          "--mamba-cache-mode",
+          "align",
+          "--max-cudagraph-capture-size",
+          "32",
+          "--max-model-len",
+          "262144",
+          "--max-num-batched-tokens",
+          "4096",
+          "--max-num-seqs",
+          "4",
+          "--max-parallel-prefills",
+          "1",
+          "--moe-backend",
+          "b12x",
+          "--override-generation-config",
+          "{\"temperature\":1.0,\"top_p\":0.95}",
+          "--prefill-compute-share",
+          "0.4",
+          "--prefill-schedule-interval",
+          "1",
+          "--quantization",
+          "modelopt_mixed",
+          "--reasoning-parser",
+          "glm45",
+          "--recurrent-checkpoint-policy",
+          "request_boundaries",
+          "--speculative-config",
+          "{\"method\":\"mtp\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"standard\",\"moe_backend\":\"b12x\",\"attention_backend\":\"B12X\",\"num_speculative_tokens\":3}",
+          "--tensor-parallel-size",
+          "2",
+          "--tool-call-parser",
+          "glm47"
+        ],
+        "drafter": "mtp",
+        "mtp_profile": "capacity",
+        "draft_lock": null,
+        "container_id": "003549153ed7c01cd8f1d791558dbbd31287630ce080765e374bad5c90f9df00",
+        "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "client_sha256": "4070aa824fd42cb3369d1ca67e02f70dbed2aba4a6be852bae6cae3d110c738e",
+        "tokenizer_sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+        "template_sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+        "started_utc": "2026-10-25T15:21:06Z",
+        "window": 262144,
+        "clients": 4,
+        "sustained": true,
+        "max_output_tokens": 32768,
+        "timeout_seconds": 1200,
+        "min_free_mib": 1024,
+        "cases": [
+          {
+            "prompt_tokens": 229376,
+            "token_sha256": "d3575b4e918cfa44ba89c26885dbfef32faf9a9aab6d18dc4ed2257c05853318",
+            "expected": [
+              "cedar-de9abda83e2b-17",
+              "orchid-de9abda83e2b-27",
+              "willow-de9abda83e2b-37"
+            ],
+            "needle_token_positions": [
+              22937,
+              114688,
+              206438
+            ]
+          },
+          {
+            "prompt_tokens": 229376,
+            "token_sha256": "eb3251cb8620744511df668f0f276833890d615ef8778204f0b4e7cb73f09fed",
+            "expected": [
+              "cedar-cb45937e1886-17",
+              "orchid-cb45937e1886-27",
+              "willow-cb45937e1886-37"
+            ],
+            "needle_token_positions": [
+              22937,
+              114688,
+              206438
+            ]
+          },
+          {
+            "prompt_tokens": 229376,
+            "token_sha256": "de5e5fa6318bb56112879f2e8d2cea5f5365913601dbfff1ddabedb7f5ffd389",
+            "expected": [
+              "cedar-f80d6efd75b8-17",
+              "orchid-f80d6efd75b8-27",
+              "willow-f80d6efd75b8-37"
+            ],
+            "needle_token_positions": [
+              22937,
+              114688,
+              206438
+            ]
+          },
+          {
+            "prompt_tokens": 229376,
+            "token_sha256": "5a27d40ae82f28a924c186078ea7c3b56c07781f0db6393e613b2b564203ec88",
+            "expected": [
+              "cedar-0d2264d238a2-17",
+              "orchid-0d2264d238a2-27",
+              "willow-0d2264d238a2-37"
+            ],
+            "needle_token_positions": [
+              22937,
+              114688,
+              206438
+            ]
+          }
+        ],
+        "prompt_protocol": "Exact token-ID input, independent salted filler/markers, checkpoint low reasoning with explicitly closed think prefix. Sustained mode ignores EOS solely to hold decode active; its tail is not quality-scored."
+      },
+      "report": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": false,
+        "request_isolation_passed": true,
+        "server_idle_after": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 4.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 126.70178154698806,
+        "decode_interval_basis": "token_ids",
+        "overlapping_decode_without_preemption": true,
+        "peak_running": 4.0,
+        "peak_waiting": 3.0,
+        "peak_kv_cache_usage_fraction": 0.691588785046729,
+        "prompt_tokens_processed_delta": 917504.0,
+        "min_free_mib": {
+          "0": 1187,
+          "1": 1270
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 229376,
+            "usage": {
+              "prompt_tokens": 229376,
+              "total_tokens": 262144,
+              "completion_tokens": 32768,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 158.09590987797128,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 32768,
+            "elapsed_seconds": 453.0462477870169,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "5c10909cd99992df24ad240638712ad0495f232538010a641a5732f535877b18",
+            "error": null
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 229376,
+            "usage": {
+              "prompt_tokens": 229376,
+              "total_tokens": 262144,
+              "completion_tokens": 32768,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 224.37931854603812,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 32768,
+            "elapsed_seconds": 532.7178065330372,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "cda216d346ad43f32109a9a8bdc0700bd06e94b8041d9f03995b7f50d24a5018",
+            "error": null
+          },
+          {
+            "client": "client-2",
+            "prompt_tokens": 229376,
+            "usage": {
+              "prompt_tokens": 229376,
+              "total_tokens": 262144,
+              "completion_tokens": 32768,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 91.62121239001863,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 32768,
+            "elapsed_seconds": 495.779593439016,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "3fcc9952cb6d1c4aefdd5d9a5095c5cdc6a7e467306dab1b586575866a4ea64e",
+            "error": null
+          },
+          {
+            "client": "client-3",
+            "prompt_tokens": 229376,
+            "usage": {
+              "prompt_tokens": 229376,
+              "total_tokens": 262144,
+              "completion_tokens": 32768,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 27.038497224042658,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 32768,
+            "elapsed_seconds": 351.081273082993,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "c4d4312659d1ae40fbf8f47b2156aea7086f234c5308ea9a4373eac3bfd6d17c",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      },
+      "api_checks": [
+        {
+          "check": "completion",
+          "passed": true,
+          "seconds": 0.10010527598205954
+        },
+        {
+          "check": "json",
+          "passed": true,
+          "seconds": 0.5461831649881788
+        },
+        {
+          "check": "tools",
+          "passed": true,
+          "seconds": 0.2621063140104525
+        },
+        {
+          "check": "streaming",
+          "passed": true,
+          "seconds": 0.38027884700568393
+        }
+      ],
+      "raw_path": "logs/swarm-validation-20261025/mtp-262k4-32k",
+      "artifacts_sha256": {
+        "mtp-262k4-32k/manifest.json": "fd36e3d4dbae8b4a69f93eb7c18cebb87b3cc66103da8696dd15e75a8b3cce06",
+        "mtp-262k4-32k/report.json": "33321cbdd8d4b7e91c63c24e39c17ed968d2e37d862e46dd9581b50dd3e2830c",
+        "mtp-262k4-32k/telemetry.jsonl": "83a0dd049a4c54ac640b8a2e56dce2d60e971ec621a1b2756c4bc1961317f8c1",
+        "mtp-262k4-32k-server.log": "117037bd3d5e5ec615b765a9d16364db25a0a2a993e704d168e0695094f9e28c",
+        "mtp-262k4-32k-client-command.json": "bcdb2718572ea65203aadee259fc379fda8806e9e64377b6b900bb8b3a2f1506"
+      }
+    },
+    {
+      "name": "mtp-1m1",
+      "qualification": "passed",
+      "manifest": {
+        "protocol": "independent-context-v1",
+        "image_id": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+        "command": [
+          "vllm",
+          "serve",
+          "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "8002",
+          "--served-model-name",
+          "glm-5.3-flash-fp4-local",
+          "--additional-config",
+          "{\"glm53_kda_decode_backend\":\"auto\",\"kda_prefill_backend\":\"b12x\"}",
+          "--attention-backend",
+          "B12X",
+          "--block-size",
+          "256",
+          "--chat-template",
+          "/opt/lil/runtime/templates/glm53-flash.jinja",
+          "--compilation-config",
+          "{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+          "--cp-kv-cache-interleave-size",
+          "4",
+          "--cudagraph-capture-sizes",
+          "1",
+          "2",
+          "4",
+          "8",
+          "12",
+          "16",
+          "20",
+          "24",
+          "28",
+          "32",
+          "--dcp-kv-cache-interleave-size",
+          "4",
+          "--decode-context-parallel-size",
+          "2",
+          "--default-chat-template-kwargs",
+          "{\"reasoning_effort\":\"max\",\"clear_thinking\":false}",
+          "--dtype",
+          "bfloat16",
+          "--enable-auto-tool-choice",
+          "--enable-chunked-prefill",
+          "--no-enable-flashinfer-autotune",
+          "--enable-prefix-caching",
+          "--enable-prompt-tokens-details",
+          "--gpu-memory-utilization",
+          "0.985",
+          "--kv-cache-dtype",
+          "fp8",
+          "--kv-cache-memory-bytes",
+          "7650410496",
+          "--linear-backend",
+          "b12x",
+          "--load-format",
+          "safetensors",
+          "--mamba-cache-mode",
+          "align",
+          "--max-cudagraph-capture-size",
+          "32",
+          "--max-model-len",
+          "1048576",
+          "--max-num-batched-tokens",
+          "4096",
+          "--max-num-seqs",
+          "1",
+          "--max-parallel-prefills",
+          "1",
+          "--moe-backend",
+          "b12x",
+          "--override-generation-config",
+          "{\"temperature\":1.0,\"top_p\":0.95}",
+          "--prefill-compute-share",
+          "0.4",
+          "--prefill-schedule-interval",
+          "1",
+          "--quantization",
+          "modelopt_mixed",
+          "--reasoning-parser",
+          "glm45",
+          "--recurrent-checkpoint-policy",
+          "request_boundaries",
+          "--speculative-config",
+          "{\"method\":\"mtp\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"standard\",\"moe_backend\":\"b12x\",\"attention_backend\":\"B12X\",\"num_speculative_tokens\":3}",
+          "--tensor-parallel-size",
+          "2",
+          "--tool-call-parser",
+          "glm47"
+        ],
+        "drafter": "mtp",
+        "mtp_profile": "capacity",
+        "draft_lock": null,
+        "container_id": "445b3343f27fc94ccefa62066b7f8c0fbc15a112f85a90eede946e938fd2e436",
+        "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "client_sha256": "4070aa824fd42cb3369d1ca67e02f70dbed2aba4a6be852bae6cae3d110c738e",
+        "tokenizer_sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+        "template_sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+        "started_utc": "2026-10-25T15:32:17Z",
+        "window": 1048576,
+        "clients": 1,
+        "sustained": false,
+        "max_output_tokens": 256,
+        "timeout_seconds": 1200,
+        "min_free_mib": 1024,
+        "cases": [
+          {
+            "prompt_tokens": 1048320,
+            "token_sha256": "af6fcd95ca246c30aff66d7be94870ffbc9643d6c79c36368aef67302a93cc98",
+            "expected": [
+              "cedar-9fbba84eb45e-17",
+              "orchid-9fbba84eb45e-27",
+              "willow-9fbba84eb45e-37"
+            ],
+            "needle_token_positions": [
+              104832,
+              524160,
+              943488
+            ]
+          }
+        ],
+        "prompt_protocol": "Exact token-ID input, independent salted filler/markers, checkpoint low reasoning with explicitly closed think prefix. Sustained mode ignores EOS solely to hold decode active; its tail is not quality-scored."
+      },
+      "report": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": true,
+        "request_isolation_passed": true,
+        "server_idle_after": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 1.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 0.025753235968295485,
+        "decode_interval_basis": "visible_text",
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 1.0,
+        "peak_waiting": 0.0,
+        "peak_kv_cache_usage_fraction": 0.5497287522603979,
+        "prompt_tokens_processed_delta": 1048320.0,
+        "min_free_mib": {
+          "0": 1219,
+          "1": 1302
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 1048320,
+            "usage": {
+              "prompt_tokens": 1048320,
+              "total_tokens": 1048364,
+              "completion_tokens": 44,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 145.5783430080046,
+            "server_prompt_ids_match": null,
+            "emitted_token_count": 0,
+            "elapsed_seconds": 145.604241552006,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "ceaf7219d189e28fe375faf0bb4e1446046136dabb890495a115f07c5c54e9bc",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      },
+      "api_checks": [
+        {
+          "check": "completion",
+          "passed": true,
+          "seconds": 0.084945424052421
+        },
+        {
+          "check": "json",
+          "passed": true,
+          "seconds": 0.5780004039988853
+        },
+        {
+          "check": "tools",
+          "passed": true,
+          "seconds": 0.271488496044185
+        },
+        {
+          "check": "streaming",
+          "passed": true,
+          "seconds": 0.4096755970385857
+        }
+      ],
+      "raw_path": "logs/swarm-validation-20261025/mtp-1m1",
+      "artifacts_sha256": {
+        "mtp-1m1/manifest.json": "ac2c55eafd9c48fac45c75a29a287f2b2e5a5382c9ab2e9e9344fc5c4c118821",
+        "mtp-1m1/report.json": "87f4e3b1e69eaaaeadfb21106a74a15e80eaf8a41ceefd0c677c1bfab4a7e99f",
+        "mtp-1m1/telemetry.jsonl": "84de3e7de6414e0f8cf360d90ffa53316fff9960ba412de236a968cd78ea1445",
+        "mtp-1m1-server.log": "1397e081cefde434ce2f1c1fffab5a0e9216f82a0595b1d1d24d68de294ac329",
+        "mtp-1m1-client-command.json": "0c5949d52707f9d43ef656e88a1e178a4c9967b720c9fbe3851f226cff9cdb45"
+      }
+    },
+    {
+      "name": "dflash2-262k4",
+      "qualification": "passed",
+      "manifest": {
+        "protocol": "independent-context-v1",
+        "image_id": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+        "command": [
+          "vllm",
+          "serve",
+          "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "8002",
+          "--served-model-name",
+          "glm-5.3-flash-fp4-local",
+          "--additional-config",
+          "{\"glm53_kda_decode_backend\":\"auto\",\"kda_prefill_backend\":\"b12x\"}",
+          "--attention-backend",
+          "B12X",
+          "--block-size",
+          "256",
+          "--chat-template",
+          "/opt/lil/runtime/templates/glm53-flash.jinja",
+          "--compilation-config",
+          "{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+          "--cp-kv-cache-interleave-size",
+          "4",
+          "--cudagraph-capture-sizes",
+          "1",
+          "2",
+          "4",
+          "8",
+          "12",
+          "16",
+          "20",
+          "24",
+          "28",
+          "32",
+          "--dcp-kv-cache-interleave-size",
+          "4",
+          "--decode-context-parallel-size",
+          "2",
+          "--default-chat-template-kwargs",
+          "{\"reasoning_effort\":\"max\",\"clear_thinking\":false}",
+          "--dtype",
+          "bfloat16",
+          "--enable-auto-tool-choice",
+          "--enable-chunked-prefill",
+          "--no-enable-flashinfer-autotune",
+          "--enable-prefix-caching",
+          "--enable-prompt-tokens-details",
+          "--gpu-memory-utilization",
+          "0.985",
+          "--kv-cache-dtype",
+          "fp8",
+          "--kv-cache-memory-bytes",
+          "7650410496",
+          "--linear-backend",
+          "b12x",
+          "--load-format",
+          "safetensors",
+          "--mamba-cache-mode",
+          "align",
+          "--max-cudagraph-capture-size",
+          "32",
+          "--max-model-len",
+          "262144",
+          "--max-num-batched-tokens",
+          "4096",
+          "--max-num-seqs",
+          "4",
+          "--max-parallel-prefills",
+          "1",
+          "--moe-backend",
+          "b12x",
+          "--override-generation-config",
+          "{\"temperature\":1.0,\"top_p\":0.95}",
+          "--prefill-compute-share",
+          "0.4",
+          "--prefill-schedule-interval",
+          "1",
+          "--quantization",
+          "modelopt_mixed",
+          "--reasoning-parser",
+          "glm45",
+          "--recurrent-checkpoint-policy",
+          "request_boundaries",
+          "--speculative-config",
+          "{\"method\":\"dflash\",\"model\":\"/root/.cache/huggingface/hub/models--incoai--GLM-5.3-Flash-DFlash2/snapshots/bf582e4eacc1810f76656d1811693ff6c6737d2a\",\"num_speculative_tokens\":7,\"draft_tensor_parallel_size\":2,\"quantization\":null,\"kv_cache_dtype\":\"fp8\",\"attention_backend\":\"TRITON_ATTN\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"standard\"}",
+          "--tensor-parallel-size",
+          "2",
+          "--tool-call-parser",
+          "glm47"
+        ],
+        "drafter": "dflash2",
+        "mtp_profile": null,
+        "draft_lock": {
+          "model_id": "incoai/GLM-5.3-Flash-DFlash2",
+          "revision": "bf582e4eacc1810f76656d1811693ff6c6737d2a",
+          "license": "CC-BY-NC-ND-4.0",
+          "model_card_url": "https://huggingface.co/incoai/GLM-5.3-Flash-DFlash2/blob/bf582e4eacc1810f76656d1811693ff6c6737d2a/README.md",
+          "config_sha256": "c4aeac0101196a6e26705b34c45230bcd0c7c68ee2d2d1efdb242087f3712573",
+          "readme_sha256": "2014434d3e3639147d35d61259690d585e7820993180e7d579e3b796dddf5a31",
+          "weights_file": "model.safetensors",
+          "weights_bytes": 2342169800,
+          "weights_sha256": "b038e1d9d1e7833fa3880c2c0135ba9b673013f03da1b29fb831931584759dac",
+          "safetensors_header_sha256": "6fa6c59f4d8e07bf4e97d0945abbadf4cfe10903227dc18534a476743b943035",
+          "weight_parameters": 1171080448,
+          "dtype": "BF16"
+        },
+        "container_id": "6aea064ee94caa93af9237b1ea4f7880518f98e69537dd91943c3a04c62723ba",
+        "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "client_sha256": "4070aa824fd42cb3369d1ca67e02f70dbed2aba4a6be852bae6cae3d110c738e",
+        "tokenizer_sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+        "template_sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+        "started_utc": "2026-10-25T15:36:45Z",
+        "window": 262144,
+        "clients": 4,
+        "sustained": true,
+        "max_output_tokens": 16384,
+        "timeout_seconds": 1200,
+        "min_free_mib": 1024,
+        "cases": [
+          {
+            "prompt_tokens": 245760,
+            "token_sha256": "c4a9163c1aa188bd6f7e4b8050baf1531dd27b61ce4cd1bae143e841c0e37e45",
+            "expected": [
+              "cedar-34b540193e28-17",
+              "orchid-34b540193e28-27",
+              "willow-34b540193e28-37"
+            ],
+            "needle_token_positions": [
+              24576,
+              122880,
+              221184
+            ]
+          },
+          {
+            "prompt_tokens": 245760,
+            "token_sha256": "a09a54213a0cff3b1247d85749e99556ac35e5c547c432104f272ac5f8e93372",
+            "expected": [
+              "cedar-2f128aac0693-17",
+              "orchid-2f128aac0693-27",
+              "willow-2f128aac0693-37"
+            ],
+            "needle_token_positions": [
+              24576,
+              122880,
+              221184
+            ]
+          },
+          {
+            "prompt_tokens": 245760,
+            "token_sha256": "ff164e5edb4fc82f16821595582d137974aa908e1e89aa5d5cd6e92248cf2558",
+            "expected": [
+              "cedar-a32924e2d46c-17",
+              "orchid-a32924e2d46c-27",
+              "willow-a32924e2d46c-37"
+            ],
+            "needle_token_positions": [
+              24576,
+              122880,
+              221184
+            ]
+          },
+          {
+            "prompt_tokens": 245760,
+            "token_sha256": "77df44e416c254109ddf54789064e66192b51fb9775f9501ea6801f1fdbecb5b",
+            "expected": [
+              "cedar-236b2e4b7bac-17",
+              "orchid-236b2e4b7bac-27",
+              "willow-236b2e4b7bac-37"
+            ],
+            "needle_token_positions": [
+              24576,
+              122880,
+              221184
+            ]
+          }
+        ],
+        "prompt_protocol": "Exact token-ID input, independent salted filler/markers, checkpoint low reasoning with explicitly closed think prefix. Sustained mode ignores EOS solely to hold decode active; its tail is not quality-scored."
+      },
+      "report": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": false,
+        "request_isolation_passed": true,
+        "server_idle_after": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 4.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 47.31286720698699,
+        "decode_interval_basis": "token_ids",
+        "overlapping_decode_without_preemption": true,
+        "peak_running": 4.0,
+        "peak_waiting": 3.0,
+        "peak_kv_cache_usage_fraction": 0.7133105802047781,
+        "prompt_tokens_processed_delta": 983040.0,
+        "min_free_mib": {
+          "0": 1461,
+          "1": 1540
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 245760,
+            "usage": {
+              "prompt_tokens": 245760,
+              "total_tokens": 262144,
+              "completion_tokens": 16384,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 98.44088313000975,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 16384,
+            "elapsed_seconds": 379.9908532029949,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "1ba237943c8fa7429cedf3d479f64a0867b6a92cea1c26b18592db18519df967",
+            "error": null
+          },
+          {
+            "client": "client-1",
+            "prompt_tokens": 245760,
+            "usage": {
+              "prompt_tokens": 245760,
+              "total_tokens": 262144,
+              "completion_tokens": 16384,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 28.21314785000868,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 16384,
+            "elapsed_seconds": 289.254171735025,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "dbcd44f051cf5daa9d729388bc1dddb34449b427f549923598b865653ce64bab",
+            "error": null
+          },
+          {
+            "client": "client-2",
+            "prompt_tokens": 245760,
+            "usage": {
+              "prompt_tokens": 245760,
+              "total_tokens": 262144,
+              "completion_tokens": 16384,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 170.19540156499716,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 16384,
+            "elapsed_seconds": 396.70988132897764,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "8db1122d620d1ea459f95800eddb9cd1c967df41abfcfa5b2bb481269eb5c001",
+            "error": null
+          },
+          {
+            "client": "client-3",
+            "prompt_tokens": 245760,
+            "usage": {
+              "prompt_tokens": 245760,
+              "total_tokens": 262144,
+              "completion_tokens": 16384,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 241.94112815300468,
+            "server_prompt_ids_match": true,
+            "emitted_token_count": 16384,
+            "elapsed_seconds": 409.69991262000985,
+            "finish_reason": "length",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "9984c379659d2253117e4e78185ef300226c0575a647d73e60feb2ea146f8850",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      },
+      "api_checks": [
+        {
+          "check": "completion",
+          "passed": true,
+          "seconds": 0.07231414399575442
+        },
+        {
+          "check": "json",
+          "passed": true,
+          "seconds": 0.5627318359911442
+        },
+        {
+          "check": "tools",
+          "passed": true,
+          "seconds": 0.23771630402188748
+        },
+        {
+          "check": "streaming",
+          "passed": true,
+          "seconds": 0.3331334770191461
+        }
+      ],
+      "raw_path": "logs/swarm-validation-20261025/dflash2-262k4",
+      "artifacts_sha256": {
+        "dflash2-262k4/manifest.json": "c4e21f4271d460a5a8eb91026714430758bf29bffd59a916a0464a01a0e3bbff",
+        "dflash2-262k4/report.json": "885cdaf3e8eaf38ac80956de941e7066504d1bac527b200ce17a0000105d1889",
+        "dflash2-262k4/telemetry.jsonl": "9e302af6c7abeb79e360f8295ca391bd3041f959ff155a9a7a54e627b74943b9",
+        "dflash2-262k4-server.log": "a681d0c053f50be9fa9c99c6141c0cb628fd52583660bda200716503cb49f944",
+        "dflash2-262k4-client-command.json": "b690b08aae994b044ec497ee4d6f76b22aa136a38e59206ce21d57e6b9d8c4c4"
+      }
+    },
+    {
+      "name": "dflash2-1m1",
+      "qualification": "passed",
+      "manifest": {
+        "protocol": "independent-context-v1",
+        "image_id": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+        "command": [
+          "vllm",
+          "serve",
+          "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "8002",
+          "--served-model-name",
+          "glm-5.3-flash-fp4-local",
+          "--additional-config",
+          "{\"glm53_kda_decode_backend\":\"auto\",\"kda_prefill_backend\":\"b12x\"}",
+          "--attention-backend",
+          "B12X",
+          "--block-size",
+          "256",
+          "--chat-template",
+          "/opt/lil/runtime/templates/glm53-flash.jinja",
+          "--compilation-config",
+          "{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+          "--cp-kv-cache-interleave-size",
+          "4",
+          "--cudagraph-capture-sizes",
+          "1",
+          "2",
+          "4",
+          "8",
+          "12",
+          "16",
+          "20",
+          "24",
+          "28",
+          "32",
+          "--dcp-kv-cache-interleave-size",
+          "4",
+          "--decode-context-parallel-size",
+          "2",
+          "--default-chat-template-kwargs",
+          "{\"reasoning_effort\":\"max\",\"clear_thinking\":false}",
+          "--dtype",
+          "bfloat16",
+          "--enable-auto-tool-choice",
+          "--enable-chunked-prefill",
+          "--no-enable-flashinfer-autotune",
+          "--enable-prefix-caching",
+          "--enable-prompt-tokens-details",
+          "--gpu-memory-utilization",
+          "0.985",
+          "--kv-cache-dtype",
+          "fp8",
+          "--kv-cache-memory-bytes",
+          "7650410496",
+          "--linear-backend",
+          "b12x",
+          "--load-format",
+          "safetensors",
+          "--mamba-cache-mode",
+          "align",
+          "--max-cudagraph-capture-size",
+          "32",
+          "--max-model-len",
+          "1048576",
+          "--max-num-batched-tokens",
+          "4096",
+          "--max-num-seqs",
+          "1",
+          "--max-parallel-prefills",
+          "1",
+          "--moe-backend",
+          "b12x",
+          "--override-generation-config",
+          "{\"temperature\":1.0,\"top_p\":0.95}",
+          "--prefill-compute-share",
+          "0.4",
+          "--prefill-schedule-interval",
+          "1",
+          "--quantization",
+          "modelopt_mixed",
+          "--reasoning-parser",
+          "glm45",
+          "--recurrent-checkpoint-policy",
+          "request_boundaries",
+          "--speculative-config",
+          "{\"method\":\"dflash\",\"model\":\"/root/.cache/huggingface/hub/models--incoai--GLM-5.3-Flash-DFlash2/snapshots/bf582e4eacc1810f76656d1811693ff6c6737d2a\",\"num_speculative_tokens\":7,\"draft_tensor_parallel_size\":2,\"quantization\":null,\"kv_cache_dtype\":\"auto\",\"attention_backend\":\"TRITON_ATTN\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"standard\"}",
+          "--tensor-parallel-size",
+          "2",
+          "--tool-call-parser",
+          "glm47"
+        ],
+        "drafter": "dflash2",
+        "mtp_profile": null,
+        "draft_lock": {
+          "model_id": "incoai/GLM-5.3-Flash-DFlash2",
+          "revision": "bf582e4eacc1810f76656d1811693ff6c6737d2a",
+          "license": "CC-BY-NC-ND-4.0",
+          "model_card_url": "https://huggingface.co/incoai/GLM-5.3-Flash-DFlash2/blob/bf582e4eacc1810f76656d1811693ff6c6737d2a/README.md",
+          "config_sha256": "c4aeac0101196a6e26705b34c45230bcd0c7c68ee2d2d1efdb242087f3712573",
+          "readme_sha256": "2014434d3e3639147d35d61259690d585e7820993180e7d579e3b796dddf5a31",
+          "weights_file": "model.safetensors",
+          "weights_bytes": 2342169800,
+          "weights_sha256": "b038e1d9d1e7833fa3880c2c0135ba9b673013f03da1b29fb831931584759dac",
+          "safetensors_header_sha256": "6fa6c59f4d8e07bf4e97d0945abbadf4cfe10903227dc18534a476743b943035",
+          "weight_parameters": 1171080448,
+          "dtype": "BF16"
+        },
+        "container_id": "3e35688a75f30be1e49b72d29ef0da5b5af8e1a49b0673994e8ba62f5e623b3f",
+        "model_revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "client_sha256": "4070aa824fd42cb3369d1ca67e02f70dbed2aba4a6be852bae6cae3d110c738e",
+        "tokenizer_sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
+        "template_sha256": "0c4099f3382d6c92700dfb99725025360966fd73032f0ecf32377c0d9e6309c5",
+        "started_utc": "2026-10-25T15:45:33Z",
+        "window": 1048576,
+        "clients": 1,
+        "sustained": false,
+        "max_output_tokens": 256,
+        "timeout_seconds": 1200,
+        "min_free_mib": 1024,
+        "cases": [
+          {
+            "prompt_tokens": 1048320,
+            "token_sha256": "58794b04cf27d4f485b9c6d8980b3ca8f3c136e5beadfe569ba4276027403fed",
+            "expected": [
+              "cedar-a9d112bc9d32-17",
+              "orchid-a9d112bc9d32-27",
+              "willow-a9d112bc9d32-37"
+            ],
+            "needle_token_positions": [
+              104832,
+              524160,
+              943488
+            ]
+          }
+        ],
+        "prompt_protocol": "Exact token-ID input, independent salted filler/markers, checkpoint low reasoning with explicitly closed think prefix. Sustained mode ignores EOS solely to hold decode active; its tail is not quality-scored."
+      },
+      "report": {
+        "requests_completed_cleanly": true,
+        "retrieval_all_passed": true,
+        "retrieval_format_clean": true,
+        "request_isolation_passed": true,
+        "server_idle_after": true,
+        "preemptions_delta": 0.0,
+        "successes_delta": 1.0,
+        "isolated_success_count": true,
+        "all_client_decode_interval_overlap_seconds": 0.002266952011268586,
+        "decode_interval_basis": "visible_text",
+        "overlapping_decode_without_preemption": false,
+        "peak_running": 1.0,
+        "peak_waiting": 0.0,
+        "peak_kv_cache_usage_fraction": 0.862258953168044,
+        "prompt_tokens_processed_delta": 1048320.0,
+        "min_free_mib": {
+          "0": 1649,
+          "1": 1730
+        },
+        "clients": [
+          {
+            "client": "client-0",
+            "prompt_tokens": 1048320,
+            "usage": {
+              "prompt_tokens": 1048320,
+              "total_tokens": 1048364,
+              "completion_tokens": 44,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "ttft_seconds": 139.4966457170085,
+            "server_prompt_ids_match": null,
+            "emitted_token_count": 0,
+            "elapsed_seconds": 139.52441405400168,
+            "finish_reason": "stop",
+            "retrieved": [
+              true,
+              true,
+              true
+            ],
+            "text_sha256": "c379806ed26bd4cd718dfd3fc7aed3a6d188e5211a08469fbea8a4041df1363d",
+            "error": null
+          }
+        ],
+        "scope": "Synthetic capacity/retrieval screen, not broad accuracy. Decode intervals may include stalls. Running count is not fully resident context count; cache occupancy may include inactive prefixes.",
+        "failure": null,
+        "capacity_passed": true,
+        "passed": true
+      },
+      "api_checks": [
+        {
+          "check": "completion",
+          "passed": true,
+          "seconds": 0.08959603297989815
+        },
+        {
+          "check": "json",
+          "passed": true,
+          "seconds": 0.5847709270310588
+        },
+        {
+          "check": "tools",
+          "passed": true,
+          "seconds": 0.2681432440294884
+        },
+        {
+          "check": "streaming",
+          "passed": true,
+          "seconds": 0.44704816001467407
+        }
+      ],
+      "raw_path": "logs/swarm-validation-20261025/dflash2-1m1",
+      "artifacts_sha256": {
+        "dflash2-1m1/manifest.json": "2a048c1c213203e963e851a685a46173521cfb0bbfb4645a218437db13d699cf",
+        "dflash2-1m1/report.json": "4db5f0a74507b974adf8b6f4fea0a79592dde62c9cbe426785a2b972715fac4e",
+        "dflash2-1m1/telemetry.jsonl": "ee2828c57c5d87937155a4381629e212b8f7cd3cc54ca4b7711b4ebed61da2c1",
+        "dflash2-1m1-server.log": "d06e65e47d806547a548cc9639d8cdc4ea0390e12f56a1db337547c77c41b8db",
+        "dflash2-1m1-client-command.json": "82fa2e48d06ff6b1d3e842db2d518133272b0ad52a55915885982af78bd1cb03"
+      }
+    }
+  ],
+  "restoration": {
+    "original": {
+      "id": "07961c91bc61b0f4fa44616461125c4775a79e6c658fa2a5bb1aa5ddf0186102",
+      "image": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+      "command": [
+        "vllm",
+        "serve",
+        "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--served-model-name",
+        "glm-5.3-flash-fp4-local",
+        "--additional-config",
+        "{\"glm53_kda_decode_backend\":\"auto\",\"kda_prefill_backend\":\"b12x\"}",
+        "--attention-backend",
+        "B12X",
+        "--block-size",
+        "256",
+        "--chat-template",
+        "/opt/lil/runtime/templates/glm53-flash.jinja",
+        "--compilation-config",
+        "{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+        "--cp-kv-cache-interleave-size",
+        "4",
+        "--cudagraph-capture-sizes",
+        "1",
+        "2",
+        "4",
+        "8",
+        "12",
+        "16",
+        "20",
+        "24",
+        "28",
+        "32",
+        "--dcp-kv-cache-interleave-size",
+        "4",
+        "--decode-context-parallel-size",
+        "2",
+        "--default-chat-template-kwargs",
+        "{\"reasoning_effort\":\"max\",\"clear_thinking\":false}",
+        "--dtype",
+        "bfloat16",
+        "--enable-auto-tool-choice",
+        "--enable-chunked-prefill",
+        "--no-enable-flashinfer-autotune",
+        "--enable-prefix-caching",
+        "--enable-prompt-tokens-details",
+        "--gpu-memory-utilization",
+        "0.985",
+        "--kv-cache-dtype",
+        "fp8",
+        "--kv-cache-memory-bytes",
+        "7650410496",
+        "--linear-backend",
+        "b12x",
+        "--load-format",
+        "safetensors",
+        "--mamba-cache-mode",
+        "align",
+        "--max-cudagraph-capture-size",
+        "32",
+        "--max-model-len",
+        "262144",
+        "--max-num-batched-tokens",
+        "4096",
+        "--max-num-seqs",
+        "4",
+        "--max-parallel-prefills",
+        "1",
+        "--moe-backend",
+        "b12x",
+        "--override-generation-config",
+        "{\"temperature\":1.0,\"top_p\":0.95}",
+        "--prefill-compute-share",
+        "0.4",
+        "--prefill-schedule-interval",
+        "1",
+        "--quantization",
+        "modelopt_mixed",
+        "--reasoning-parser",
+        "glm45",
+        "--recurrent-checkpoint-policy",
+        "request_boundaries",
+        "--speculative-config",
+        "{\"method\":\"mtp\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"standard\",\"moe_backend\":\"b12x\",\"attention_backend\":\"B12X\",\"num_speculative_tokens\":3}",
+        "--tensor-parallel-size",
+        "2",
+        "--tool-call-parser",
+        "glm47"
+      ],
+      "running": true
+    },
+    "restored": {
+      "id": "07961c91bc61b0f4fa44616461125c4775a79e6c658fa2a5bb1aa5ddf0186102",
+      "image": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+      "command": [
+        "vllm",
+        "serve",
+        "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--served-model-name",
+        "glm-5.3-flash-fp4-local",
+        "--additional-config",
+        "{\"glm53_kda_decode_backend\":\"auto\",\"kda_prefill_backend\":\"b12x\"}",
+        "--attention-backend",
+        "B12X",
+        "--block-size",
+        "256",
+        "--chat-template",
+        "/opt/lil/runtime/templates/glm53-flash.jinja",
+        "--compilation-config",
+        "{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+        "--cp-kv-cache-interleave-size",
+        "4",
+        "--cudagraph-capture-sizes",
+        "1",
+        "2",
+        "4",
+        "8",
+        "12",
+        "16",
+        "20",
+        "24",
+        "28",
+        "32",
+        "--dcp-kv-cache-interleave-size",
+        "4",
+        "--decode-context-parallel-size",
+        "2",
+        "--default-chat-template-kwargs",
+        "{\"reasoning_effort\":\"max\",\"clear_thinking\":false}",
+        "--dtype",
+        "bfloat16",
+        "--enable-auto-tool-choice",
+        "--enable-chunked-prefill",
+        "--no-enable-flashinfer-autotune",
+        "--enable-prefix-caching",
+        "--enable-prompt-tokens-details",
+        "--gpu-memory-utilization",
+        "0.985",
+        "--kv-cache-dtype",
+        "fp8",
+        "--kv-cache-memory-bytes",
+        "7650410496",
+        "--linear-backend",
+        "b12x",
+        "--load-format",
+        "safetensors",
+        "--mamba-cache-mode",
+        "align",
+        "--max-cudagraph-capture-size",
+        "32",
+        "--max-model-len",
+        "262144",
+        "--max-num-batched-tokens",
+        "4096",
+        "--max-num-seqs",
+        "4",
+        "--max-parallel-prefills",
+        "1",
+        "--moe-backend",
+        "b12x",
+        "--override-generation-config",
+        "{\"temperature\":1.0,\"top_p\":0.95}",
+        "--prefill-compute-share",
+        "0.4",
+        "--prefill-schedule-interval",
+        "1",
+        "--quantization",
+        "modelopt_mixed",
+        "--reasoning-parser",
+        "glm45",
+        "--recurrent-checkpoint-policy",
+        "request_boundaries",
+        "--speculative-config",
+        "{\"method\":\"mtp\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"standard\",\"moe_backend\":\"b12x\",\"attention_backend\":\"B12X\",\"num_speculative_tokens\":3}",
+        "--tensor-parallel-size",
+        "2",
+        "--tool-call-parser",
+        "glm47"
+      ],
+      "running": true
+    },
+    "api_checks": [
+      {
+        "check": "completion",
+        "passed": true,
+        "seconds": 0.24619367002742365
+      },
+      {
+        "check": "json",
+        "passed": true,
+        "seconds": 0.5676475869840942
+      },
+      {
+        "check": "tools",
+        "passed": true,
+        "seconds": 0.2596462710062042
+      },
+      {
+        "check": "streaming",
+        "passed": true,
+        "seconds": 0.372438429039903
+      }
+    ]
+  },
+  "cpu_validation": {
+    "tests": 136,
+    "result": "passed",
+    "zig_version": "0.17.0",
+    "log_sha256": "3adf343676a484742caafe258c78502919fc08c00cc8793bf93aabd71464d0f0"
+  },
+  "scope": "Exact-token synthetic capacity, retrieval, isolation and concurrent decode; API completion/JSON/tools/streaming. First MTP attempt used shorter output than the successful repeat. DFlash2 uses FP8 draft KV at 262K/four and BF16 draft KV at 1M/one."
+}
