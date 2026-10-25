@@ -75,7 +75,7 @@ def shard_tensor_bytes(file, expected_names):
     return end
 
 
-def inspect_model(hub, revision=REVISION, model_dir=None):
+def select_model_path(hub, revision=REVISION, model_dir=None, *, allow_missing=False):
     hub = Path(hub).resolve()
     home = Path(os.environ.get('HF_HOME', str(hub.parent)))
     if model_dir:
@@ -88,11 +88,22 @@ def inspect_model(hub, revision=REVISION, model_dir=None):
                       hub / 'glm-5.3-flash-fp4-local']
     existing = [p for p in candidates if (p / 'config.json').is_file()]
     if not existing:
+        if allow_missing:
+            return candidates[0].resolve()
         raise ValueError('NVIDIA FP4 checkpoint not found. Checked: ' + ', '.join(map(str, candidates))
                          + '. Set MODEL_DIR to the complete local checkpoint. No weights will be downloaded.')
     if not model_dir and len(existing) > 1:
         raise ValueError('Multiple local copies found; select one explicitly with MODEL_DIR: ' + ', '.join(map(str, existing)))
-    path = existing[0].resolve()
+    return existing[0].resolve()
+
+
+def plan_model(hub, revision=REVISION, model_dir=None):
+    return mount_paths(hub, select_model_path(hub, revision, model_dir, allow_missing=True))
+
+
+def inspect_model(hub, revision=REVISION, model_dir=None):
+    hub = Path(hub).resolve()
+    path = select_model_path(hub, revision, model_dir)
     config = json.loads((path / 'config.json').read_text())
     quant = config.get('quantization_config', {})
     if config.get('model_type') != 'glm5_next' or quant.get('quant_method') != 'modelopt':
@@ -144,7 +155,7 @@ def main():
         hub = Path(os.environ.get('HF_HUB_CACHE', '/models_engrams/huggingface/hub'))
         revision = os.environ.get('MODEL_REVISION', REVISION)
         directory = os.environ.get('MODEL_DIR') or None
-        result = (mount_paths(hub, directory or hub / 'models--nvidia--GLM-5.3-Flash-FP4-Local' / 'snapshots' / revision)
+        result = (plan_model(hub, revision, directory)
                   if args.plan else inspect_model(hub, revision, directory))
         print(json.dumps(result, indent=2))
     except (ValueError, OSError, KeyError) as exc:

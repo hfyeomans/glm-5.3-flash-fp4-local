@@ -52,6 +52,35 @@ class ModelTests(unittest.TestCase):
         self.assertEqual(r['bytes'], (self.snapshot/'model-00001.safetensors').stat().st_size)
         self.assertTrue(r['container_path'].startswith(str(model.CONTAINER_HUB)))
 
+    def test_plan_uses_same_automatically_discovered_local_copy(self):
+        local = self.base/'nvidia/glm-5.3-flash-fp4-local'
+        local.parent.mkdir()
+        self.snapshot.rename(local)
+        with patch.dict(os.environ, {'HF_HOME': str(self.base)}):
+            planned = model.plan_model(self.hub, TEST_REV)
+            actual = model.inspect_model(self.hub, TEST_REV)
+        for key in ('path', 'mount_source', 'mount_target', 'container_path'):
+            self.assertEqual(planned[key], actual[key])
+        self.assertEqual(planned['container_path'], '/model')
+
+    def test_plan_and_inspection_both_refuse_ambiguous_local_copies(self):
+        checkpoint(self.base/'glm-5.3-flash-fp4-local')
+        with patch.dict(os.environ, {'HF_HOME': str(self.base)}):
+            for resolve in (model.plan_model, model.inspect_model):
+                with self.subTest(resolve=resolve.__name__), self.assertRaisesRegex(ValueError, 'Multiple local copies'):
+                    resolve(self.hub, TEST_REV)
+
+    def test_plan_without_weights_uses_requested_snapshot_or_directory(self):
+        shutil.rmtree(self.hub)
+        with patch.dict(os.environ, {'HF_HOME': str(self.base)}):
+            planned = model.plan_model(self.hub, TEST_REV)
+            self.assertEqual(planned['path'], str(self.snapshot))
+            self.assertEqual(planned['mount_source'], str(self.hub))
+            local = self.base/'absent-model'
+            planned = model.plan_model(self.hub, TEST_REV, local)
+            self.assertEqual(planned['path'], str(local))
+            self.assertEqual(planned['container_path'], '/model')
+
     def test_missing_shard_fails_without_downloading(self):
         (self.snapshot/'model-00001.safetensors').unlink()
         with self.assertRaisesRegex(ValueError,'Missing, empty or broken shard'):
