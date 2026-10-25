@@ -62,9 +62,13 @@ container's configuration unchanged.
 | `MAX_NUM_BATCHED_TOKENS` | `4096` | Scheduler token budget per iteration |
 | `GPU_MEMORY_UTILIZATION` | `0.985` | Preserve the measured baseline fraction |
 | `KV_CACHE_MEMORY_BYTES` | `7650410496` | Fixed FP8 KV allocation **per GPU** |
-| `MTP_ENABLED` | `1` | Use `0` for a controlled plain-decoding comparison |
+| `DRAFTER` | `mtp` | `mtp`, experimental `dflash2`, or `none`; explicit value overrides `MTP_ENABLED` |
+| `MTP_ENABLED` | `1` | Legacy switch: `0` selects plain decoding when `DRAFTER` is unset |
 | `LOAD_FORMAT` | `safetensors` | Qualified loader; InstantTensor remains experimental here |
 | `RESTART_POLICY` | `no` | Inspect failures; optional `on-failure:3` after acceptance |
+
+The [DFlash2 experiment](docs/DFLASH2-FEASIBILITY.md) includes an offline-validated
+selector and a 128K probe profile. GPU compatibility, accuracy and speed are pending.
 
 For **262,144 tokens per request and four active sequences**, change only these
 lines in `.env`, retaining the baseline memory and kernel settings:

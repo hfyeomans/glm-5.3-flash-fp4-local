@@ -1,0 +1,132 @@
+{
+  "reviewed_utc": "2026-10-25T02:44:56.755226+00:00",
+  "branch": "research/dflash2-feasibility",
+  "base_commit": "4153ef5",
+  "scope": "Source review and CPU/offline validation; no GPU inference or service changes",
+  "target": {
+    "model_id": "nvidia/GLM-5.3-Flash-FP4-Local",
+    "revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+    "format": "modelopt_mixed, original NVIDIA CSF32 compressed scales"
+  },
+  "draft": {
+    "model_id": "incoai/GLM-5.3-Flash-DFlash2",
+    "revision": "bf582e4eacc1810f76656d1811693ff6c6737d2a",
+    "license": "CC-BY-NC-ND-4.0",
+    "model_card_url": "https://huggingface.co/incoai/GLM-5.3-Flash-DFlash2/blob/bf582e4eacc1810f76656d1811693ff6c6737d2a/README.md",
+    "config_sha256": "c4aeac0101196a6e26705b34c45230bcd0c7c68ee2d2d1efdb242087f3712573",
+    "readme_sha256": "2014434d3e3639147d35d61259690d585e7820993180e7d579e3b796dddf5a31",
+    "weights_file": "model.safetensors",
+    "weights_bytes": 2342169800,
+    "weights_sha256": "b038e1d9d1e7833fa3880c2c0135ba9b673013f03da1b29fb831931584759dac",
+    "safetensors_header_sha256": "6fa6c59f4d8e07bf4e97d0945abbadf4cfe10903227dc18534a476743b943035",
+    "weight_parameters": 1171080448,
+    "dtype": "BF16"
+  },
+  "local_payload_verification": {
+    "path": "/models_engrams/huggingface/hub/models--incoai--GLM-5.3-Flash-DFlash2/snapshots/bf582e4eacc1810f76656d1811693ff6c6737d2a",
+    "actual_sha256": "b038e1d9d1e7833fa3880c2c0135ba9b673013f03da1b29fb831931584759dac",
+    "matches_hub_lfs": true
+  },
+  "image": "ghcr.io/local-inference-lab/vllm:release-10152026@sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+  "vllm_image_source_sha256": {
+    "config/parallel.py": "e3802272e792ad710b8a55233bdc7ba7cd08bcee79c5259098b34bcab2b431a7",
+    "config/speculative.py": "44d44520dbf0007752b1c7ca5f173a3d14b09b394b32c053dd4c9d6da16f2777",
+    "model_executor/models/qwen3_dflash.py": "6707af08db78bde3bbe010aac9104a840c57df2215f114055283377cd96011ed",
+    "model_executor/models/qwen3_dflash2.py": "e751759734f6859c89d68be29d0e90743f86830b378c3a41a97692fd825be495",
+    "model_executor/models/registry.py": "3f76aeed12ccee18c66706faa097d3963f0540757149cf76faa20ef64821d68a",
+    "models/glm5next/nvidia/kda.py": "58d50c694fdfcee19b042ab4d6f86202fea73ff70f39ed8fa1bbbec16fa2d0bf",
+    "models/glm5next/nvidia/model.py": "6bc553844f264709f003b523eae48fcb22f4d06c670fd0cf4f62e641a3128823",
+    "models/glm5next/nvidia/mtp.py": "2c3c713aa393f769a973c4f339595668c20c7aa7fb6cdfdf91ddef65365b7449",
+    "transformers_utils/configs/eagle.py": "a150d5347cf7c7b53ce8d7e6711c2e85656df1ceeef28c921f90b52946b7203a",
+    "v1/attention/backends/b12x.py": "9d984fe913312a08d2cfa4462c09b57def03e538532b05eed3fc46bb4119bf85",
+    "v1/attention/ops/b12x_noncausal.py": "7885bd9365f793f91e5ca95ee11da0cf81eac1ffca0a409b4b5597235857f075",
+    "v1/core/kv_cache_coordinator.py": "f76fd21d0b2d3c9f24a7b44457a3ba2cd6d8c8a51b1f7ec183bd729d43a48f2a",
+    "v1/core/kv_cache_utils.py": "77d6ae740c7679f600fab3caf61c3de370a4303beef76673ef3538b38b4c2ed8",
+    "v1/spec_decode/dflash.py": "076a7cef13a781a6d2cc2d40f3cd6f9043ee4b64a00a63ba2ece7866b86319da",
+    "v1/worker/gpu/spec_decode/__init__.py": "e805af77452096c569bc236e97878e777019c1116503262a779273086e05a664",
+    "v1/worker/gpu/spec_decode/dflash/speculator.py": "4a7cd216285525d836fe96c5c0e20f118831e04eab113b3a482e5f431ff71642",
+    "v1/worker/gpu/spec_decode/dflash/utils.py": "801b26b2cb26f6ea9577d027d6df94178845adab9d953ad8b895954b34414bf0",
+    "v1/worker/gpu/spec_decode/dflash2/speculator.py": "b70043550938a1df9aecc85d8c8224c38c929ca34f68834572f6e723854d2027",
+    "v1/worker/gpu/spec_decode/eagle/speculator.py": "746e318a4f266d75522ff7f3731ea9b4527b7b4824f71364d1a62184ea1f7b3d",
+    "v1/worker/gpu/spec_decode/speculator.py": "0c56b8cddb6a5c4b772b9ae134d8700a087175ecf71263f3abe8cbf011203912"
+  },
+  "tensorfold_local_source_sha256": {
+    "families/glm/cuda_engine.zig": "40a869f3a67218ccda79d11eaf85bfac889a5221e493140459b06fa7d4abded3",
+    "families/glm/dflash_load.zig": "c7012b7875438381885f89065209012aadf1b07cf5a0e7c5ad0affe358bab31d",
+    "families/glm/dflash.zig": "59967a417948d7593a70d90c8fd04b0c4774571bc7a287266d738eab8443c269",
+    "families/glm/dflash_block.zig": "d4d6e0da21bde1ccc70e3b5d644de924509b4781c00ea9c305a59ff7754dd215",
+    "families/glm/cuda_taps.zig": "1c6e37f2162aab189374f8c17240c53490805d284f9ce36d78b23ed4b6c358bf"
+  },
+  "upstream_prs": [
+    {
+      "number": 56983,
+      "url": "https://github.com/vllm-project/vllm/pull/56983",
+      "state": "closed",
+      "merged": true,
+      "head_sha": "306f565407f3e70cf238eac8bd350f234de6e2d6",
+      "merge_commit_sha": "2274e86842d6e59a5f9f9d1fb6cc1dd2d2bf8350",
+      "merged_at": "2026-10-08T18:41:12Z"
+    },
+    {
+      "number": 55682,
+      "url": "https://github.com/vllm-project/vllm/pull/55682",
+      "state": "open",
+      "merged": false,
+      "head_sha": "7998c9aa8247008d7b3493bfd32028dd21db21e1",
+      "merge_commit_sha": null,
+      "merged_at": null
+    },
+    {
+      "number": 55423,
+      "url": "https://github.com/vllm-project/vllm/pull/55423",
+      "state": "closed",
+      "merged": false,
+      "head_sha": "bbdd543db261679bd5b219fd1b5671fa1b7e3c21",
+      "merge_commit_sha": "ac877b1ca548f59e935186b5dc09b54bd3d86c46",
+      "merged_at": null
+    }
+  ],
+  "cpu_checks": {
+    "command": "./scripts/check.sh",
+    "tests": 78,
+    "passed": true,
+    "log_sha256": "352ca888e289bfdb40f308341fabd1a8e303235dd6a4dee1903da5b38f880ac0",
+    "issues_found_and_fixed": [
+      "Duplicate Hub mount in dry run when host path has a symlink alias",
+      "Existing benchmark startup omitted sys import and ROOT definition"
+    ],
+    "coverage": [
+      "Pinned draft config/header/size and full-payload corruption checks",
+      "Symlink containment",
+      "Missing draft refused before container stop",
+      "MTP default and legacy selector precedence",
+      "All three dry-run modes, fixed target budget",
+      "MTP benchmark and capacity harnesses refuse DFlash2 labels"
+    ]
+  },
+  "dry_run_sha256": {
+    "mtp": "765581ee0ac82b8846839bef85be0930bbdb25f8fc12c8e341d66d24b1849cf2",
+    "dflash2": "b93d80f8de2c4719f4c39edb5cc62779906021f23fba259678442dce86dfff2c",
+    "none": "52da69715ee51130ce9704e9e93fc862707a724040b7ac23f5c2a016d5c2b962"
+  },
+  "probe_candidate": {
+    "tested_on_gpu": false,
+    "max_model_len": 131072,
+    "max_num_seqs": 1,
+    "kv_cache_memory_bytes_per_gpu": 3221225472,
+    "gpu_memory_utilization": 0.985,
+    "draft_tokens": 7
+  },
+  "decisions": {
+    "vllm": "Candidate for first GPU qualification",
+    "tensorfold": "Defer: resident CSF guard rejects external drafter; needs engine integration",
+    "default": "mtp"
+  },
+  "remaining": [
+    "Separately labelled DFlash2 benchmark mode",
+    "GPU loader/cache geometry/headroom validation",
+    "Greedy/sampling and rejection rollback checks",
+    "Matched MTP/plain/DFlash2 latency and quality",
+    "Context ladder after reduced-context qualification"
+  ]
+}

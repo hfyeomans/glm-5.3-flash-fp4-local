@@ -1,5 +1,9 @@
 """Prevent queued/evicted requests and reused cache from qualifying simultaneous context."""
 import importlib.util
+import json
+import sys
+import tempfile
+from unittest import mock
 from pathlib import Path
 import unittest
 
@@ -9,6 +13,23 @@ spec.loader.exec_module(bench)
 
 
 class ConcurrentEvidenceTests(unittest.TestCase):
+    def test_external_drafter_cannot_enter_mtp_capacity_baseline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / 'result'
+            state = {'State': {'Running': True}, 'Config': {
+                'Labels': {'local.glm53.recipe': 'glm53-fp4-local-v1'},
+                'Cmd': ['vllm', 'serve', '/target/' + bench.REVISION,
+                        '--speculative-config', '{"method":"dflash"}']},
+                'HostConfig': {'DeviceRequests': [{'DeviceIDs': ['0', '1']}]}}
+            argv = ['concurrent_context.py', '--window', '8192', '--clients', '1', '--output', str(output)]
+            with mock.patch.object(sys, 'argv', argv), mock.patch.object(
+                    bench.subprocess, 'check_output', return_value=json.dumps([state])), mock.patch.object(
+                    bench, 'metrics') as metrics:
+                with self.assertRaisesRegex(ValueError, 'refuses DFlash2'):
+                    bench.main()
+                metrics.assert_not_called()
+            self.assertFalse(output.exists())
+
     def data(self):
         rows = [dict(client=str(i), prompt_tokens=1000, done=True, text='answer',
                      usage={'prompt_tokens': 1000, 'completion_tokens': 128,

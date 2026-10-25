@@ -225,6 +225,8 @@ def main():
         raise ValueError('Expected exactly two GPU device ids on the serving container')
     if REVISION not in ' '.join(command) or '--speculative-config' not in command:
         raise ValueError('Expected pinned checkpoint and MTP-on baseline')
+    if json.loads(command[command.index('--speculative-config') + 1]).get('method') != 'mtp':
+        raise ValueError('This MTP baseline harness refuses DFlash2/other drafters')
     for key, expected in {'--max-model-len': '1048576', '--max-num-seqs': '8',
                           '--gpu-memory-utilization': '0.985', '--kv-cache-memory-bytes': '7650410496'}.items():
         if command[command.index(key) + 1] != expected:

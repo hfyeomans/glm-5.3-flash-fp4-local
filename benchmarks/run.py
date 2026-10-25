@@ -9,12 +9,15 @@ import random
 import re
 import statistics
 import subprocess
+import sys
 import time
 import urllib.request
 import uuid
 from urllib.parse import urlparse
 
 from prepare import digest
+
+ROOT = Path(__file__).resolve().parents[1]
 
 METRICS = ('vllm:request_prefill_time_seconds', 'vllm:request_decode_time_seconds',
            'vllm:time_to_first_token_seconds', 'vllm:request_prompt_tokens', 'vllm:request_generation_tokens')
@@ -130,6 +133,8 @@ def main():
     model = json.loads(subprocess.check_output([sys.executable, str(ROOT / 'scripts/model.py')], text=True))
     if args.backend == 'vllm':
         enabled = '--speculative-config' in command
+        if enabled and json.loads(command[command.index('--speculative-config') + 1]).get('method') != 'mtp':
+            raise ValueError('This MTP comparison refuses other drafters; DFlash2 needs a separately labelled benchmark mode')
         if enabled != (args.mtp == 'on'):
             raise ValueError('Requested MTP mode does not match vLLM launch')
         settings = {'command': command}

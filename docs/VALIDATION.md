@@ -863,3 +863,26 @@ sampling from the container, `mtp=off` prefill controls, strict
 `prompt_tokens_details.cached_tokens` and the pinned `squad.json` hash — are enforced
 by code but not yet exercised against live servers; they take effect on the next
 qualification run and its receipts are the confirmation.
+
+## DFlash2 feasibility and selector (2026-10-25)
+
+Isolated branch `research/dflash2-feasibility`, based on `4153ef5`: added
+`DRAFTER=mtp|dflash2|none`, retaining the MTP default and legacy switch. The pinned
+Inco AI GLM-5.3-Flash-DFlash2 weights were already cached; the full 2,342,169,800-byte
+file passed SHA256 verification. No weights were downloaded.
+
+`./scripts/check.sh` passed **78 CPU tests**, including offline draft identity,
+symlink containment, selector precedence, unchanged target budgets and refusal
+before container stop when the draft is missing. Both MTP timing/capacity
+harnesses reject external drafts. Initial checks exposed a duplicate dry-run Hub
+mount through a host path alias and missing `sys`/`ROOT` definitions in the
+existing benchmark startup; both were fixed. All three launch previews passed.
+
+Read-only inspection of the pinned image found dedicated DFlash2 execution,
+GLM mHC auxiliary capture and DCP-replicated draft-cache grouping. TensorFold's
+resident-CSF path explicitly rejects an external drafter. No GPU inference,
+service restart or TensorFold modification was performed. The 128K/one-sequence,
+3 GiB-KV probe profile remains untested on GPUs.
+
+[Review and qualification gates](DFLASH2-FEASIBILITY.md) ·
+[Source hashes, pins and check receipt](../experiments/dflash2/results/feasibility-v1.json).

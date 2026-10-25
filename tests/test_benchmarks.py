@@ -1,5 +1,8 @@
 """Protect timing isolation against concurrent traffic and token-count mismatches."""
 import importlib.util
+import json
+import tempfile
+from unittest import mock
 from pathlib import Path
 import sys
 import unittest
@@ -12,6 +15,27 @@ spec.loader.exec_module(bench)
 
 
 class TimingIsolationTests(unittest.TestCase):
+    def test_external_drafter_cannot_be_recorded_as_mtp(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            workload = {'cases': [{'name': 'probe'}]}
+            workload['workloads_sha256'] = bench.digest(workload)
+            source = root / 'workloads.json'
+            source.write_text(json.dumps(workload))
+            output = root / 'result'
+            state = {'State': {'Running': True}, 'Config': {
+                'Env': [], 'Labels': {'local.glm53.recipe': 'glm53-fp4-local-v1'},
+                'Cmd': ['vllm', 'serve', '/target', '--speculative-config', '{"method":"dflash"}']}}
+            argv = ['run.py', '--backend', 'vllm', '--mtp', 'on',
+                    '--workloads', str(source), '--output', str(output)]
+            with mock.patch.object(sys, 'argv', argv), mock.patch.object(
+                    bench.subprocess, 'check_output', side_effect=[json.dumps([state]), '{}']), mock.patch.object(
+                    bench, 'call') as request:
+                with self.assertRaisesRegex(ValueError, 'refuses other drafters'):
+                    bench.main()
+                request.assert_not_called()
+            self.assertFalse(output.exists())
+
     def sample(self):
         before = {name + suffix: 100.0 for name in bench.METRICS for suffix in ('_sum', '_count')}
         after = before.copy()
