@@ -67,8 +67,10 @@ container's configuration unchanged.
 | `LOAD_FORMAT` | `safetensors` | Qualified loader; InstantTensor remains experimental here |
 | `RESTART_POLICY` | `no` | Inspect failures; optional `on-failure:3` after acceptance |
 
-The [DFlash2 experiment](docs/DFLASH2-FEASIBILITY.md) includes an offline-validated
-selector and a 128K probe profile. GPU compatibility, accuracy and speed are pending.
+The [DFlash2 experiment](experiments/dflash2/RESULTS.md) runs with Triton draft
+attention and B12X target attention. MTP was faster in the matched 8K/32K screen;
+near-1M retrieval and four concurrent 262K windows passed. The four-stream
+profile uses FP8 draft KV; broader accuracy checks remain pending.
 
 For **262,144 tokens per request and four active sequences**, change only these
 lines in `.env`, retaining the baseline memory and kernel settings:

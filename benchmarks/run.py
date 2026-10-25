@@ -42,12 +42,13 @@ def metrics(base):
     totals = {}
     for line in raw.splitlines():
         match = re.match(r'([^\s{]+)(?:\{[^}]*\})?\s+([^\s]+)', line)
-        if match and match[1].endswith(('_sum', '_count')):
+        if match:
             key = match[1]
-            if any(key == name + suffix for name in METRICS for suffix in ('_sum', '_count')):
+            if (key in ('vllm:num_requests_running', 'vllm:num_requests_waiting') or
+                    any(key == name + suffix for name in METRICS for suffix in ('_sum', '_count'))):
                 totals[key] = totals.get(key, 0.0) + float(match[2])
-    if len(totals) != 2 * len(METRICS):
-        raise ValueError('Missing required vLLM metrics')
+    if len(totals) != 2 * len(METRICS) + 2:
+        raise ValueError('Missing required vLLM metrics or scheduler gauges')
     return totals
 
 

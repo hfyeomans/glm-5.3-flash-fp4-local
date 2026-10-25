@@ -27,6 +27,9 @@ retain separate image pins and historical measurements. The original
 [loader/kernel plan](COMPRESSED-SCALES-PLAN.md) and
 [validation record](../docs/VALIDATION.md) preserve failures and subsequent fixes.
 
+External DFlash2 integration is deferred; the [implementation and qualification plan](DFLASH2-PLAN.md)
+records the resident-scale blocker, head dependencies and memory requirements.
+
 ## Fixed ingredients
 
 | Ingredient | Pin |

@@ -1,6 +1,7 @@
 """Protect timing isolation against concurrent traffic and token-count mismatches."""
 import importlib.util
 import json
+import io
 import tempfile
 from unittest import mock
 from pathlib import Path
@@ -35,6 +36,17 @@ class TimingIsolationTests(unittest.TestCase):
                     bench.main()
                 request.assert_not_called()
             self.assertFalse(output.exists())
+
+    def test_metric_reader_preserves_required_scheduler_gauges(self):
+        lines = [f'{name}{suffix} 1' for name in bench.METRICS for suffix in ('_sum', '_count')]
+        gauges = ['vllm:num_requests_running{engine="0"} 2', 'vllm:num_requests_waiting 3']
+        with mock.patch.object(bench.urllib.request, 'urlopen', return_value=io.BytesIO(('\n'.join(lines+gauges)).encode())):
+            metrics = bench.metrics('http://127.0.0.1:8000')
+        self.assertEqual(metrics['vllm:num_requests_running'], 2)
+        self.assertEqual(metrics['vllm:num_requests_waiting'], 3)
+        with mock.patch.object(bench.urllib.request, 'urlopen', return_value=io.BytesIO(('\n'.join(lines)).encode())):
+            with self.assertRaisesRegex(ValueError, 'scheduler gauges'):
+                bench.metrics('http://127.0.0.1:8000')
 
     def sample(self):
         before = {name + suffix: 100.0 for name in bench.METRICS for suffix in ('_sum', '_count')}

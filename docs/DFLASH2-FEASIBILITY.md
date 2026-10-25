@@ -1,8 +1,10 @@
 # DFlash2: vLLM first, TensorFold deferred
 
 **Decision:** qualify DFlash2 in the pinned vLLM image first. Keep MTP as the default.
-The selector and offline checks are implemented on `research/dflash2-feasibility`;
-GPU fit, accuracy and speed are pending. The serving instance was left running.
+The selector is implemented on `research/dflash2-feasibility`. GPU tests passed
+API checks, near-1M retrieval and four concurrent 262K windows; MTP remains
+faster in matched short timing cells.
+See [measured results](../experiments/dflash2/RESULTS.md).
 
 ## Which draft and which license?
 
@@ -43,8 +45,10 @@ independently configured. See the [pinned config](https://huggingface.co/incoai/
 The vLLM image remains `release-10152026`, digest
 `sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29`.
 Its copied source has dedicated DFlash2 model/selector code, GLM auxiliary-state
-capture that completes deferred mHC post-processing, non-causal B12X attention,
-and separate DCP-replicated draft KV grouping. These are encouraging integration
+capture that completes deferred mHC post-processing and separate DCP-replicated
+draft KV grouping. The first GPU launch rejected regular B12X draft attention
+for its 256-token pages and replicated DCP KV. The draft now uses `TRITON_ATTN`;
+target attention stays B12X. These are encouraging integration
 points; the FP4 target's shared head, host embeddings, graph capture and rejection
 rollback still need execution tests on our SM120 cards.
 
@@ -72,7 +76,8 @@ The draft defaults to its pinned snapshot under `HF_CACHE_ROOT/hub` and mounts
 read-only. `DFLASH2_MODEL_DIR` can point to a complete copy of that same checkpoint.
 Startup validates config, tensor header and file size before any container stop;
 `--verify` additionally hashes the full payload. `DFLASH2_NUM_SPECULATIVE_TOKENS`
-accepts 1–7. Target memory, kernels and bootstrap settings stay unchanged by the
+accepts 1–7. `DFLASH2_KV_CACHE_DTYPE=auto|fp8` independently selects BF16 or FP8
+draft-cache storage; the default is `auto`. Target memory, kernels and bootstrap settings stay unchanged by the
 selector. New launch receipts identify the selected drafter explicitly.
 
 Use [the candidate probe settings](../experiments/dflash2/vllm-probe.env.example)
@@ -114,8 +119,8 @@ A useful promotion target is at least 10% lower end-to-end latency on decode-hea
 workloads, with any TTFT regression above 5% called out as a tradeoff.
 
 The existing MTP comparison and concurrency harnesses now reject external drafters.
-Before these GPU comparisons, add a separately labelled DFlash2 benchmark mode
-with container/endpoint binding and draft identity in the receipt.
+The [experimental comparison client](../experiments/dflash2/bench.py) records
+DFlash2 explicitly, including container/endpoint binding and draft identity.
 
 ## Why TensorFold comes later
 
@@ -134,3 +139,8 @@ and 1,693/1,846 MiB at 1M with mapped embeddings. The latter leaves only 157 MiB
 above the headroom floor. Start any native exploration at short context, retaining
 GPU embeddings below the 1M profile. No TensorFold source or profile was changed
 in this review. [Capacity evidence](../tensorfold/csf-resident/RESULTS.md).
+
+Both capacity targets passed: **262,144 × four concurrent requests** with FP8
+draft KV and **1,048,576 × one request** with BF16 draft KV. The 99% attempt
+failed CUDA startup's free-memory gate; both successful profiles use 98.5% with
+7.125 GiB explicit KV allocation per GPU. See the measured results above.

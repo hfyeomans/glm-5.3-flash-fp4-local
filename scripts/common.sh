@@ -15,7 +15,7 @@ if [[ -f "$REPO_ROOT/.env" ]]; then
     [[ "$line" == *=* ]] || fail '.env requires literal KEY=value lines.'
     key=${line%%=*}; value=${line#*=}
     case "$key" in
-      HF_CACHE_ROOT|MODEL_DIR|MODEL_REVISION|LOAD_FORMAT|MTP_ENABLED|DRAFTER|DFLASH2_MODEL_DIR|DFLASH2_NUM_SPECULATIVE_TOKENS|IMAGE|CONTAINER_NAME|GPUS|HOST|PORT|SERVED_MODEL_NAME|RUNTIME_VOLUME|MAX_MODEL_LEN|MAX_NUM_SEQS|MAX_NUM_BATCHED_TOKENS|GPU_MEMORY_UTILIZATION|KV_CACHE_MEMORY_BYTES|MIN_GPU_FREE_MIB|WAIT_TIMEOUT|SMOKE_TIMEOUT|RESTART_POLICY) ;;
+      HF_CACHE_ROOT|MODEL_DIR|MODEL_REVISION|LOAD_FORMAT|MTP_ENABLED|DRAFTER|DFLASH2_MODEL_DIR|DFLASH2_NUM_SPECULATIVE_TOKENS|DFLASH2_KV_CACHE_DTYPE|IMAGE|CONTAINER_NAME|GPUS|HOST|PORT|SERVED_MODEL_NAME|RUNTIME_VOLUME|MAX_MODEL_LEN|MAX_NUM_SEQS|MAX_NUM_BATCHED_TOKENS|GPU_MEMORY_UTILIZATION|KV_CACHE_MEMORY_BYTES|MIN_GPU_FREE_MIB|WAIT_TIMEOUT|SMOKE_TIMEOUT|RESTART_POLICY) ;;
       *) fail "Unsupported .env key: $key (credentials belong in exported environment variables)." ;;
     esac
     if [[ ! -v "$key" ]]; then export "$key=$value"; fi
@@ -36,6 +36,7 @@ fi
 export DRAFTER
 export DFLASH2_MODEL_DIR=${DFLASH2_MODEL_DIR:-}
 export DFLASH2_NUM_SPECULATIVE_TOKENS=${DFLASH2_NUM_SPECULATIVE_TOKENS:-7}
+export DFLASH2_KV_CACHE_DTYPE=${DFLASH2_KV_CACHE_DTYPE:-auto}
 export MODEL_REVISION=${MODEL_REVISION:-76348ddb2be2e35e39ecfc00e75dc07703f4f3d5}
 export IMAGE=${IMAGE:-ghcr.io/local-inference-lab/vllm:release-10152026@sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29}
 export CONTAINER_NAME=${CONTAINER_NAME:-glm53-fp4-tp2}
@@ -79,6 +80,7 @@ for key in ['CONTAINER_NAME','RUNTIME_VOLUME']:
 require(re.fullmatch(r'[0-9a-f]{40}',e['MODEL_REVISION']), 'MODEL_REVISION must be a full commit SHA')
 require(e['MTP_ENABLED'] in ['0','1'], 'MTP_ENABLED must be 0 or 1')
 require(e['DRAFTER'] in ['mtp','dflash2','none'], 'DRAFTER must be mtp, dflash2 or none')
+require(e['DFLASH2_KV_CACHE_DTYPE'] in ['auto','fp8'], 'DFLASH2_KV_CACHE_DTYPE must be auto or fp8')
 require(e['DFLASH2_NUM_SPECULATIVE_TOKENS'].isdigit() and 1 <= int(e['DFLASH2_NUM_SPECULATIVE_TOKENS']) <= 7, 'DFLASH2_NUM_SPECULATIVE_TOKENS must be 1..7')
 require(e['LOAD_FORMAT'] in ['instanttensor','safetensors'], 'LOAD_FORMAT must be instanttensor or safetensors')
 require(e['RESTART_POLICY'] in ['no','unless-stopped','on-failure','on-failure:3'], 'Unsupported RESTART_POLICY')
@@ -138,11 +140,11 @@ build_serve_args() {
     SERVE_ARGS+=(--speculative-config '{"method":"mtp","draft_sample_method":"probabilistic","rejection_sample_method":"standard","moe_backend":"b12x","attention_backend":"B12X","num_speculative_tokens":3}')
   elif [[ "$DRAFTER" == dflash2 ]]; then
     local spec
-    spec=$(python3 - "$DRAFT_CONTAINER_PATH" "$DFLASH2_NUM_SPECULATIVE_TOKENS" <<'PYSPEC'
+    spec=$(python3 - "$DRAFT_CONTAINER_PATH" "$DFLASH2_NUM_SPECULATIVE_TOKENS" "$DFLASH2_KV_CACHE_DTYPE" <<'PYSPEC'
 import json, sys
 print(json.dumps({'method':'dflash', 'model':sys.argv[1], 'num_speculative_tokens':int(sys.argv[2]),
-                  'draft_tensor_parallel_size':2, 'quantization':None, 'kv_cache_dtype':'auto',
-                  'attention_backend':'B12X', 'draft_sample_method':'probabilistic',
+                  'draft_tensor_parallel_size':2, 'quantization':None, 'kv_cache_dtype':sys.argv[3],
+                  'attention_backend':'TRITON_ATTN', 'draft_sample_method':'probabilistic',
                   'rejection_sample_method':'standard'}, separators=(',',':')))
 PYSPEC
 )
