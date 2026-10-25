@@ -5,20 +5,16 @@
 Use the pinned NVIDIA target and Inco AI draft from
 [the feasibility review](../../docs/DFLASH2-FEASIBILITY.md).
 The initial comparison uses 128K / one sequence / 3 GiB KV per GPU.
-Capacity profiles passed near-1M retrieval and four concurrent 262K windows. Target attention stays
-B12X; the draft uses Triton because this image's regular B12X backend rejects
+Target attention stays B12X; the draft uses Triton because this image's regular B12X backend rejects
 256-token pages and replicated DCP KV.
 
-## Capacity targets
+## Tested profiles
 
-Measured capacity profiles:
+- [262K × four](vllm-262k-x4.env.example): FP8 draft KV; 40.1 seconds of four-client token-stream overlap.
+- [1M × one](vllm-1m.env.example): BF16 draft KV; near-window retrieval passed.
 
-- **262,144 tokens × four concurrent requests**, with measured token-stream overlap.
-- **1,048,576 tokens × one request**, including output tokens in the window.
-
-Start at 98.5%; 99% is authorized if needed. Tune the explicit per-GPU KV budget
-alongside draft/state/workspace allocation. Record memory minima, preemption,
-queueing and failures at each step. Qualify concurrent full windows with measured token-stream overlap.
+Both use 98.5% and 7.125 GiB KV per GPU. The 99% startup attempt failed its
+free-memory check. [Memory minima and remaining checks](RESULTS.md).
 
 ## Matched performance screen
 
@@ -45,7 +41,7 @@ original frozen workloads for comparable input IDs; preserve every raw result.
 ## Capacity client
 
 Select the [1M/one-sequence](vllm-1m.env.example) or
-[262K/four-sequence](vllm-262k-x4.env.example) settings in this worktree's
+[262K/four-sequence](vllm-262k-x4.env.example) settings in the repository root's
 `.env`, then restart. Read [the results](RESULTS.md) before choosing a profile.
 The probe's name/port differ from the normal MTP service; release its GPUs first.
 
@@ -60,6 +56,6 @@ python3 benchmarks/concurrent_context.py --drafter dflash2 \
 ```
 
 This client needs the existing tokenizer environment (transformers), such as the
-main worktree's `.state/quality-venv/bin/python`. All windows include the output
+repository's `.state/quality-venv/bin/python`. All windows include the output
 budget. Concurrent capacity requires `overlapping_decode_without_preemption=true`
 plus successful completion/retrieval and isolation checks in the report.

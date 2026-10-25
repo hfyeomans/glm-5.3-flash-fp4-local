@@ -24,9 +24,8 @@ DFlash2 uses seven, BF16 draft weights and BF16 draft KV.
 | 32,768 / 1,024 | MTP | 173.6 | 10,051 | 3.272 s | 9.173 s |
 | 32,768 / 1,024 | DFlash2 | 152.9 | 10,216 | 3.221 s | 9.861 s |
 
-Values are medians. DFlash2 end-to-end time was about 7–10% longer. Every cell
-produced three distinct output hashes in both modes, so these are timing results;
-functional correctness is reported separately below.
+Values are medians. DFlash2 end-to-end time was about 7–10% longer. Both modes
+produced three distinct greedy output hashes per cell.
 
 Across the measured requests, DFlash2 accepted 27–29% of its seven-token proposals,
 versus MTP's 52–53% of three-token proposals. Including the target's bonus token,
@@ -62,13 +61,9 @@ successful requests. No image or checkpoint patch was required.
 ## Larger-context targets
 
 Both targets passed: 1,048,576 tokens × one request and 262,144 × four concurrent requests.
-The first 1M probe retains BF16 draft KV and allocates 7.125 GiB KV/card, with the
-user-authorized 99% fraction. vLLM explicitly reports that the fixed KV byte
-budget overrides fraction-based KV sizing.
-
-The 99% attempt failed at CUDA startup: 93.78/93.93 GiB was free versus
-94.11 GiB required, before weights loaded. The retry uses 98.5% with the same
-7.125 GiB KV allocation; increasing the fraction alone cannot bypass that gate.
+The initial 99% attempt failed before loading weights: CUDA reported
+93.78/93.93 GiB free versus 94.11 GiB required. Both successful profiles use
+98.5% and 7.125 GiB explicit KV/card. The fixed byte budget controls KV allocation.
 
 At 98.5%, the 1M profile started and reported **1,167,222 effective KV tokens**.
 The larger-window ladder passed:

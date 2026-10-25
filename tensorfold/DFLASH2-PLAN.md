@@ -1,7 +1,7 @@
 # DFlash2 integration work
 
-**Status:** deferred while vLLM is qualified. The current resident-CSF image rejects
-external drafters. Keep the existing MTP profiles unchanged.
+**Status:** blocked by the resident-CSF engine's external-drafter guard. The work
+below is required before adding a DFlash2 profile; existing MTP profiles stay unchanged.
 
 Use `incoai/GLM-5.3-Flash-DFlash2@bf582e4eacc1810f76656d1811693ff6c6737d2a`
 with the existing NVIDIA target revision
@@ -26,7 +26,6 @@ with the existing NVIDIA target revision
 4. **Serving selector.** Add an explicit `mtp|dflash2|none` mode with pinned
    read-only draft mounting, metadata validation and launch receipts. Keep MTP
    the default. Build and pin a separate SM120 image for the implementation.
-
 5. **Four streams.** After the single-slot path passes, address
    `CsfResidentSingleSlot` with per-slot draft/recurrent scratch, cache ownership
    and cancellation cleanup. Test isolation before enabling a 262K/four-slot profile.
