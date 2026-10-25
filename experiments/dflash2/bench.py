@@ -30,7 +30,7 @@ def validate_server(state, mode, base):
     endpoint = urlparse(base)
     if endpoint.hostname not in ('localhost', '127.0.0.1', '::1'):
         raise ValueError('Local endpoint required')
-    if str(endpoint.port or (443 if endpoint.scheme == 'https' else 80)) != command[command.index('--port') + 1]:
+    if str(endpoint.port if endpoint.port is not None else (443 if endpoint.scheme == 'https' else 80)) != command[command.index('--port') + 1]:
         raise ValueError('Endpoint differs from inspected container port')
     if state['Image'] != IMAGE or command[:2] != ['vllm', 'serve'] or REVISION not in command[2]:
         raise ValueError('Expected pinned image and NVIDIA checkpoint')

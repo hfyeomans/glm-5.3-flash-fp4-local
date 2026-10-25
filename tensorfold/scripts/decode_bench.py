@@ -51,7 +51,7 @@ def main():
         raise ValueError('Expected fixed 16K, one-slot, cold-cache, default-reserve unprofiled server')
     if env.get('TF_NVFP4_DECODE_WARPS') not in ('1', '4'):
         raise ValueError('Missing explicit decode warp setting')
-    if str(endpoint.port or (443 if endpoint.scheme == 'https' else 80)) != env.get('TF_PORT'):
+    if str(endpoint.port if endpoint.port is not None else (443 if endpoint.scheme == 'https' else 80)) != env.get('TF_PORT'):
         raise ValueError('Benchmark endpoint port does not match the recorded container')
     args.output.mkdir(parents=True, exist_ok=False)
     manifest = {'image_id': state['Image'], 'settings': {k: v for k, v in env.items() if k.startswith('TF_') or k == 'MODEL_PATH'},

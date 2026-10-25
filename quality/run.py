@@ -40,9 +40,9 @@ def main():
     if not 1 <= args.limit <= PROFILE['samples_per_task']:
         parser.error('limit must be 1..128')
     base = (args.base_url or ('http://127.0.0.1:8000' if args.backend == 'vllm' else 'http://127.0.0.1:8001')).rstrip('/')
-    if urlparse(base).hostname not in ('localhost', '127.0.0.1', '::1'):
+    endpoint = urlparse(base)
+    if endpoint.hostname not in ('localhost', '127.0.0.1', '::1'):
         parser.error('This recipe sends benchmark prompts only to a local server')
-    args.output.mkdir(parents=True, exist_ok=False)
     cache = Path(os.environ.get('HF_CACHE_ROOT', '/models_engrams/huggingface'))
     os.environ.update(HF_HOME=str(cache), HF_HUB_CACHE=str(cache / 'hub'),
                       HF_DATASETS_CACHE=str(cache / 'datasets'), HF_HUB_DISABLE_IMPLICIT_TOKEN='1',
@@ -78,8 +78,9 @@ def main():
         if option in command:
             settings[option] = command[command.index(option) + 1]
     expected_port = command[command.index('--port') + 1] if args.backend == 'vllm' else environment.get('TF_PORT')
-    if str(urlparse(base).port or (443 if urlparse(base).scheme == 'https' else 80)) != expected_port:
+    if str(endpoint.port if endpoint.port is not None else (443 if endpoint.scheme == 'https' else 80)) != expected_port:
         raise RuntimeError('Benchmark endpoint port does not match the recorded container')
+    args.output.mkdir(parents=True, exist_ok=False)
     listed = call(base, '/v1/models')
     if alias not in [x['id'] for x in listed['data']]:
         raise RuntimeError('Unexpected served model identity')

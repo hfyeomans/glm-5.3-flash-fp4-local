@@ -345,6 +345,25 @@ sys.exit(70)
         self.assertNotIn('is absent', result.stdout)
         self.assertFalse(any(c[0]=='stop' for c in self.commands()))
 
+    def test_stop_recognizes_exact_absence_error_variants(self):
+        self.env['ABSENT'] = '1'
+        for prefix in ('Error:', 'Error response from daemon:'):
+            for kind in ('container', 'object'):
+                error = f'{prefix} No such {kind}: glm53-fp4-tp2'
+                with self.subTest(error=error):
+                    self.env['INSPECT_ERROR'] = error
+                    result = self.run_script('stop.sh')
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertIn('is absent', result.stdout)
+        for error in ('Error: No such container: glm53-fp4-tp2-other',
+                      'permission denied\nError: No such container: glm53-fp4-tp2'):
+            with self.subTest(error=error):
+                self.env['INSPECT_ERROR'] = error
+                result = self.run_script('stop.sh')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('Cannot inspect container', result.stderr)
+        self.assertFalse(any(c[0] in ('run', 'rm', 'stop') for c in self.commands()))
+
     def test_start_refuses_inspect_errors_before_preflight(self):
         self.env.update(ABSENT='1', INSPECT_ERROR='daemon disconnected')
         result=self.run_script('start.sh')

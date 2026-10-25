@@ -101,7 +101,8 @@ container_exists() {
     return 0
   fi
   case "$error" in
-    "Error response from daemon: No such container: $CONTAINER_NAME"|"Error: No such object: $CONTAINER_NAME") return 1 ;;
+    "Error response from daemon: No such container: $CONTAINER_NAME"|"Error: No such container: $CONTAINER_NAME"|\
+    "Error response from daemon: No such object: $CONTAINER_NAME"|"Error: No such object: $CONTAINER_NAME") return 1 ;;
     *) fail "Cannot inspect container $CONTAINER_NAME: $error" ;;
   esac
 }

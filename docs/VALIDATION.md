@@ -1023,3 +1023,10 @@ FP8 KV, BF16 compute, ModelOpt mixed quantization and 256-token blocks.
 recorded MTP launch manifests passed the stricter guard; substituting target
 TRITON_ATTN was rejected. These follow-ups changed validation/cleanup only;
 the GPU receipts and serving configuration are unchanged.
+
+CodeRabbit's two follow-ups also reproduced: alternate exact Docker absence
+messages were rejected, and explicit endpoint port `0` became the scheme default.
+The lifecycle helper now accepts both known error prefixes while rejecting mixed
+errors or a different container name. All five measurement clients preserve
+explicit ports and reject mismatches before HTTP/output creation. **144 CPU
+tests passed**, including compiled Zig checks; all four PR findings are fixed.

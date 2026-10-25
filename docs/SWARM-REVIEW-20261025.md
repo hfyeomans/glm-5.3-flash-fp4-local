@@ -79,3 +79,7 @@ and an unchecked target attention backend in the new MTP capacity guard.
 Separate Sol agents reproduced and fixed both. **140 CPU tests passed** after
 integration, and the stricter guard accepted all recorded MTP launches while
 rejecting a substituted target backend. See the validation record above.
+
+CodeRabbit's alternate Docker absence-prefix and explicit-port-zero findings
+were reproduced and fixed across lifecycle and all five measurement guards.
+The final suite passed **144 CPU tests**, including compiled Zig checks.

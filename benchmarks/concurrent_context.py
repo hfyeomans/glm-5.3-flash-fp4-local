@@ -278,7 +278,7 @@ def main():
         if int(command[command.index('--max-model-len') + 1]) < args.window:
             raise ValueError('Requested window exceeds the launched model limit')
     endpoint = urlparse(base)
-    if str(endpoint.port or (443 if endpoint.scheme == 'https' else 80)) != command[command.index('--port') + 1]:
+    if str(endpoint.port if endpoint.port is not None else (443 if endpoint.scheme == 'https' else 80)) != command[command.index('--port') + 1]:
         raise ValueError('Endpoint differs from inspected serving port')
     before = metrics(base)
     if before['vllm:num_requests_running'] or before['vllm:num_requests_waiting']:

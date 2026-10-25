@@ -44,16 +44,21 @@ class EndpointTests(unittest.TestCase):
                 'Cmd': ['vllm', 'serve', '/target', '--port', '8123']}}
             argv = ['run', '--backend', 'vllm', '--mtp', 'off', '--workloads', str(source),
                     '--base-url', 'http://127.0.0.1:8123', '--output', str(Path(tmp) / 'out')]
-            for port in ('8123', '8000'):
-                argv[argv.index('--base-url') + 1] = 'http://127.0.0.1:' + port
-                argv[-1] = str(Path(tmp) / ('out-' + port))
-                error, message = (RuntimeError, 'reached tokenizer') if port == '8123' else (ValueError, 'endpoint port')
-                with self.subTest(port=port), mock.patch.object(sys, 'argv', argv), mock.patch.object(
+            endpoints = [('http://127.0.0.1:8123', '8123', True), ('http://127.0.0.1:8000', '8123', False),
+                         ('http://localhost', '80', True), ('https://localhost', '443', True),
+                         ('http://localhost:0', '80', False), ('https://localhost:0', '443', False)]
+            for index, (base, server_port, accepted) in enumerate(endpoints):
+                state['Config']['Cmd'][-1] = server_port
+                argv[argv.index('--base-url') + 1] = base
+                argv[-1] = str(Path(tmp) / ('out-' + str(index)))
+                error, message = (RuntimeError, 'reached tokenizer') if accepted else (ValueError, 'endpoint port')
+                with self.subTest(base=base), mock.patch.object(sys, 'argv', argv), mock.patch.object(
                         bench.subprocess, 'check_output', side_effect=[json.dumps([state]), '{"container_path":"/target"}']), \
                         mock.patch.object(bench, 'call', side_effect=RuntimeError('reached tokenizer')) as call:
                     with self.assertRaisesRegex(error, message):
                         bench.main()
-                    self.assertEqual(call.call_count, int(port == '8123'))
+                    self.assertEqual(call.call_count, int(accepted))
+                    self.assertEqual(Path(argv[-1]).exists(), accepted)
 
     def test_quality_command_port_without_environment_port_reaches_task_loading(self):
         tokenizer = mock.Mock()
@@ -77,19 +82,24 @@ class EndpointTests(unittest.TestCase):
                 'Env': [], 'Cmd': ['vllm', 'serve', '/target', '--port', '8123']}}
             argv = ['quality', '--backend', 'vllm', '--base-url', 'http://localhost:8123',
                     '--output', str(root / 'out')]
-            for port in ('8123', '8000'):
-                argv[argv.index('--base-url') + 1] = 'http://localhost:' + port
-                argv[-1] = str(root / ('out-' + port))
-                with self.subTest(port=port), mock.patch.object(sys, 'argv', argv), mock.patch.dict(sys.modules, modules), \
+            endpoints = [('http://localhost:8123', '8123', True), ('http://localhost:8000', '8123', False),
+                         ('http://localhost', '80', True), ('https://localhost', '443', True),
+                         ('http://localhost:0', '80', False), ('https://localhost:0', '443', False)]
+            for index, (base, server_port, accepted) in enumerate(endpoints):
+                state['Config']['Cmd'][-1] = server_port
+                argv[argv.index('--base-url') + 1] = base
+                argv[-1] = str(root / ('out-' + str(index)))
+                with self.subTest(base=base), mock.patch.object(sys, 'argv', argv), mock.patch.dict(sys.modules, modules), \
                         mock.patch.dict(quality.os.environ), mock.patch.object(quality.subprocess, 'check_output',
                         side_effect=[json.dumps(model), json.dumps([state])]), mock.patch.object(
                         quality.importlib.metadata, 'distribution') as dist, mock.patch.object(
                         quality, 'call', return_value={'data': [{'id': 'glm-5.3-flash-fp4-local'}]}) as call:
                     dist.return_value.read_text.return_value = direct
-                    message = 'reached tasks' if port == '8123' else 'endpoint port'
+                    message = 'reached tasks' if accepted else 'endpoint port'
                     with self.assertRaisesRegex(RuntimeError, message):
                         quality.main()
-                    self.assertEqual(call.call_count, int(port == '8123'))
+                    self.assertEqual(call.call_count, int(accepted))
+                    self.assertEqual(Path(argv[-1]).exists(), accepted)
 
     def test_concurrent_mtp_rejects_an_endpoint_with_the_wrong_effective_port(self):
         state = {'State': {'Running': True}, 'Config': {
@@ -117,6 +127,66 @@ class EndpointTests(unittest.TestCase):
             'HostConfig': {'DeviceRequests': [{'DeviceIDs': ['0', '1']}]}}
         with self.assertRaisesRegex(ValueError, 'Endpoint differs'):
             dflash.validate_server(state, 'none', 'https://localhost')
+
+    def test_concurrent_mtp_distinguishes_omitted_and_zero_ports(self):
+        state = {'State': {'Running': True}, 'Config': {
+            'Labels': {'local.glm53.recipe': 'glm53-fp4-local-v1'},
+            'Cmd': ['vllm', 'serve', '/target/' + concurrent.REVISION, '--port', '80',
+                    '--speculative-config', '{"method":"mtp"}', '--max-model-len', '1048576',
+                    '--max-num-seqs', '8', '--gpu-memory-utilization', '0.985',
+                    '--kv-cache-memory-bytes', '7650410496']},
+            'HostConfig': {'DeviceRequests': [{'DeviceIDs': ['0', '1']}]}}
+        with tempfile.TemporaryDirectory() as tmp:
+            for scheme, server_port in (('http', '80'), ('https', '443')):
+                state['Config']['Cmd'][state['Config']['Cmd'].index('--port') + 1] = server_port
+                for suffix in ('', ':0'):
+                    base = scheme + '://localhost' + suffix
+                    output = Path(tmp) / 'out'
+                    argv = ['concurrent', '--window', '8192', '--clients', '1', '--base-url', base,
+                            '--output', str(output)]
+                    error, message = (RuntimeError, 'reached metrics') if not suffix else (ValueError, 'Endpoint differs')
+                    with self.subTest(base=base), mock.patch.object(sys, 'argv', argv), mock.patch.object(
+                            concurrent.subprocess, 'check_output', return_value=json.dumps([state])), mock.patch.object(
+                            concurrent, 'metrics', side_effect=RuntimeError('reached metrics')) as metrics:
+                        with self.assertRaisesRegex(error, message):
+                            concurrent.main()
+                        self.assertEqual(metrics.call_count, int(not suffix))
+                        self.assertFalse(output.exists())
+
+    def test_dflash_distinguishes_omitted_and_zero_ports(self):
+        state = {'Image': dflash.IMAGE, 'State': {'Running': True}, 'Config': {
+            'Labels': {'local.glm53.recipe': 'glm53-fp4-local-v1'},
+            'Cmd': ['vllm', 'serve', '/target/' + dflash.REVISION, '--port', '80']},
+            'HostConfig': {'DeviceRequests': [{'DeviceIDs': ['0', '1']}]}}
+        for scheme, server_port in (('http', '80'), ('https', '443')):
+            state['Config']['Cmd'][-1] = server_port
+            base = scheme + '://localhost'
+            with self.subTest(base=base):
+                self.assertEqual(dflash.validate_server(state, 'none', base), (None, [0, 1]))
+                with self.assertRaisesRegex(ValueError, 'Endpoint differs'):
+                    dflash.validate_server(state, 'none', base + ':0')
+
+    def test_decode_distinguishes_omitted_and_zero_ports(self):
+        env = {'TF_CONTEXT': '16384', 'TF_PARALLEL': '1', 'TF_PROMPT_CACHE_GIB': '0',
+               'TF_MEMORY_RESERVE_GIB': '', 'TF_PROFILE': '0', 'TF_NVFP4_DECODE_WARPS': '4'}
+        with tempfile.TemporaryDirectory() as tmp:
+            for scheme, server_port in (('http', '80'), ('https', '443')):
+                env['TF_PORT'] = server_port
+                state = {'Image': 'image', 'State': {'Running': True},
+                         'Config': {'Env': [f'{k}={v}' for k, v in env.items()]}}
+                for index, suffix in enumerate(('', ':0')):
+                    base = scheme + '://localhost' + suffix
+                    output = Path(tmp) / (scheme + '-' + str(index))
+                    argv = ['decode', '--base-url', base, '--output', str(output)]
+                    error, message = (RuntimeError, 'reached tokenizer') if not suffix else (ValueError, 'endpoint port')
+                    with self.subTest(base=base), mock.patch.object(sys, 'argv', argv), mock.patch.object(
+                            decode.subprocess, 'check_output', return_value=json.dumps([state])), mock.patch.object(
+                            decode, 'workloads', return_value=[('probe', {'max_tokens': 256})]), mock.patch.object(
+                            decode, 'call', side_effect=RuntimeError('reached tokenizer')) as call:
+                        with self.assertRaisesRegex(error, message):
+                            decode.main()
+                        self.assertEqual(call.call_count, int(not suffix))
+                        self.assertEqual(output.exists(), not suffix)
 
     def test_decode_rejects_remote_endpoint_before_http(self):
         env = {'TF_CONTEXT': '16384', 'TF_PARALLEL': '1', 'TF_PROMPT_CACHE_GIB': '0',
