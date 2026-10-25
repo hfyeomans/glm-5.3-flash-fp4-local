@@ -38,7 +38,10 @@ def main():
     args = p.parse_args()
     if args.rounds < 2:
         p.error('At least two rounds required')
-    args.output.mkdir(parents=True, exist_ok=False)
+    args.base_url = args.base_url.rstrip('/')
+    endpoint = urlparse(args.base_url)
+    if endpoint.hostname not in ('localhost', '127.0.0.1', '::1'):
+        raise ValueError('Local benchmark endpoint required')
     cases = workloads('glm-5.3-flash-fp4-local')
     state = json.loads(subprocess.check_output(['docker', 'inspect', 'glm53-fp4-tensorfold'], text=True))[0]
     env = dict(x.split('=', 1) for x in state['Config']['Env'])
@@ -48,8 +51,9 @@ def main():
         raise ValueError('Expected fixed 16K, one-slot, cold-cache, default-reserve unprofiled server')
     if env.get('TF_NVFP4_DECODE_WARPS') not in ('1', '4'):
         raise ValueError('Missing explicit decode warp setting')
-    if str(urlparse(args.base_url.rstrip('/')).port or 80) != env.get('TF_PORT'):
+    if str(endpoint.port or (443 if endpoint.scheme == 'https' else 80)) != env.get('TF_PORT'):
         raise ValueError('Benchmark endpoint port does not match the recorded container')
+    args.output.mkdir(parents=True, exist_ok=False)
     manifest = {'image_id': state['Image'], 'settings': {k: v for k, v in env.items() if k.startswith('TF_') or k == 'MODEL_PATH'},
                 'rounds': args.rounds, 'workload_sha256': digest(cases),
                 'client_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),

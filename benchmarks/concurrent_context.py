@@ -244,7 +244,8 @@ def main():
         draft_lock = module.LOCK
         if int(command[command.index('--max-model-len') + 1]) < args.window:
             raise ValueError('Requested window exceeds the launched model limit')
-    if str(urlparse(base).port or 80) != command[command.index('--port') + 1]:
+    endpoint = urlparse(base)
+    if str(endpoint.port or (443 if endpoint.scheme == 'https' else 80)) != command[command.index('--port') + 1]:
         raise ValueError('Endpoint differs from inspected serving port')
     before = metrics(base)
     if before['vllm:num_requests_running'] or before['vllm:num_requests_waiting']:

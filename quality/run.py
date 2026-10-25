@@ -65,9 +65,6 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(snapshot, local_files_only=True, trust_remote_code=False)
     template = (snapshot / 'chat_template.jinja').read_text()
     alias = 'glm-5.3-flash-fp4-local'
-    listed = call(base, '/v1/models')
-    if alias not in [x['id'] for x in listed['data']]:
-        raise RuntimeError('Unexpected served model identity')
     container = 'glm53-fp4-tp2' if args.backend == 'vllm' else 'glm53-fp4-tensorfold'
     state = json.loads(subprocess.check_output(['docker', 'inspect', container], text=True))[0]
     image_id = state['Image']
@@ -80,9 +77,12 @@ def main():
     for option in ('--max-model-len', '--max-num-seqs', '--kv-cache-dtype', '--gpu-memory-utilization', '--kv-cache-memory-bytes', '--tensor-parallel-size', '--decode-context-parallel-size', '--load-format', '--speculative-config'):
         if option in command:
             settings[option] = command[command.index(option) + 1]
-    expected_port = environment.get('PORT' if args.backend == 'vllm' else 'TF_PORT')
+    expected_port = command[command.index('--port') + 1] if args.backend == 'vllm' else environment.get('TF_PORT')
     if str(urlparse(base).port or (443 if urlparse(base).scheme == 'https' else 80)) != expected_port:
         raise RuntimeError('Benchmark endpoint port does not match the recorded container')
+    listed = call(base, '/v1/models')
+    if alias not in [x['id'] for x in listed['data']]:
+        raise RuntimeError('Unexpected served model identity')
     manager = TaskManager()
     tasks, selected, task_docs = [], {}, {}
     for name, config in PROFILE['tasks'].items():
