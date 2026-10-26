@@ -49,6 +49,14 @@ def select_cases(bank, lengths, long_samples=None):
             (long_samples is None or c['length'] != max(lengths) or c['sample'] < long_samples)]
 
 
+def physical_shortfalls(free, devices, minimum):
+    missing=sorted(d for d in devices if d not in free)
+    if missing:return f'Selected GPUs absent from nvidia-smi output: {",".join(missing)}'
+    low=sorted(d for d in devices if free[d]<minimum)
+    if low:return 'Post-request physical headroom below the declared floor on GPU '+','.join(low)
+    return None
+
+
 def import_completed(source, bank_dir, selected, manifest, output):
     previous=json.loads((source/'manifest.json').read_text())
     if previous['client_sha256'] != REUSE_CLIENT_SHA256:
@@ -161,8 +169,9 @@ def main():
         with rows_path.open('a') as out:out.write(json.dumps(row)+'\n')
         done[doc['id']]=row
         print(f'{i+1}/{len(selected)} {doc["id"]} tokens={doc["prompt_tokens"]} score={metric} seconds={seconds:.2f} truncated={row["truncated"]}',flush=True)
-        free=[int(x.split(',')[1]) for x in subprocess.check_output(['nvidia-smi','--query-gpu=index,memory.free','--format=csv,noheader,nounits'],text=True).splitlines()]
-        if min(free)<args.minimum_free_mib:raise RuntimeError('Post-request physical headroom below the declared floor')
+        free={x.split(',')[0].strip():int(x.split(',')[1]) for x in subprocess.check_output(['nvidia-smi','--query-gpu=index,memory.free','--format=csv,noheader,nounits'],text=True).splitlines()}
+        shortfall=physical_shortfalls(free,devices,args.minimum_free_mib)
+        if shortfall:raise RuntimeError(shortfall)
         if args.telemetry_file:
             sys.path.insert(0,str(ROOT/'tensorfold/tuning'))
             from sweep import headroom

@@ -36,6 +36,7 @@ def main():
     finished = load(args.run / 'complete.json')
     assert finished['status'] == 'pass'
     results = load(args.run / 'long-context/results.json')
+    assert results['manifest'] == load(args.run / 'long-context/manifest.json'), 'Embedded manifest differs from the on-disk long-context manifest'
     bank = load(args.bank / 'manifest.json')
     manifest = results['manifest']
     long_n = manifest['sampling_plan']['long_samples_per_task']

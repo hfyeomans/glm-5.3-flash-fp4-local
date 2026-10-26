@@ -117,7 +117,7 @@ class ReporterGateTests(unittest.TestCase):
             (run/'complete.json').write_text(json.dumps({'status':'pass'}))
             (run/'launch-manifest.json').write_text('{}')
             (run/'server.log').write_text('')
-            (run/'long-context/manifest.json').write_text('{}')
+            (run/'long-context/manifest.json').write_text(json.dumps(manifest))
             (run/'long-context/results.json').write_text(json.dumps(results))
             (run/'gpu.csv').write_text('utc,index,memory_free_MiB\nt0,2,2000\nt0,3,1900\n')
             receipt=Path(folder)/'receipt.json';out=Path(folder)/'report.md'
@@ -128,3 +128,16 @@ class ReporterGateTests(unittest.TestCase):
             self.assertEqual(packed['headroom']['required_free_MiB'],1200)
             self.assertEqual(sorted(packed['headroom']['sampled_min_free_MiB']),['2','3'])
             self.assertIn('The 1,200 MiB floor passed',out.read_text())
+            (run/'long-context/manifest.json').write_text('{"tampered":true}')
+            with self.assertRaises(AssertionError):
+                with patch('sys.argv',['report_long.py','--run',str(run),'--bank',str(bank),
+                                       '--receipt',str(receipt),'--report',str(out)]):
+                    report.main()
+
+class PhysicalGateTests(unittest.TestCase):
+    def test_physical_check_scopes_to_selected_devices(self):
+        check=module('long_context').physical_shortfalls
+        free={'0':900,'2':2000,'3':1900}
+        self.assertIsNone(check(free,['2','3'],1536))
+        self.assertIn('GPU 0',check(free,['0','2'],1536))
+        self.assertIn('absent',check({'0':900},['2','3'],1536))
