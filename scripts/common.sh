@@ -168,7 +168,7 @@ PYSPEC
 build_docker_args() {
   DOCKER_ARGS=(docker run -d --name "$CONTAINER_NAME" --init --gpus "\"device=$GPUS\""
     --restart "$RESTART_POLICY" --network host --ipc host --shm-size 32g --stop-timeout 30
-    --log-opt max-size=100m --log-opt max-file=3
+    --log-driver json-file --log-opt max-size=100m --log-opt max-file=3
     --ulimit memlock=-1 --ulimit stack=67108864:67108864
     --label "local.glm53.recipe=$RECIPE_LABEL"
     --mount "type=bind,src=$MODEL_MOUNT_SOURCE,dst=$MODEL_MOUNT_TARGET,readonly"

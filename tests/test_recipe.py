@@ -368,6 +368,10 @@ sys.exit(70)
                 self.assertIn('Cannot inspect container', result.stderr)
         self.assertFalse(any(c[0] in ('run', 'rm', 'stop') for c in self.commands()))
 
+    def test_launch_pins_the_json_file_logging_driver(self):
+        args=self.dry_command()
+        self.assertEqual(args[args.index('--log-driver')+1],'json-file')
+
     def test_open_bind_warns_without_api_key(self):
         self.env.pop('VLLM_API_KEY',None)
         r=self.run_script('start.sh','--dry-run')
