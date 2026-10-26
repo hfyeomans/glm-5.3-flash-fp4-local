@@ -49,7 +49,9 @@ def main():
     assert results['requests_sha256'] == sha(requests)
     rows = [json.loads(line) for line in requests.read_text().splitlines()]
     assert [r['id'] for r in rows] == manifest['cases'] == [c['id'] for c in selected]
-    memory = headroom(args.run / 'gpu.csv', ['0', '1'], 1536)
+    floor = int(manifest['minimum_free_MiB'])
+    devices = manifest['gpu_devices']
+    memory = headroom(args.run / 'gpu.csv', devices, floor)
     assert memory['passed']
     supplemental = []
     source_gate = None
@@ -61,7 +63,7 @@ def main():
         assert sha(source / 'requests.jsonl') == manifest['reuse']['requests_sha256']
         old = [json.loads(line) for line in (source / 'requests.jsonl').read_text().splitlines()]
         supplemental = [r for r in old if r['id'] not in manifest['cases']]
-        source_gate = headroom(source.parent / 'gpu.csv', ['0', '1'], 1536)
+        source_gate = headroom(source.parent / 'gpu.csv', devices, floor)
         assert source_gate['passed']
         memory = dict(memory, sampled_min_free_MiB={rank: min(value, source_gate['sampled_min_free_MiB'][rank])
                       for rank, value in memory['sampled_min_free_MiB'].items()},
@@ -101,8 +103,9 @@ def main():
         large = next(g for g in results['groups'] if g['task'] == task and g['configured_context'] == 1048576)
         suffix = '' if large['near_window_cases'] == large['n'] else ' (below 1M)'
         lines.append(f"| {task} | {small['mean_score']:.2f} | {large['mean_score']:.2f} | {large['input_tokens_min']:,}–{large['input_tokens_max']:,}{suffix} | {large['full_credit_clean_completion']}/{large['n']} |")
+    minima = '/'.join(f"{memory['sampled_min_free_MiB'][device]:,}" for device in devices)
     lines += ['', 'CWE and SQuAD are corpus-limited and excluded from the near-1M aggregate. Both groups use the same 1M server allocation; shorter controls contain roughly 28K tokens. Each request allows 256 output tokens. QA question IDs are shared across lengths; synthetic golds need not be identical.', '',
-        f"Minimum sampled free memory across source and continued runs: {memory['sampled_min_free_MiB']['0']:,}/{memory['sampled_min_free_MiB']['1']:,} MiB. The 1,536 MiB floor passed; one-second sampling does not observe intervening transient peaks. Capacity and task accuracy remain separate results.", '',
+        f"Minimum sampled free memory across source and continued runs: {minima} MiB. The {floor:,} MiB floor passed; one-second sampling does not observe intervening transient peaks. Capacity and task accuracy remain separate results.", '',
         '## Incorrect or nonclean core responses', '', '| Case | Official score | Truncated | Reasoning marker |', '|---|---:|---|---|']
     lines += [f"| {r['id']} | {r['score']} | {r['truncated']} | {r['reasoning_marker']} |" for r in issues] if issues else ['| None | — | — | — |']
     lines += ['', '## Supplemental completed cases', '', '| Case | Official score | Clean full credit |', '|---|---:|---|']

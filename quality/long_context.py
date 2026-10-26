@@ -53,11 +53,11 @@ def import_completed(source, bank_dir, selected, manifest, output):
     previous=json.loads((source/'manifest.json').read_text())
     if previous['client_sha256'] != REUSE_CLIENT_SHA256:
         raise ValueError('Unqualified source client for reuse')
-    for key in ('bank_sha256','official_scorer_sha256','image_id','settings','interface','minimum_free_MiB'):
+    for key in ('bank_sha256','official_scorer_sha256','image_id','settings','interface','minimum_free_MiB','gpu_devices'):
         if previous[key] != manifest[key]:raise ValueError('Reuse protocol differs: '+key)
     sys.path.insert(0,str(ROOT/'tensorfold/tuning'))
     from sweep import headroom
-    gate=headroom(source.parent/'gpu.csv',['0','1'],manifest['minimum_free_MiB'])
+    gate=headroom(source.parent/'gpu.csv',previous.get('gpu_devices') or manifest['gpu_devices'],manifest['minimum_free_MiB'])
     if not gate['passed']:raise ValueError('Source run failed the memory floor')
     old=[json.loads(line) for line in (source/'requests.jsonl').read_text().splitlines()]
     by_id={r['id']:r for r in old};assert len(by_id)==len(old),'Duplicate source rows'
@@ -91,6 +91,7 @@ def main():
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--lengths',type=int,nargs='+',required=True)
     p.add_argument('--minimum-free-mib',type=int,default=1536)
+    p.add_argument('--devices',help='Comma-separated GPU indices for the headroom gate; defaults to every local GPU')
     p.add_argument('--telemetry-file',type=Path)
     p.add_argument('--long-samples',type=int,help='Use the first N fixed sample indices at the longest nominal length; retain all shorter controls')
     p.add_argument('--reuse-run',type=Path,help='Import completed valid results from the pinned corrected client; never choose by score')
@@ -105,11 +106,13 @@ def main():
     assert env['TF_PARALLEL']=='1' and env['TF_PROMPT_CACHE_GIB']=='0'
     assert env['MODEL_PATH'].endswith(bank['protocol']['model_revision'])
     assert int(env['TF_CONTEXT'])>=max(args.lengths)
+    devices=args.devices.split(',') if args.devices else [x.strip() for x in subprocess.check_output(['nvidia-smi','--query-gpu=index','--format=csv,noheader,nounits'],text=True).splitlines()]
     selected=select_cases(bank,args.lengths,args.long_samples)
     manifest={'bank_sha256':sha(args.bank/'manifest.json'),'client_sha256':sha(Path(__file__)),'official_scorer_sha256':sha(scorer_path),
               'image_id':state['Image'],'settings':{k:v for k,v in env.items() if k.startswith(('TF_','NCCL_')) or k=='MODEL_PATH'},
               'cases':[c['id'] for c in selected],'interface':'raw completion, shared locally rendered chat template, thinking off, greedy, MTP on, cold cache',
-              'minimum_free_MiB':args.minimum_free_mib,'response_diagnostics':'Report truncations and generated think markers separately; clean full credit also requires neither. Official RULER score remains unchanged.'}
+              'minimum_free_MiB':args.minimum_free_mib,'gpu_devices':devices,
+              'response_diagnostics':'Report truncations and generated think markers separately; clean full credit also requires neither. Official RULER score remains unchanged.'}
     manifest['sampling_plan']={'long_samples_per_task':args.long_samples or bank['protocol']['samples_per_task'],'rule':'Lowest fixed sample indices at longest nominal length; all shorter controls retained, independent of scores'}
     if args.reuse_run:
         manifest['reuse']={'source':str(args.reuse_run),'manifest_sha256':sha(args.reuse_run/'manifest.json'),'requests_sha256':sha(args.reuse_run/'requests.jsonl')}
@@ -163,7 +166,7 @@ def main():
         if args.telemetry_file:
             sys.path.insert(0,str(ROOT/'tensorfold/tuning'))
             from sweep import headroom
-            gate=headroom(args.telemetry_file,['0','1'],args.minimum_free_mib)
+            gate=headroom(args.telemetry_file,devices,args.minimum_free_mib)
             (args.output/'headroom.json').write_text(json.dumps(gate,indent=2)+'\n')
             if not gate['passed']:raise RuntimeError('Sampled headroom floor failed during the run')
     assert set(done)==set(manifest['cases'])
