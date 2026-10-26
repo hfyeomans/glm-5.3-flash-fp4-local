@@ -12,5 +12,5 @@ if ! container_exists; then log "$CONTAINER_NAME is absent."; exit 0; fi
 assert_owned
 docker stop --time 30 "$CONTAINER_NAME" >/dev/null
 mkdir -p "$LOG_DIR"
-docker logs --timestamps "$CONTAINER_NAME" > "$LOG_DIR/stopped-$(date -u +%Y%m%dT%H%M%SZ)-$$.log" 2>&1
+docker logs --timestamps "$CONTAINER_NAME" > "$LOG_DIR/stopped-$(date -u +%Y%m%dT%H%M%SZ)-$$.log" 2>&1 || true
 log "Stopped $CONTAINER_NAME. Container, logs, weights and runtime volume are preserved."

@@ -211,8 +211,12 @@ if a[0]=='inspect':
     else: print(os.environ.get('OWNER','foreign'))
     sys.exit(0)
 if a[0]=='ps': print('other-gpu-service\tother-image');sys.exit(0)
-if a[0]=='logs': print('fixture log');sys.exit(0)
+if a[0]=='logs':
+    if os.environ.get('LOGS_ERROR'): sys.exit(1)
+    print('fixture log');sys.exit(0)
 if a[0]=='stop': sys.exit(0)
+if a[0]=='rm': sys.exit(0)
+if a[0]=='run': print('fixture-container-id');sys.exit(0)
 sys.exit(70)
 ''')
         docker.chmod(0o755)
@@ -363,6 +367,30 @@ sys.exit(70)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn('Cannot inspect container', result.stderr)
         self.assertFalse(any(c[0] in ('run', 'rm', 'stop') for c in self.commands()))
+
+    def test_open_bind_warns_without_api_key(self):
+        self.env.pop('VLLM_API_KEY',None)
+        r=self.run_script('start.sh','--dry-run')
+        self.assertIn('unauthenticated API beyond loopback',r.stdout)
+        self.env['VLLM_API_KEY']='fixture-key'
+        r=self.run_script('start.sh','--dry-run')
+        self.assertNotIn('unauthenticated API beyond loopback',r.stdout)
+
+    def test_stop_succeeds_when_log_capture_fails(self):
+        self.env['OWNER']='glm53-fp4-local-v1'
+        self.env['LOGS_ERROR']='1'
+        r=self.run_script('stop.sh')
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertIn('Stopped',r.stdout)
+        self.assertTrue(any(c[0]=='stop' for c in self.commands()))
+        self.assertTrue(any(c[0]=='logs' for c in self.commands()))
+
+    def test_start_stops_a_non_running_container_before_removal(self):
+        self.env['OWNER']='glm53-fp4-local-v1'
+        r=self.run_script('start.sh')
+        recorded=[c[0] for c in self.commands()]
+        self.assertEqual([x for x in recorded if x in ('stop','logs','rm')],['stop','logs','rm'])
+        self.assertNotEqual(r.returncode,0)
 
     def test_start_refuses_inspect_errors_before_preflight(self):
         self.env.update(ABSENT='1', INSPECT_ERROR='daemon disconnected')
