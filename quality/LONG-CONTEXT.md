@@ -60,6 +60,24 @@ uv pip install --target .state/long-quality-deps -r quality/long-context-require
   --output logs/qualification-v2/long-accuracy-22-fresh
 ```
 
+For the 52-control maintenance check, use `--long-context-lengths 32768`
+and omit `--long-context-samples`; that flag reduces the longest selected
+length, which would also reduce a controls-only run. Keep the `host-1m`
+profile and frozen bank, and set `--output logs/qualification-v2/short-controls`.
+Package its completed profile directory with:
+
+```bash
+python3 quality/report_long.py \
+  --run logs/qualification-v2/short-controls/00-host-1m \
+  --bank logs/qualification-v2/ruler-bank-v2 --controls-only \
+  --receipt tensorfold/results/short-controls.json \
+  --report docs/SHORT-CONTROLS.md
+```
+
+Use fresh output paths. `--controls-only` requires all 52 frozen controls and
+reports no near-1M metrics. Without it, the reporter requires the historical
+cohort containing both length groups.
+
 The generator requires the pinned RULER checkout at `.state/ruler-upstream`, the
 existing pinned lm-eval installation, NLTK assets, and the datasets recorded in
 its manifest. Dataset files remain under `/models_engrams/huggingface`, outside

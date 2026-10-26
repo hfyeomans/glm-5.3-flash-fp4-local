@@ -1,0 +1,457 @@
+{
+  "schema": "review-hardening-validation-v1",
+  "date_utc": "2026-10-26",
+  "baseline_commit": "e910531e60cb5d9afec3d1cbbc912b583044caa2",
+  "checkpoint": {
+    "id": "nvidia/GLM-5.3-Flash-FP4-Local",
+    "revision": "76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+    "format": "Original NVIDIA ModelOpt mixed FP4 with CSF32 compressed scales",
+    "cache_root": "/models_engrams/huggingface"
+  },
+  "v1": {
+    "passed": true,
+    "new_id": "9c8c3ac3c1a51d85fe44f7dcd71e541abc0b78d191c14a7a55280b03ff6ec131",
+    "image": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+    "command": [
+      "vllm",
+      "serve",
+      "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "8000",
+      "--served-model-name",
+      "glm-5.3-flash-fp4-local",
+      "--additional-config",
+      "{\"glm53_kda_decode_backend\":\"auto\",\"kda_prefill_backend\":\"b12x\"}",
+      "--attention-backend",
+      "B12X",
+      "--block-size",
+      "256",
+      "--chat-template",
+      "/opt/lil/runtime/templates/glm53-flash.jinja",
+      "--compilation-config",
+      "{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+      "--cp-kv-cache-interleave-size",
+      "4",
+      "--cudagraph-capture-sizes",
+      "1",
+      "2",
+      "4",
+      "8",
+      "12",
+      "16",
+      "20",
+      "24",
+      "28",
+      "32",
+      "--dcp-kv-cache-interleave-size",
+      "4",
+      "--decode-context-parallel-size",
+      "2",
+      "--default-chat-template-kwargs",
+      "{\"reasoning_effort\":\"max\",\"clear_thinking\":false}",
+      "--dtype",
+      "bfloat16",
+      "--enable-auto-tool-choice",
+      "--enable-chunked-prefill",
+      "--no-enable-flashinfer-autotune",
+      "--enable-prefix-caching",
+      "--enable-prompt-tokens-details",
+      "--gpu-memory-utilization",
+      "0.985",
+      "--kv-cache-dtype",
+      "fp8",
+      "--kv-cache-memory-bytes",
+      "7650410496",
+      "--linear-backend",
+      "b12x",
+      "--load-format",
+      "safetensors",
+      "--mamba-cache-mode",
+      "align",
+      "--max-cudagraph-capture-size",
+      "32",
+      "--max-model-len",
+      "262144",
+      "--max-num-batched-tokens",
+      "4096",
+      "--max-num-seqs",
+      "4",
+      "--max-parallel-prefills",
+      "1",
+      "--moe-backend",
+      "b12x",
+      "--override-generation-config",
+      "{\"temperature\":1.0,\"top_p\":0.95}",
+      "--prefill-compute-share",
+      "0.4",
+      "--prefill-schedule-interval",
+      "1",
+      "--quantization",
+      "modelopt_mixed",
+      "--reasoning-parser",
+      "glm45",
+      "--recurrent-checkpoint-policy",
+      "request_boundaries",
+      "--speculative-config",
+      "{\"method\":\"mtp\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"standard\",\"moe_backend\":\"b12x\",\"attention_backend\":\"B12X\",\"num_speculative_tokens\":3}",
+      "--tensor-parallel-size",
+      "2",
+      "--tool-call-parser",
+      "glm47"
+    ],
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "glm53-fp4-runtime-10152026",
+        "Source": "/var/lib/docker/volumes/glm53-fp4-runtime-10152026/_data",
+        "Destination": "/cache",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": true,
+        "Propagation": ""
+      },
+      {
+        "Type": "bind",
+        "Source": "/mnt/models_engrams/huggingface/hub",
+        "Destination": "/root/.cache/huggingface/hub",
+        "Mode": "",
+        "RW": false,
+        "Propagation": "rprivate"
+      }
+    ],
+    "log_config": {
+      "Type": "json-file",
+      "Config": {
+        "max-file": "3",
+        "max-size": "100m"
+      }
+    },
+    "b12x_sha256": "e37ab420b63b9c470d1b21962f86ab1862fe571556d339135328e3a160921654",
+    "run_path": "logs/run-20261026T015113Z-3330186",
+    "warning_checks": {
+      "live_unauthenticated_nonloopback": true,
+      "key_set_dry_run_silent": true,
+      "loopback_dry_run_silent": true
+    },
+    "api_checks": [
+      {
+        "check": "completion",
+        "passed": true,
+        "seconds": 0.09981428901664913
+      },
+      {
+        "check": "json",
+        "passed": true,
+        "seconds": 0.5499204469379038
+      },
+      {
+        "check": "tools",
+        "passed": true,
+        "seconds": 0.27013832493685186
+      },
+      {
+        "check": "streaming",
+        "passed": true,
+        "seconds": 0.3829519880237058
+      }
+    ]
+  },
+  "v1_initial_container_state": "exited",
+  "v2": {
+    "passed": true,
+    "source_container": "glm53-csf-limits-parent",
+    "source_container_state": "exited",
+    "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+    "profile": "tensorfold/serving/profiles.json",
+    "source_path": "/src/tensorfold/zig/tests/qwen35/serve_cancel_release.py",
+    "sha256": "545c9a0aaa7df67261f80bb489e976403e4c6c1e662dddbbb327e8d9943182a4",
+    "bytes": 7587,
+    "executed": false,
+    "handoff_command_failure": {
+      "returncode": 1,
+      "stderr": "Error response from daemon: Could not find the file /src/tensorfold/zig/tests/qwen35/serve_cancel_release.py in container glm53-fp4-tp2",
+      "explanation": "The fixture belongs to TensorFold, not the vLLM image."
+    }
+  },
+  "v3": {
+    "completion": {
+      "profile": "host-1m",
+      "protocol": {
+        "profiles_sha256": "29253bc0dcc45907aac77d73b89770d18da032a1fd0aad76fee3502b9e47b4e3",
+        "client_sha256": "6c0404ad80b25dabfdd7a9fe72c8652f365933d7dc12774b70158c5793e94d95",
+        "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+        "repeats": 2,
+        "mtp": "on",
+        "cases": [
+          "short-code",
+          "short-prose",
+          "prefill-8192",
+          "prefill-32768"
+        ],
+        "teacher_histories_sha256": null,
+        "quality": false,
+        "cache_check": false,
+        "baseline_image": false,
+        "skip_benchmark": true,
+        "context_targets": [
+          2048,
+          8192
+        ],
+        "minimum_free_MiB": 1536,
+        "long_context_bank_sha256": "90ae1b9aed4a6b5649a4a2e8abcd258d4aaa7982ad08be23fc00253be74d0961",
+        "long_context_lengths": [
+          32768
+        ],
+        "long_context_client_sha256": "a5e27258956b8e7486c9e3d4e72ec550adf0264807348422d8ff4e3b4e912721"
+      },
+      "started_unix": 1792979679.4077456,
+      "token_hashes": {},
+      "repeat_and_mtp_identical": null,
+      "status": "pass",
+      "elapsed_seconds": 556.3388719558716
+    },
+    "launch": {
+      "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+      "profile": "host-1m",
+      "protocol": {
+        "profiles_sha256": "29253bc0dcc45907aac77d73b89770d18da032a1fd0aad76fee3502b9e47b4e3",
+        "client_sha256": "6c0404ad80b25dabfdd7a9fe72c8652f365933d7dc12774b70158c5793e94d95",
+        "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+        "repeats": 2,
+        "mtp": "on",
+        "cases": [
+          "short-code",
+          "short-prose",
+          "prefill-8192",
+          "prefill-32768"
+        ],
+        "teacher_histories_sha256": null,
+        "quality": false,
+        "cache_check": false,
+        "baseline_image": false,
+        "skip_benchmark": true,
+        "context_targets": [
+          2048,
+          8192
+        ],
+        "minimum_free_MiB": 1536,
+        "long_context_bank_sha256": "90ae1b9aed4a6b5649a4a2e8abcd258d4aaa7982ad08be23fc00253be74d0961",
+        "long_context_lengths": [
+          32768
+        ],
+        "long_context_client_sha256": "a5e27258956b8e7486c9e3d4e72ec550adf0264807348422d8ff4e3b4e912721"
+      },
+      "settings": {
+        "TF_TUNE_PREFILL_UP": "4",
+        "TF_TUNE_SCALE_LAYOUT": "2",
+        "TF_GLM_KDA_DECODE_WIDE": "1",
+        "NCCL_CUMEM_HOST_ENABLE": "0",
+        "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+        "TF_PROMPT_CACHE_GIB": "0",
+        "TF_MEMORY_RESERVE_GIB": "1.5",
+        "TF_NVFP4_DECODE_WARPS": "1",
+        "TF_TUNE_PREFILL_DOWN": "8",
+        "TF_TUNE_HOST_EMBED": "1",
+        "TF_GLM_OVERLAP_PIECES": "4",
+        "TF_GLM_PREFILL_REDUCE": "split",
+        "TF_HOST": "127.0.0.1",
+        "TF_PARALLEL": "1",
+        "TF_GLM_PDL": "1",
+        "NCCL_CUMEM_ENABLE": "0",
+        "TF_PROFILE": "0",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_GLM_PROMPT_K": "one",
+        "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "TF_PORT": "8001",
+        "TF_COMM_PORT": "29600",
+        "TF_CONTEXT": "1048576",
+        "TF_NCCL_DEBUG": "WARN"
+      }
+    },
+    "device_forwarding": {
+      "passed": true,
+      "manifest_devices": [
+        "0",
+        "1"
+      ],
+      "actual_docker_device_ids": [
+        "0",
+        "1"
+      ],
+      "minimum_free_MiB": 1536,
+      "actual_long_context_child": {
+        "pid": 3342604,
+        "args": [
+          "/home/hank/dev/src/glm-5.3-flash-fp4-local/.state/worktrees/hardening-validation/.state/quality-venv/bin/python",
+          "/home/hank/dev/src/glm-5.3-flash-fp4-local/.state/worktrees/hardening-validation/quality/long_context.py",
+          "--bank",
+          "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/qualification-v2/ruler-bank-v2",
+          "--lengths",
+          "32768",
+          "--output",
+          "/home/hank/dev/src/glm-5.3-flash-fp4-local/.state/worktrees/hardening-validation/logs/hardening-validation-20261026/v3-short-controls/00-host-1m/long-context",
+          "--telemetry-file",
+          "/home/hank/dev/src/glm-5.3-flash-fp4-local/.state/worktrees/hardening-validation/logs/hardening-validation-20261026/v3-short-controls/00-host-1m/gpu.csv",
+          "--minimum-free-mib",
+          "1536",
+          "--devices",
+          "0,1"
+        ]
+      }
+    },
+    "gates": {
+      "context-2048-headroom.json": {
+        "required_free_MiB": 1536,
+        "sampled_min_free_MiB": {
+          "0": 1765,
+          "1": 1846
+        },
+        "passed": true,
+        "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured",
+        "after_stage": "context-2048"
+      },
+      "context-8192-headroom.json": {
+        "required_free_MiB": 1536,
+        "sampled_min_free_MiB": {
+          "0": 1765,
+          "1": 1846
+        },
+        "passed": true,
+        "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured",
+        "after_stage": "context-8192"
+      },
+      "smoke-headroom.json": {
+        "required_free_MiB": 1536,
+        "sampled_min_free_MiB": {
+          "0": 1765,
+          "1": 1846
+        },
+        "passed": true,
+        "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured",
+        "after_stage": "smoke"
+      },
+      "long-context/headroom.json": {
+        "required_free_MiB": 1536,
+        "sampled_min_free_MiB": {
+          "0": 1765,
+          "1": 1846
+        },
+        "passed": true,
+        "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured"
+      }
+    },
+    "controls": {
+      "n": 52,
+      "mean_task_score": 98.07692307692308,
+      "clean_full_credit": 51
+    },
+    "near_1m_requests": 0,
+    "sweep_command": [
+      "/home/hank/dev/src/glm-5.3-flash-fp4-local/.state/worktrees/hardening-validation/.state/quality-venv/bin/python",
+      "tensorfold/tuning/sweep.py",
+      "--profile-file",
+      "tensorfold/serving/profiles.json",
+      "--profiles",
+      "host-1m",
+      "--skip-benchmark",
+      "--minimum-free-mib",
+      "1536",
+      "--long-context-bank",
+      "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/qualification-v2/ruler-bank-v2",
+      "--long-context-lengths",
+      "32768",
+      "--output",
+      "/home/hank/dev/src/glm-5.3-flash-fp4-local/.state/worktrees/hardening-validation/logs/hardening-validation-20261026/v3-short-controls"
+    ]
+  },
+  "v4": {
+    "receipt": "tensorfold/results/review-hardening-controls-v1.json",
+    "receipt_sha256": "abadfd29089aa60509ca92661d0e895e5a400d550fe52dc5efcc11614dbb62ed",
+    "report": "docs/REVIEW-HARDENING-CONTROLS-20261026.md",
+    "report_sha256": "e91547b8b58c6a3455b3a34e29d540359abf5ba9eb9bf4b02a9ed25f478311a1",
+    "negative_checks": {
+      "tampered_disk_manifest_rejected": true,
+      "tamper_error": "AssertionError: Embedded manifest differs from the on-disk long-context manifest",
+      "manifest_floor_and_devices_match_receipt": true,
+      "unrelated_device_replay": {
+        "scope": "Synthetic GPU 99 at zero free MiB appended to the real two-GPU telemetry; no third physical GPU exists on this host.",
+        "ignored_foreign_device_gate": {
+          "required_free_MiB": 1536,
+          "sampled_min_free_MiB": {
+            "0": 1765,
+            "1": 1846
+          },
+          "passed": true,
+          "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured"
+        },
+        "selected_low_device_gate": {
+          "required_free_MiB": 1536,
+          "sampled_min_free_MiB": {
+            "0": 1765,
+            "1": 1846,
+            "99": 0
+          },
+          "passed": false,
+          "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured"
+        },
+        "physical_unrelated_ignored": true,
+        "physical_selected_low_rejected": "Post-request physical headroom below the declared floor on GPU 99",
+        "physical_selected_missing_rejected": "Selected GPUs absent from nvidia-smi output: 98"
+      }
+    }
+  },
+  "v5": {
+    "baseline_tests": 151,
+    "final_tests": 159,
+    "passed": true,
+    "zig_version": "0.17.0",
+    "zig_compiled_gate_ran": true,
+    "baseline_log_sha256": "2acd3d00f824fece6eccbe9cab5375f8762ec02867b439a7c6a44d1f35165156",
+    "final_log_sha256": "dbedc64d576f4f3d5041c61ad3980dc171dc5f26f580aa0e5b96b109cd8a269e"
+  },
+  "restoration": {
+    "container_id": "9c8c3ac3c1a51d85fe44f7dcd71e541abc0b78d191c14a7a55280b03ff6ec131",
+    "image": "sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29",
+    "same_v1_configuration": true,
+    "api_checks": [
+      {
+        "check": "completion",
+        "passed": true,
+        "seconds": 0.23951688897795975
+      },
+      {
+        "check": "json",
+        "passed": true,
+        "seconds": 0.5479763370240107
+      },
+      {
+        "check": "tools",
+        "passed": true,
+        "seconds": 0.271630318951793
+      },
+      {
+        "check": "streaming",
+        "passed": true,
+        "seconds": 0.363769801100716
+      }
+    ]
+  },
+  "raw_path": "logs/hardening-validation-20261026",
+  "source_hashes": {
+    "start.sh": "f1a1079706f1150294c0f136fc0686aa0e27f092045cc21c19e7029ff71648ba",
+    "stop.sh": "6b143ef4897d510eb8bb6eedf879f81020fc9de92bf98d9edb8eeaa1db4c361c",
+    "scripts/common.sh": "d1ce48f4d86cf36797bf1fd69d94edf0a4695ada748ec3e1b990b74cf7ed1116",
+    "config/b12x.env": "e37ab420b63b9c470d1b21962f86ab1862fe571556d339135328e3a160921654",
+    "quality/long_context.py": "a5e27258956b8e7486c9e3d4e72ec550adf0264807348422d8ff4e3b4e912721",
+    "quality/report_long.py": "bd48e0d334c85ca1294d567deb1652266fe409d6275125551132b429d61b127f",
+    "tensorfold/tuning/sweep.py": "2ae2346fffed4b5853827edd94ee8b2ed9e11fd2bd4f864207fe9cbee5a38b1d",
+    "tensorfold/serving/profiles.json": "29253bc0dcc45907aac77d73b89770d18da032a1fd0aad76fee3502b9e47b4e3"
+  },
+  "not_run": [
+    "Near-1M workload requalification",
+    "Physical third-GPU test (synthetic replay used)",
+    "TensorFold TF_HOST parity changes"
+  ]
+}
