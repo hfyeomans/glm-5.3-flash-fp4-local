@@ -40,7 +40,15 @@ def headroom(path, devices, minimum):
             'scope': 'One-second samples across startup and completed rungs; transient peaks between samples are not captured'}
 
 
-def prepare_cancel_fixture(source, destination):
+# Recorded by the csf-resident cancellation receipts; a fixture that does not hash to
+# this value is never executed on the host.
+EXPECTED_CANCEL_FIXTURE_SHA256 = '545c9a0aaa7df67261f80bb489e976403e4c6c1e662dddbbb327e8d9943182a4'
+
+
+def prepare_cancel_fixture(source, destination, expected_sha=EXPECTED_CANCEL_FIXTURE_SHA256):
+    actual = sha(source)
+    if actual != expected_sha:
+        raise ValueError(f'Upstream cancellation fixture sha256 {actual} does not match the pinned {expected_sha}')
     # Keep the upstream test and thresholds; use the same authority as its normal HTTP client.
     original = source.read_text()
     old = 'b"POST /v1/chat/completions HTTP/1.1\\r\\nHost: x\\r\\nContent-Type: application/json\\r\\nContent-Length: "'
@@ -50,7 +58,7 @@ def prepare_cancel_fixture(source, destination):
     adapted = original.replace(old, new)
     compile(adapted, str(destination), 'exec')
     destination.write_text(adapted)
-    return {'upstream_sha256': sha(source), 'sha256': sha(destination),
+    return {'upstream_sha256': actual, 'expected_upstream_sha256': expected_sha, 'sha256': sha(destination),
             'adaptation': 'Raw socket Host header uses URL authority, matching http.client; no server host policy or test threshold changed'}
 
 
@@ -201,7 +209,7 @@ def execute_sweep(args, profiles):
                 commands.append(('long-context', [sys.executable, str(ROOT / 'quality/long_context.py'),
                     '--bank', str(args.long_context_bank), '--lengths', *map(str, args.long_context_lengths),
                     '--output', str(folder / 'long-context'), '--telemetry-file', str(folder / 'gpu.csv'),
-                    '--minimum-free-mib', str(args.minimum_free_mib or 1536)]))
+                    '--minimum-free-mib', str(args.minimum_free_mib or 1536), '--devices', env['TF_GPUS']]))
                 if args.long_context_samples is not None:
                     commands[-1][1].extend(['--long-samples', str(args.long_context_samples)])
                 if args.long_context_reuse:

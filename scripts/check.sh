@@ -3,8 +3,8 @@
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 export PYTHONDONTWRITEBYTECODE=1
-for script in ./*.sh scripts/*.sh tensorfold/*.sh tensorfold/scripts/*.sh tensorfold/csf-resident/*.sh quality/*.sh; do bash -n "$script"; done
-shellcheck -S warning ./*.sh scripts/*.sh tensorfold/*.sh tensorfold/scripts/*.sh tensorfold/csf-resident/*.sh quality/*.sh
+for script in ./*.sh scripts/*.sh tensorfold/*.sh tensorfold/scripts/*.sh tensorfold/csf-resident/*.sh tensorfold/tuning/*.sh quality/*.sh; do bash -n "$script"; done
+shellcheck -S warning ./*.sh scripts/*.sh tensorfold/*.sh tensorfold/scripts/*.sh tensorfold/csf-resident/*.sh tensorfold/tuning/*.sh quality/*.sh
 python3 - <<'PYSYNTAX'
 import ast
 from pathlib import Path

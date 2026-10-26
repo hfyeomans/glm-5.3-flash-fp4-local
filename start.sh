@@ -16,6 +16,9 @@ validate_config
 # Lifecycle acceptance must check the endpoint this launch is configured to bind.
 export BASE_URL=$RECIPE_BASE_URL
 log "GLM-5.3-Flash FP4 | 2 GPUs ($GPUS) | drafter=$DRAFTER | port $PORT"
+if [[ -z "${VLLM_API_KEY:-}" && "$HOST" != 127.0.0.1 && "$HOST" != ::1 && "$HOST" != localhost ]]; then
+  log "WARNING: HOST=$HOST exposes an unauthenticated API beyond loopback; set VLLM_API_KEY or bind HOST to 127.0.0.1."
+fi
 RUN_IMAGE=$IMAGE
 if [[ "${DRY_RUN:-0}" == 1 ]]; then
   resolve_model --plan
@@ -52,12 +55,12 @@ PYPORT
     python3 "$REPO_ROOT/scripts/smoke.py" --ready
     exit 0
   fi
-  if [[ "$MODE" == restart ]]; then
+  if [[ "$MODE" == restart || "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" != true ]]; then
     log "Stopping recipe container $CONTAINER_NAME before launch checks."
     docker stop --time 30 "$CONTAINER_NAME" >/dev/null
   fi
   mkdir -p "$LOG_DIR"
-  docker logs --timestamps "$CONTAINER_NAME" > "$LOG_DIR/previous-$(date -u +%Y%m%dT%H%M%SZ)-$$.log" 2>&1
+  docker logs --timestamps "$CONTAINER_NAME" > "$LOG_DIR/previous-$(date -u +%Y%m%dT%H%M%SZ)-$$.log" 2>&1 || true
   docker rm "$CONTAINER_NAME" >/dev/null
 fi
 python3 "$REPO_ROOT/scripts/doctor.py" || fail 'Preflight failed. Correct the listed blockers, then rerun.'
