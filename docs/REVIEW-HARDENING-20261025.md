@@ -85,6 +85,23 @@ not a live constraint, and the launch opts in through `cudaFuncSetAttribute`.
 Changing the threshold would change which variants the probe measures and break
 comparability with recorded receipts for no runtime gain.
 
+## Bot review follow-up
+
+CodeRabbit and Devin reviewed the PR before merge. Three findings accepted, one dismissed.
+
+- Devin: the post-request physical headroom check took the minimum across every
+  local GPU, so a valid run on selected GPUs could abort because an unrelated GPU
+  was low. The check now covers only the selected devices and fails loudly when a
+  selected index is missing.
+- CodeRabbit: the reporter certified headroom from the manifest embedded in
+  `results.json` without comparing the on-disk `long-context/manifest.json`. It
+  now refuses a mismatch before certifying anything.
+- CodeRabbit: `max-size` and `max-file` log options are only valid on the
+  `json-file` driver. The launch now pins `--log-driver json-file` instead of
+  relying on the daemon default.
+- Dismissed: the docstring coverage check. The repo deliberately has no
+  docstrings; that check predates this diff.
+
 ## Validation
 
 `./scripts/check.sh` passes with 149 tests (baseline 144, five new), shell lint and
