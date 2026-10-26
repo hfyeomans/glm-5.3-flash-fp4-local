@@ -90,21 +90,29 @@ class CapacityHeadroomTests(unittest.TestCase):
                 sweep.headroom(path, ['0', '2'], 1400)
 
 
+CANCEL_FIXTURE_SNIPPET = ('sock.sendall(b"POST /v1/chat/completions HTTP/1.1\\r\\nHost: x\\r\\nContent-Type: application/json\\r\\nContent-Length: "'
+                          ' + str(len(payload)).encode() + b"\\r\\n\\r\\n" + payload)\n')
+
+
+def load_cancel_sweep():
+    import sys
+    spec = importlib.util.spec_from_file_location('cancel_sweep', ROOT / 'tensorfold/tuning/sweep.py')
+    sweep = importlib.util.module_from_spec(spec)
+    with patch.dict(sys.modules, {'run': runner, 'receipts': receipts}):
+        spec.loader.exec_module(sweep)
+    return sweep
+
+
 class CancelFixtureTests(unittest.TestCase):
     def test_host_adapter_preserves_body_and_rejects_unknown_source(self):
-        import sys
         import tempfile
         import types
-        spec = importlib.util.spec_from_file_location('cancel_sweep', ROOT / 'tensorfold/tuning/sweep.py')
-        sweep = importlib.util.module_from_spec(spec)
-        with patch.dict(sys.modules, {'run': runner, 'receipts': receipts}):
-            spec.loader.exec_module(sweep)
-        original = ('sock.sendall(b"POST /v1/chat/completions HTTP/1.1\\r\\nHost: x\\r\\nContent-Type: application/json\\r\\nContent-Length: "'
-                    ' + str(len(payload)).encode() + b"\\r\\n\\r\\n" + payload)\n')
+        sweep = load_cancel_sweep()
+        original = CANCEL_FIXTURE_SNIPPET
         with tempfile.TemporaryDirectory() as folder:
             source, target = [Path(folder) / name for name in ('original.py', 'adapted.py')]
             source.write_text(original)
-            metadata = sweep.prepare_cancel_fixture(source, target)
+            metadata = sweep.prepare_cancel_fixture(source, target, expected_sha=sweep.sha(source))
             sent = []
             exec(compile(target.read_text(), str(target), 'exec'),
                  {'sock': types.SimpleNamespace(sendall=sent.append), 'payload': b'{}',
@@ -113,9 +121,20 @@ class CancelFixtureTests(unittest.TestCase):
             self.assertTrue(sent[0].endswith(b'Content-Length: 2\r\n\r\n{}'))
             self.assertEqual(source.read_text(), original)
             self.assertNotEqual(metadata['upstream_sha256'], metadata['sha256'])
+            self.assertEqual(metadata['expected_upstream_sha256'], sweep.sha(source))
             source.write_text('print("different fixture")\n')
             with self.assertRaisesRegex(ValueError, 'Unrecognized upstream'):
+                sweep.prepare_cancel_fixture(source, target, expected_sha=sweep.sha(source))
+
+    def test_unpinned_fixture_source_is_refused_before_host_execution(self):
+        import tempfile
+        sweep = load_cancel_sweep()
+        with tempfile.TemporaryDirectory() as folder:
+            source, target = [Path(folder) / name for name in ('original.py', 'adapted.py')]
+            source.write_text(CANCEL_FIXTURE_SNIPPET)
+            with self.assertRaisesRegex(ValueError, 'does not match the pinned'):
                 sweep.prepare_cancel_fixture(source, target)
+            self.assertFalse(target.exists())
 
 
 class ServingPlacementTests(unittest.TestCase):
