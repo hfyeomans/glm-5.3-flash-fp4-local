@@ -96,14 +96,15 @@ class ReporterGateTests(unittest.TestCase):
         self.tasks=[f'task{i}' for i in range(13)];self.cases=[];self.rows=[];self.groups=[]
         for length in (32768,1048576):
             for task in self.tasks:
+                near_window=length==1048576 and task not in ('task11','task12')
                 for sample in range(4):
                     ident=f'{length}-{task}-{sample}'
                     self.cases.append({'id':ident,'length':length,'sample':sample,'task':task})
                     self.rows.append({'id':ident,'task':task,'length':length,'prompt_tokens':length,'score':100,
                                  'full_credit':True,'truncated':False,'reasoning_marker':False,
-                                 'near_window':length==1048576,'response':{'choices':[{'text':'answer'}]}})
+                                 'near_window':near_window,'response':{'choices':[{'text':'answer'}]}})
                 self.groups.append({'configured_context':length,'task':task,'n':4,'mean_score':100.0,'full_credit':4,
-                               'near_window_cases':0 if length==1048576 and task in ('task11','task12') else 4,
+                               'near_window_cases':4 if near_window else 0,
                                'input_tokens_min':length,'input_tokens_max':length,'truncated':0,
                                'reasoning_markers':0,'full_credit_clean_completion':4})
         self.bank.mkdir();(self.bank/'manifest.json').write_text(json.dumps(
@@ -147,6 +148,7 @@ class ReporterGateTests(unittest.TestCase):
         self.assertEqual(sorted(packed['headroom']['sampled_min_free_MiB']),['2','3'])
         self.assertIn('The 1,200 MiB floor passed',self.out.read_text())
         self.assertEqual(packed['near_1m']['n'],44)
+        self.assertEqual(packed['near_1m']['clean_full_credit'],44)
         (self.run/'long-context/manifest.json').write_text('{"tampered":true}')
         with self.assertRaisesRegex(AssertionError,'Embedded manifest'):
             self.invoke()
@@ -234,6 +236,19 @@ class ReporterGateTests(unittest.TestCase):
             with self.subTest(key=key):
                 self.results['groups']=[dict(g) for g in original]
                 self.results['groups'][0][key]=value
+                self.write_run()
+                with self.assertRaises(AssertionError):self.invoke('--controls-only')
+                self.assertFalse(self.receipt.exists())
+
+    def test_controls_only_rejects_tampered_group_counters(self):
+        self.controls_only()
+        original=[dict(g) for g in self.results['groups']]
+        for counter in ('full_credit','near_window_cases','truncated','reasoning_markers'):
+            with self.subTest(counter=counter):
+                self.receipt.unlink(missing_ok=True)
+                self.out.unlink(missing_ok=True)
+                self.results['groups']=[dict(g) for g in original]
+                self.results['groups'][0][counter]+=1
                 self.write_run()
                 with self.assertRaises(AssertionError):self.invoke('--controls-only')
                 self.assertFalse(self.receipt.exists())

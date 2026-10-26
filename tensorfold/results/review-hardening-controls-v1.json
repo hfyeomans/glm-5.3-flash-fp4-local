@@ -1,0 +1,382 @@
+{
+  "context_label_semantics": "Group configured_context is the nominal 32768 bank label; actual TF_CONTEXT is 1048576 for all controls.",
+  "results": {
+    "complete": true,
+    "cases": 52,
+    "groups": [
+      {
+        "configured_context": 32768,
+        "task": "niah_single_1",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28651,
+        "input_tokens_max": 28653,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_single_2",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28674,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_single_3",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28673,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_multikey_1",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28673,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_multikey_2",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28660,
+        "input_tokens_max": 28671,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_multikey_3",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28610,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_multivalue",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28674,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "niah_multiquery",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28674,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "vt",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28652,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "cwe",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28657,
+        "input_tokens_max": 28669,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "fwe",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28660,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      },
+      {
+        "configured_context": 32768,
+        "task": "qa_squad",
+        "n": 4,
+        "mean_score": 75.0,
+        "full_credit": 3,
+        "near_window_cases": 0,
+        "input_tokens_min": 28505,
+        "input_tokens_max": 28674,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 3
+      },
+      {
+        "configured_context": 32768,
+        "task": "qa_hotpot",
+        "n": 4,
+        "mean_score": 100.0,
+        "full_credit": 4,
+        "near_window_cases": 0,
+        "input_tokens_min": 28471,
+        "input_tokens_max": 28666,
+        "truncated": 0,
+        "reasoning_markers": 0,
+        "full_credit_clean_completion": 4
+      }
+    ],
+    "manifest": {
+      "bank_sha256": "90ae1b9aed4a6b5649a4a2e8abcd258d4aaa7982ad08be23fc00253be74d0961",
+      "client_sha256": "a5e27258956b8e7486c9e3d4e72ec550adf0264807348422d8ff4e3b4e912721",
+      "official_scorer_sha256": "6740467c17b8dc06b6b30f4f97e54ce8de81db0dd879f1538d0b6b5727f4bd5f",
+      "image_id": "sha256:e80420cb0f54909e06f5c5aeafa8f0fc5b27c031c5f7e8199d227b6175d9652f",
+      "settings": {
+        "TF_TUNE_PREFILL_UP": "4",
+        "TF_TUNE_SCALE_LAYOUT": "2",
+        "TF_GLM_KDA_DECODE_WIDE": "1",
+        "NCCL_CUMEM_HOST_ENABLE": "0",
+        "TF_MODEL_NAME": "glm-5.3-flash-fp4-local",
+        "TF_PROMPT_CACHE_GIB": "0",
+        "TF_MEMORY_RESERVE_GIB": "1.5",
+        "TF_NVFP4_DECODE_WARPS": "1",
+        "TF_TUNE_PREFILL_DOWN": "8",
+        "TF_TUNE_HOST_EMBED": "1",
+        "TF_GLM_OVERLAP_PIECES": "4",
+        "TF_GLM_PREFILL_REDUCE": "split",
+        "TF_HOST": "127.0.0.1",
+        "TF_PARALLEL": "1",
+        "TF_GLM_PDL": "1",
+        "NCCL_CUMEM_ENABLE": "0",
+        "TF_PROFILE": "0",
+        "TF_TUNE_SPLIT_TARGET": "192",
+        "TF_GLM_PROMPT_K": "one",
+        "MODEL_PATH": "/root/.cache/huggingface/hub/models--nvidia--GLM-5.3-Flash-FP4-Local/snapshots/76348ddb2be2e35e39ecfc00e75dc07703f4f3d5",
+        "TF_PORT": "8001",
+        "TF_COMM_PORT": "29600",
+        "TF_CONTEXT": "1048576",
+        "TF_NCCL_DEBUG": "WARN"
+      },
+      "cases": [
+        "niah_single_1-32768-0",
+        "niah_single_1-32768-1",
+        "niah_single_1-32768-2",
+        "niah_single_1-32768-3",
+        "niah_single_2-32768-0",
+        "niah_single_2-32768-1",
+        "niah_single_2-32768-2",
+        "niah_single_2-32768-3",
+        "niah_single_3-32768-0",
+        "niah_single_3-32768-1",
+        "niah_single_3-32768-2",
+        "niah_single_3-32768-3",
+        "niah_multikey_1-32768-0",
+        "niah_multikey_1-32768-1",
+        "niah_multikey_1-32768-2",
+        "niah_multikey_1-32768-3",
+        "niah_multikey_2-32768-0",
+        "niah_multikey_2-32768-1",
+        "niah_multikey_2-32768-2",
+        "niah_multikey_2-32768-3",
+        "niah_multikey_3-32768-0",
+        "niah_multikey_3-32768-1",
+        "niah_multikey_3-32768-2",
+        "niah_multikey_3-32768-3",
+        "niah_multivalue-32768-0",
+        "niah_multivalue-32768-1",
+        "niah_multivalue-32768-2",
+        "niah_multivalue-32768-3",
+        "niah_multiquery-32768-0",
+        "niah_multiquery-32768-1",
+        "niah_multiquery-32768-2",
+        "niah_multiquery-32768-3",
+        "vt-32768-0",
+        "vt-32768-1",
+        "vt-32768-2",
+        "vt-32768-3",
+        "cwe-32768-0",
+        "cwe-32768-1",
+        "cwe-32768-2",
+        "cwe-32768-3",
+        "fwe-32768-0",
+        "fwe-32768-1",
+        "fwe-32768-2",
+        "fwe-32768-3",
+        "qa_squad-32768-0",
+        "qa_squad-32768-1",
+        "qa_squad-32768-2",
+        "qa_squad-32768-3",
+        "qa_hotpot-32768-0",
+        "qa_hotpot-32768-1",
+        "qa_hotpot-32768-2",
+        "qa_hotpot-32768-3"
+      ],
+      "interface": "raw completion, shared locally rendered chat template, thinking off, greedy, MTP on, cold cache",
+      "minimum_free_MiB": 1536,
+      "gpu_devices": [
+        "0",
+        "1"
+      ],
+      "response_diagnostics": "Report truncations and generated think markers separately; clean full credit also requires neither. Official RULER score remains unchanged.",
+      "sampling_plan": {
+        "long_samples_per_task": 4,
+        "rule": "Lowest fixed sample indices at longest nominal length; all shorter controls retained, independent of scores"
+      }
+    },
+    "requests_sha256": "7dfbf002d6dd5c5c161a42fdf16e86d942907a783be2de660abea8651c0bd93b",
+    "scope": "Local RULER-derived screen using NVIDIA metrics; per-group sample counts and any reused results are explicit, not a full published leaderboard run. Report actual lengths; undersized tasks are not evidence at 1M. Short controls need not have identical synthetic golds; QA question IDs are shared. No inference about vLLM long-context accuracy."
+  },
+  "completion": {
+    "profile": "host-1m",
+    "protocol": {
+      "profiles_sha256": "29253bc0dcc45907aac77d73b89770d18da032a1fd0aad76fee3502b9e47b4e3",
+      "client_sha256": "6c0404ad80b25dabfdd7a9fe72c8652f365933d7dc12774b70158c5793e94d95",
+      "workloads_sha256": "0b6002363ca42e1355e8783552944c74350986ce337a6d16cee47e21eaefcec3",
+      "repeats": 2,
+      "mtp": "on",
+      "cases": [
+        "short-code",
+        "short-prose",
+        "prefill-8192",
+        "prefill-32768"
+      ],
+      "teacher_histories_sha256": null,
+      "quality": false,
+      "cache_check": false,
+      "baseline_image": false,
+      "skip_benchmark": true,
+      "context_targets": [
+        2048,
+        8192
+      ],
+      "minimum_free_MiB": 1536,
+      "long_context_bank_sha256": "90ae1b9aed4a6b5649a4a2e8abcd258d4aaa7982ad08be23fc00253be74d0961",
+      "long_context_lengths": [
+        32768
+      ],
+      "long_context_client_sha256": "a5e27258956b8e7486c9e3d4e72ec550adf0264807348422d8ff4e3b4e912721"
+    },
+    "started_unix": 1792979679.4077456,
+    "token_hashes": {},
+    "repeat_and_mtp_identical": null,
+    "status": "pass",
+    "elapsed_seconds": 556.3388719558716
+  },
+  "headroom": {
+    "required_free_MiB": 1536,
+    "sampled_min_free_MiB": {
+      "0": 1765,
+      "1": 1846
+    },
+    "passed": true,
+    "scope": "One-second samples across startup and completed rungs; transient peaks between samples are not captured"
+  },
+  "source_run_headroom": null,
+  "cohort_requests": 52,
+  "reused_requests": 0,
+  "new_requests": 52,
+  "short_controls": {
+    "n": 52,
+    "mean_task_score": 98.07692307692308,
+    "clean_full_credit": 51
+  },
+  "near_1m": null,
+  "all_nonclean_or_incorrect_cases": [
+    {
+      "id": "qa_squad-32768-2",
+      "task": "qa_squad",
+      "prompt_tokens": 28591,
+      "score": 0,
+      "truncated": false,
+      "reasoning_marker": false,
+      "clean_full_credit": false,
+      "response_sha256": "0024db565c5d444cff167b6a1effc49c72dcd458f9689709884803d554ac98bf"
+    }
+  ],
+  "supplemental_completed_cases": [],
+  "evidence": [
+    {
+      "path": "logs/hardening-validation-20261026/v3-short-controls/00-host-1m/launch-manifest.json",
+      "sha256": "b448065d998cc185be39172edb3218a5323d8d2b27b24f510a0d19ed8fbf3156"
+    },
+    {
+      "path": "logs/hardening-validation-20261026/v3-short-controls/00-host-1m/complete.json",
+      "sha256": "0cfc52f89ddc958434a6d9eb54227d3a7b2455026d1f3906d8235d235eda5e8a"
+    },
+    {
+      "path": "logs/hardening-validation-20261026/v3-short-controls/00-host-1m/gpu.csv",
+      "sha256": "d9c03bb37b6bbe951a4a32da756d1bc2d62cdf7442c087f870ae79a150ad431d"
+    },
+    {
+      "path": "logs/hardening-validation-20261026/v3-short-controls/00-host-1m/server.log",
+      "sha256": "fa338a72bd26e419bc1aa339a7b6395ecd2ae9f5275982e9820bc1988e01a7c1"
+    },
+    {
+      "path": "logs/hardening-validation-20261026/v3-short-controls/00-host-1m/long-context/manifest.json",
+      "sha256": "915d2c39546d06c82d697d8e26a5d0093c57fe8ea79fe012e4845c08a50fd10f"
+    },
+    {
+      "path": "logs/hardening-validation-20261026/v3-short-controls/00-host-1m/long-context/results.json",
+      "sha256": "05b47c58365f00b76da93e35e2320d0e58432ec7414acc111f85d8d084e661f1"
+    },
+    {
+      "path": "logs/hardening-validation-20261026/v3-short-controls/00-host-1m/long-context/requests.jsonl",
+      "sha256": "7dfbf002d6dd5c5c161a42fdf16e86d942907a783be2de660abea8651c0bd93b"
+    },
+    {
+      "path": "/home/hank/dev/src/glm-5.3-flash-fp4-local/logs/qualification-v2/ruler-bank-v2/manifest.json",
+      "sha256": "90ae1b9aed4a6b5649a4a2e8abcd258d4aaa7982ad08be23fc00253be74d0961"
+    }
+  ],
+  "reporter_sha256": "bd48e0d334c85ca1294d567deb1652266fe409d6275125551132b429d61b127f",
+  "limits": "All 52 frozen 32K controls under TF_CONTEXT=1048576; near-1M cases were not run. Substring scores and clean completion are separate.",
+  "cohort_mode": "controls-only"
+}

@@ -91,6 +91,10 @@ def main():
             task_rows = [r for r in rows if r['task'] == group['task']]
             assert group['n'] == len(task_rows) == 4
             assert math.isclose(group['mean_score'], sum(r['score'] for r in task_rows) / len(task_rows), rel_tol=1e-12, abs_tol=1e-12)
+            assert group['full_credit'] == sum(r['full_credit'] for r in task_rows)
+            assert group['near_window_cases'] == sum(r['near_window'] for r in task_rows)
+            assert group['truncated'] == sum(r['truncated'] for r in task_rows)
+            assert group['reasoning_markers'] == sum(r['reasoning_marker'] for r in task_rows)
             assert group['full_credit_clean_completion'] == sum(clean(r) for r in task_rows)
             assert group['input_tokens_min'] == min(r['prompt_tokens'] for r in task_rows)
             assert group['input_tokens_max'] == max(r['prompt_tokens'] for r in task_rows)

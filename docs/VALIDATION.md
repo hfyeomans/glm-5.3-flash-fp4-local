@@ -1030,3 +1030,75 @@ The lifecycle helper now accepts both known error prefixes while rejecting mixed
 errors or a different container name. All five measurement clients preserve
 explicit ports and reject mismatches before HTTP/output creation. **144 CPU
 tests passed**, including compiled Zig checks; all four PR findings are fixed.
+
+## Review-hardening validation (2026-10-26 UTC)
+
+**V1–V5 passed** on two RTX PRO 6000 Blackwell Max-Q cards. The 52 short
+TensorFold controls produced **51/52 clean full-credit responses**, mean task
+score **98.08**. The sole miss remains `qa_squad-32768-2`; no responses were
+truncated. MTP vLLM was restored and passed completion, JSON, tools and streaming.
+
+| Check | Evidence |
+|---|---|
+| V1 — launch | Same pinned image, command, mounts and B12X settings; `json-file`, `max-size=100m`, `max-file=3` appear in both launch record and Docker inspect. Live unauthenticated/non-loopback launch warned; key-set and loopback dry runs were silent. Full API suite passed. |
+| V2 — fixture | Copied without execution from the stopped `glm53-csf-limits-parent`, whose image matches the serving profile `sha256:e80420cb…`. SHA-256 matches `545c9a0aaa7df67261f80bb489e976403e4c6c1e662dddbbb327e8d9943182a4`. The handoff's vLLM source path lacked this TensorFold fixture. |
+| V3 — selected devices | Actual sweep child used `--devices 0,1`; manifest and Docker GPU IDs agree. Smoke, 2K/8K sanity rungs and all 52 controls passed their gates. Minimum free memory **1,765 / 1,846 MiB**, above **1,536 MiB**. |
+| V4 — receipt | Floor and GPU IDs match the manifest. A changed on-disk manifest was rejected. Adding an unrelated zero-free GPU to copied telemetry left the selected-device gate passing; selecting that device failed both sampled and physical checks. |
+| V5 — suite | **159 CPU tests passed**, including compiled Zig 0.17.0 checks using the existing compiler via `ZIG`. Baseline before the reporter fix: 151 tests, also including Zig. |
+
+The vLLM container was already stopped on arrival. V1 ran `./stop.sh`,
+`./start.sh` and `./smoke.sh --suite`; the running service was then stopped for V3
+and restored afterward. The NVIDIA revision remains
+`76348ddb2be2e35e39ecfc00e75dc07703f4f3d5`, with original compressed scales,
+release-10152026 image `sha256:745feb916ee816f5409fd58386114be4f22fbede7f9c0e0a7b8c4fe8dac0fb29`,
+GPU fraction 0.985 and 7,650,410,496-byte per-GPU KV budget.
+
+The reporter originally rejected a complete 52-control run because it required
+the full short-plus-long cohort. The new `--controls-only` mode was reproduced
+failing-first, preserves the default full report, checks the entire frozen
+short cohort and records `near_1m: null`. PR review also tightened group-counter
+checks and corrected inconsistent test-fixture flags. Inference code and client
+pins were unchanged; the first report draft is retained in the raw run folder.
+
+Commands run from the validation worktree (existing dependency overlay and bank):
+
+```bash
+./stop.sh
+./start.sh
+./smoke.sh --suite --output logs/hardening-validation-20261026/v1-api
+
+docker cp glm53-csf-limits-parent:/src/tensorfold/zig/tests/qwen35/serve_cancel_release.py \
+  logs/hardening-validation-20261026/serve_cancel_release.py
+sha256sum logs/hardening-validation-20261026/serve_cancel_release.py
+
+PYTHONPATH="$PWD/.state/long-quality-deps" .state/quality-venv/bin/python \
+  tensorfold/tuning/sweep.py --profile-file tensorfold/serving/profiles.json \
+  --profiles host-1m --skip-benchmark --minimum-free-mib 1536 \
+  --long-context-bank /home/hank/dev/src/glm-5.3-flash-fp4-local/logs/qualification-v2/ruler-bank-v2 \
+  --long-context-lengths 32768 \
+  --output logs/hardening-validation-20261026/v3-short-controls
+
+.state/quality-venv/bin/python quality/report_long.py --controls-only \
+  --run logs/hardening-validation-20261026/v3-short-controls/00-host-1m \
+  --bank /home/hank/dev/src/glm-5.3-flash-fp4-local/logs/qualification-v2/ruler-bank-v2 \
+  --receipt tensorfold/results/review-hardening-controls-v1.json \
+  --report docs/REVIEW-HARDENING-CONTROLS-20261026.md
+
+ZIG=/home/hank/dev/src/glm-5.3-flash-fp4-local/.state/worktrees/swarm-native/.state/cpu-zig/zig \
+  ./scripts/check.sh
+```
+
+The frozen bank hash is `90ae1b9aed4a6b5649a4a2e8abcd258d4aaa7982ad08be23fc00253be74d0961`.
+All 52 requests were new; actual inputs were 28,471–28,674 tokens. The existing
+`host-1m` allocation stayed in place, with no near-1M prompts. This two-GPU host
+used a synthetic third-device replay; no physical third GPU was tested.
+TensorFold `TF_HOST` parity was outside this pass.
+
+[Validation receipt](../tensorfold/results/review-hardening-validation-v1.json) ·
+[Control scores and misses](REVIEW-HARDENING-CONTROLS-20261026.md) ·
+[Control receipt](../tensorfold/results/review-hardening-controls-v1.json).
+Raw evidence is under `logs/hardening-validation-20261026/` in
+`.state/worktrees/hardening-validation`, including `v1-result.json`,
+`v3-device-forwarding.json`, `v4-negative-gates.json`, `restored.json`, and the
+sweep's `*-headroom.json` / `long-context/headroom.json`. Historical receipts
+and qualification sections are unchanged.
