@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import statistics
 import sys
@@ -31,6 +32,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('run', 'bank', 'receipt', 'report'):
         parser.add_argument('--' + name, type=Path, required=True)
+    parser.add_argument('--controls-only', action='store_true',
+                        help='Package all 52 frozen 32K controls without near-1M cases')
     args = parser.parse_args()
     load = lambda path: json.loads(path.read_text())
     finished = load(args.run / 'complete.json')
@@ -40,7 +43,13 @@ def main():
     bank = load(args.bank / 'manifest.json')
     manifest = results['manifest']
     long_n = manifest['sampling_plan']['long_samples_per_task']
-    selected = select_cases(bank, [32768, 1048576], long_n)
+    selected = select_cases(bank, [32768] if args.controls_only else [32768, 1048576],
+                            None if args.controls_only else long_n)
+    if args.controls_only:
+        assert len(selected) == 52 and len({c['id'] for c in selected}) == 52, 'Expected all 52 frozen controls'
+        assert len(bank['protocol']['tasks']) == 13 and bank['protocol']['samples_per_task'] == 4
+        for task in bank['protocol']['tasks']:
+            assert sorted(c['sample'] for c in selected if c['task'] == task) == [0, 1, 2, 3]
     assert results['complete'] and results['cases'] == len(selected)
     assert bank['protocol']['name'] == 'local-ruler-13-v2'
     assert manifest['settings']['TF_CONTEXT'] == '1048576'
@@ -50,6 +59,9 @@ def main():
     assert results['requests_sha256'] == sha(requests)
     rows = [json.loads(line) for line in requests.read_text().splitlines()]
     assert [r['id'] for r in rows] == manifest['cases'] == [c['id'] for c in selected]
+    if args.controls_only:
+        assert all((row['task'], row['length']) == (case['task'], case['length'])
+                   for row, case in zip(rows, selected)), 'Control metadata differs from the frozen bank'
     floor = int(manifest['minimum_free_MiB'])
     devices = manifest['gpu_devices']
     memory = headroom(args.run / 'gpu.csv', devices, floor)
@@ -72,7 +84,18 @@ def main():
         files += [source / 'manifest.json', source / 'requests.jsonl', source.parent / 'gpu.csv']
     near = [g for g in results['groups'] if g['configured_context'] == 1048576 and g['near_window_cases'] == g['n']]
     controls = [g for g in results['groups'] if g['configured_context'] == 32768]
-    assert len(near) == 11 and sum(g['n'] for g in near) == 11 * long_n
+    if args.controls_only:
+        assert len(results['groups']) == len(controls) == 13
+        assert {g['task'] for g in controls} == set(bank['protocol']['tasks'])
+        for group in controls:
+            task_rows = [r for r in rows if r['task'] == group['task']]
+            assert group['n'] == len(task_rows) == 4
+            assert math.isclose(group['mean_score'], sum(r['score'] for r in task_rows) / len(task_rows), rel_tol=1e-12, abs_tol=1e-12)
+            assert group['full_credit_clean_completion'] == sum(clean(r) for r in task_rows)
+            assert group['input_tokens_min'] == min(r['prompt_tokens'] for r in task_rows)
+            assert group['input_tokens_max'] == max(r['prompt_tokens'] for r in task_rows)
+    else:
+        assert len(near) == 11 and sum(g['n'] for g in near) == 11 * long_n
     assert sum(g['n'] for g in controls) == 52
     issues = [brief(r) for r in rows if not clean(r)]
     reused = sum('reused_from' in r for r in rows)
@@ -82,16 +105,39 @@ def main():
         'cohort_requests': len(rows), 'reused_requests': reused, 'new_requests': len(rows) - reused,
         'short_controls': {'n': 52, 'mean_task_score': statistics.mean(g['mean_score'] for g in controls),
                            'clean_full_credit': sum(clean(r) for r in rows if r['length'] == 32768)},
-        'near_1m': {'tasks': 11, 'n': 11 * long_n, 'mean_task_score': statistics.mean(g['mean_score'] for g in near),
+        'near_1m': None if args.controls_only else {'tasks': 11, 'n': 11 * long_n, 'mean_task_score': statistics.mean(g['mean_score'] for g in near),
                     'clean_full_credit': sum(clean(r) for r in rows if r['length'] == 1048576 and r['near_window'])},
         'all_nonclean_or_incorrect_cases': issues,
         'supplemental_completed_cases': [brief(r) for r in supplemental],
         'evidence': [{'path': str(path), 'sha256': sha(path)} for path in files],
         'reporter_sha256': sha(Path(__file__)),
         'limits': 'User reduced long examples mid-run by fixed sample index, independent of scores. All shorter controls retained. Small local RULER-derived screen, not a leaderboard or universal qualification. No matched vLLM or older-TensorFold long scores exist for this bank. Substring scores and clean completion are separate.'}
+    if args.controls_only:
+        receipt['cohort_mode'] = 'controls-only'
+        receipt['context_label_semantics'] = 'Group configured_context is the nominal 32768 bank label; actual TF_CONTEXT is 1048576 for all controls.'
+        receipt['limits'] = 'All 52 frozen 32K controls under TF_CONTEXT=1048576; near-1M cases were not run. Substring scores and clean completion are separate.'
     if args.receipt.exists():
         raise SystemExit(f'Refusing to overwrite existing receipt: {args.receipt}')
     args.receipt.write_text(json.dumps(receipt, indent=2) + '\n')
+    if args.controls_only:
+        short = receipt['short_controls']
+        minima = ', '.join(f"GPU {device}: {memory['sampled_min_free_MiB'][device]:,} MiB" for device in devices)
+        lines = ['# Long-context short controls', '',
+            f"Completed all 52 frozen controls across 13 tasks: {short['clean_full_credit']}/52 have clean full credit; mean task score {short['mean_task_score']:.2f}. Clean full credit requires full score, no truncation and no generated reasoning marker.", '',
+            'Nominal input length is 32,768 tokens; actual server allocation is `TF_CONTEXT=1048576`. Near-1M cases were not run.', '',
+            f"Minimum sampled free memory: {minima}. The {floor:,} MiB floor passed; one-second sampling does not observe intervening transient peaks.", '',
+            '| Task | Cases | Mean score | Actual input tokens | Clean full credit |',
+            '|---|---:|---:|---:|---:|']
+        for task in bank['protocol']['tasks']:
+            group = next(g for g in controls if g['task'] == task)
+            lines.append(f"| {task} | {group['n']} | {group['mean_score']:.2f} | {group['input_tokens_min']:,}–{group['input_tokens_max']:,} | {group['full_credit_clean_completion']}/{group['n']} |")
+        lines += ['', '## Incorrect or nonclean responses', '',
+            '| Case | Score | Truncated | Reasoning marker |', '|---|---:|---|---|']
+        lines += [f"| {r['id']} | {r['score']} | {r['truncated']} | {r['reasoning_marker']} |" for r in issues] if issues else ['| None | — | — | — |']
+        lines += ['', f"Requests: {len(rows) - reused} new, {reused} reused. Raw responses: `{requests.as_posix()}`.", '',
+            f'[Portable receipt](../{args.receipt.as_posix()}) · [Protocol](../quality/LONG-CONTEXT.md).', '']
+        args.report.write_text('\n'.join(lines))
+        return
     short, long = receipt['short_controls'], receipt['near_1m']
     lines = ['# Long-context accuracy screen', '',
         f"Completed the selected {len(rows)}-request cohort on `host-1m`: {short['clean_full_credit']}/52 shorter controls and {long['clean_full_credit']}/{long['n']} near-1M cases have clean full credit. This requires full official score, no truncation and no generated reasoning marker.", '',
