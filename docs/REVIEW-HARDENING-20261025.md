@@ -104,3 +104,9 @@ round; GPU qualification remains a separate step recorded in
 - Long-context manifests now record `gpu_devices`. Re-reporting a pre-change run
   with `report_long.py` fails on the missing key instead of silently assuming
   devices `0,1`.
+- The cancellation fixture pin is deliberately fail-closed: a deliberate image
+  update that changes the upstream fixture requires consciously refreshing
+  `EXPECTED_CANCEL_FIXTURE_SHA256`, the same discipline as the image pins.
+- `--log-opt` rotation flags appear in new runs' `launch-command.txt`; they do not
+  affect measurement, and mixed old/new comparisons were already refused by the
+  protocol checks.
