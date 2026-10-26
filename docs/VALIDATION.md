@@ -1102,3 +1102,32 @@ Raw evidence is under `logs/hardening-validation-20261026/` in
 `v3-device-forwarding.json`, `v4-negative-gates.json`, `restored.json`, and the
 sweep's `*-headroom.json` / `long-context/headroom.json`. Historical receipts
 and qualification sections are unchanged.
+
+## vLLM MTP 1M follow-up (2026-10-26 UTC)
+
+**Passed:** one request with **1,048,320 input tokens** and a 256-token output
+budget retrieved all three markers and stopped normally after 44 output tokens.
+TTFT was **145.078 s**; end-to-end time **145.092 s**. Cache reuse and preemptions
+were zero. Minimum free GPU memory was **1,221 / 1,302 MiB**, above the existing
+1,024 MiB vLLM capacity-test floor. Completion, JSON, tools and streaming passed.
+
+The probe used `MAX_MODEL_LEN=1048576`, `MAX_NUM_SEQS=1`, MTP3, the pinned
+release-10152026 image and NVIDIA revision
+`76348ddb2be2e35e39ecfc00e75dc07703f4f3d5` with original CSF32 scales. B12X,
+GPU fraction 0.985 and the 7,650,410,496-byte per-GPU KV budget were unchanged.
+
+```bash
+.state/quality-venv/bin/python benchmarks/concurrent_context.py \
+  --drafter mtp --mtp-profile capacity --container glm53-fp4-1m-verify \
+  --base-url http://127.0.0.1:8002 --window 1048576 --clients 1 \
+  --min-free-mib 1024 \
+  --output logs/vllm-1m-verification-20261026/capacity
+```
+
+The probe is stopped. The original 262,144-token/four-sequence MTP container
+was restored with identical ID, image and command, and passed the full API suite.
+This follow-up changed evidence only; the existing 159-test CPU result is unchanged.
+
+[Portable receipt](../benchmarks/results/vllm-1m-verification-20261026.json).
+Raw launch, server, telemetry, response and restoration logs remain in
+`logs/vllm-1m-verification-20261026/` under the hardening-validation worktree.
